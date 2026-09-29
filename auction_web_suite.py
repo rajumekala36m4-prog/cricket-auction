@@ -211,13 +211,17 @@ def home():
 @app.route('/register')
 def register():
     cfg = load_config()
+    regs = load_registrations()
+    players_list = list(regs.values())
+    players_list.sort(key=lambda p: p.get('serial_no', 999))
     return render_template(
         'register.html',
         active_page='register',
         tournament_name=cfg["tournament_name"],
         upi_id=cfg["upi_id"],
         payee_name=cfg["payee_name"],
-        reg_fee=cfg["registration_fee"]
+        reg_fee=cfg["registration_fee"],
+        players=players_list
     )
 
 @app.route('/register/success/<player_id>')
@@ -245,22 +249,28 @@ def register_success(player_id):
 @app.route('/live')
 def auction_live():
     cfg = load_config()
+    state = load_auction_state()
     is_viewer = request.args.get('viewer', 'false').lower() == 'true'
     return render_template(
         'auction_live.html',
         active_page='auction',
         tournament_name=cfg["tournament_name"],
-        viewer_mode=is_viewer
+        viewer_mode=is_viewer,
+        teams=state.get("teams", {}),
+        config=cfg
     )
 
 @app.route('/view')
 def auction_view():
     cfg = load_config()
+    state = load_auction_state()
     return render_template(
         'auction_live.html',
-        active_page='auction',
+        active_page='view',
         tournament_name=cfg["tournament_name"],
-        viewer_mode=True
+        viewer_mode=True,
+        teams=state.get("teams", {}),
+        config=cfg
     )
 
 @app.route('/teams')
@@ -300,6 +310,7 @@ def api_register():
 
         name = request.form.get('name', '').strip()
         phone = request.form.get('phone', '').strip()
+        village = request.form.get('village', '').strip() or 'Saidapur'
         role = request.form.get('role', 'All-Rounder')
         batting_style = request.form.get('batting_style', 'Right Hand Bat')
         bowling_style = request.form.get('bowling_style', 'None')
@@ -315,7 +326,7 @@ def api_register():
         if 'photo' in request.files:
             photo_file = request.files['photo']
             if photo_file and photo_file.filename:
-                ext = os.path.kplitext(photo_file.filename)[1].lower() or '.jpg'
+                ext = os.path.splitext(photo_file.filename)[1].lower() or '.jpg'
                 filename = f"player_{uuid.uuid4().hex[:8]}{ext}"
                 save_path = os.path.join(PHOTOS_DIR, filename)
                 photo_file.save(save_path)
@@ -326,7 +337,7 @@ def api_register():
         if 'screenshot' in request.files:
             screen_file = request.files['screenshot']
             if screen_file and screen_file.filename:
-                ext = os.path.kplitext(screen_file.filename)[1].lower() or '.jpg'
+                ext = os.path.splitext(screen_file.filename)[1].lower() or '.jpg'
                 filename = f"pay_{uuid.uuid4().hex[:8]}{ext}"
                 save_path = os.path.join(PAYMENTS_DIR, filename)
                 screen_file.save(save_path)
@@ -347,6 +358,7 @@ def api_register():
             'id': player_id,
             'serial_no': serial_no,
             'name': name,
+            'village': village,
             'phone': phone,
             'role': role,
             'batting_style': batting_style,
@@ -364,10 +376,6 @@ def api_register():
         save_registrations(regs)
         sync_player_to_auction(name, serial_no)
         
-        # Dual-Redundancy: Sync to Google Sheet if configured
-        if cfg.get('google_sheet_url'):
-            threading.Thread(target=sync_to_google_sheet_async, args=(cfg['google_sheet_url'], regs[name]), daemon=True).start()
-
         return jsonify({
             'success': True,
             'player_id': player_id,
