@@ -1,0 +1,7 @@
+services:
+  - type: web
+    name: spl-cricket-auction
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn auction_web_suite:app
+    plan: free
