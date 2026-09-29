@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}{{ tournament_name }}{% endblock %}</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+  {% block extra_css %}{% endblock %}
+</head>
+<body>
+  <header class="navbar">
+    <div class="nav-container">
+      <a href="/" class="nav-brand">
+        <span class="brand-badge">SPL</span>
+        <div class="brand-text">{{ tournament_name }}</div>
+      </a>
+      <button class="mobile-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')">☰</button>
+      <ul class="nav-links">
+        <li><a href="/" class="nav-link {% if active_page == 'home' %}active{% endif %}">🏠 Home</a></li>
+        <li><a href="/register" class="nav-link highlight {% if active_page == 'register' %}active{% endif %}">📝 Register Player</a></li>
+        <li><a href="/auction" class="nav-link {% if active_page == 'auction' %}active{% endif %}">🏏 Live Auction</a></li>
+        <li><a href="/teams" class="nav-link {% if active_page == 'teams' %}active{% endif %}">👥 Team Squads</a></li>
+        <li><a href="/admin" class="nav-link {% if active_page == 'admin' %}active{% endif %}">⚙️ Admin</a></li>
+      </ul>
+    </div>
+  </header>
+
+  <main class="page-container">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer style="text-align: center; padding: 2rem 1rem; color: var(--text-dim); font-size: 0.85rem; border-top: 1px solid var(--border-glass); margin-top: auto;">
+    <p>{{ tournament_name }} &copy; 2026. Official Player Registration & Live Auction Management System.</p>
+  </footer>
+
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

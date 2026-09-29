@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="text-align: center; max-width: 800px; margin: 2rem auto 3rem;">
+  <div style="display: inline-block; background: rgba(245, 158, 11, 0.15); color: var(--primary-gold); border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.4rem 1rem; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.25rem;">
+    🏏 Season 2026 Official Portal
+  </div>
+  <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; margin-bottom: 1rem; letter-spacing: -0.02em;">
+    {{ tournament_name }}
+  </h1>
+  <p style="font-size: 1.2rem; color: var(--text-muted); line-height: 1.6;">
+    Player Registration with Instant UPI Payments & Live Big-Screen Player Auction Engine with Photos, Roles, and Real-Time Purses.
+  </p>
+</div>
+
+<!-- Quick Stats Grid -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
+  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
+    <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary-gold);">{{ total_registered }}</div>
+    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Registered Players</div>
+  </div>
+  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
+    <div style="font-size: 2.5rem; font-weight: 900; color: var(--electric-blue);">{{ total_teams }}</div>
+    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Participating Teams</div>
+  </div>
+  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
+    <div style="font-size: 2.5rem; font-weight: 900; color: var(--pitch-green);">₹{{ total_purse }}</div>
+    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Purse per Team</div>
+  </div>
+  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
+    <div style="font-size: 2.5rem; font-weight: 900; color: #ec4899;">₹{{ reg_fee }}</div>
+    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Registration Fee</div>
+  </div>
+</div>
+
+<!-- Main Action Navigation Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(245, 158, 11, 0.4);">
+    <div>
+      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📝</div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Player Registration</h2>
+      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+        Players can register their name, mobile, role (Batsman, Bowler, All-Rounder, WK), take/upload photo, and pay registration fee instantly via PhonePe, Google Pay, or BHIM UPI.
+      </p>
+    </div>
+    <a href="/register" class="btn btn-primary" style="width: 100%;">Register Now & Pay UPI &rarr;</a>
+  </div>
+
+  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(16, 185, 129, 0.4);">
+    <div>
+      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏏</div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Live Auction Arena</h2>
+      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+        Projector & big-screen auction dashboard! Shows player photo, role, stats, registration status, live bidding counters, sound effects, sold celebration, and team purse meters.
+      </p>
+    </div>
+    <a href="/auction" class="btn btn-success" style="width: 100%;">Enter Live Auction &rarr;</a>
+  </div>
+
+  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(59, 130, 246, 0.4);">
+    <div>
+      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">👥</div>
+      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Teams & Squads</h2>
+      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
+        Live mobile-friendly squad tracker for team captains and spectators to view bought players, prices, remaining purse, and team rosters in real time.
+      </p>
+    </div>
+    <a href="/teams" class="btn btn-secondary" style="width: 100%;">View Team Rosters &rarr;</a>
+  </div>
+</div>
+{% endblock %}

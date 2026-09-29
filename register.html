@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 680px; margin: 0 auto;">
+  <div style="text-align: center; margin-bottom: 2rem;">
+    <h1 style="font-size: 2.25rem; font-weight: 900; margin-bottom: 0.5rem;">Cricketer Registration</h1>
+    <p style="color: var(--text-muted); font-size: 1rem;">
+      Fill in your details, take or upload your photo, and complete registration payment via PhonePe, Google Pay, or BHIM UPI.
+    </p>
+  </div>
+
+  <div id="formAlert" style="display: none; background: rgba(239, 68, 68, 0.2); border: 1px solid var(--crimson-red); color: #fca5a5; padding: 1rem; border-radius: var(--radius-md); margin-bottom: 1.5rem; font-weight: 600;"></div>
+
+  <form id="registrationForm" class="glass-card" enctype="multipart/form-data">
+    <!-- Step 1: Basic Info -->
+    <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-gold); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem;">
+      <span>1.</span> Player Details
+    </h3>
+
+    <div class="form-group">
+      <label class="form-label">Full Name <span class="req">*</span></label>
+      <input type="text" id="playerName" class="form-control" placeholder="e.g. M. Raju Anna" required autocomplete="name">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Mobile / WhatsApp Number <span class="req">*</span></label>
+      <input type="tel" id="playerPhone" class="form-control" placeholder="e.g. 9876543210" required pattern="[0-9]{10}" maxlength="10">
+    </div>
+
+    <!-- Step 2: Role Selection -->
+    <div class="form-group">
+      <label class="form-label">Playing Role <span class="req">*</span></label>
+      <div class="role-grid">
+        <label class="role-card-opt">
+          <input type="radio" name="playerRole" value="Batsman" required>
+          <div class="role-box">
+            <span class="icon">🏏</span>
+            <span class="title">Batsman</span>
+          </div>
+        </label>
+        <label class="role-card-opt">
+          <input type="radio" name="playerRole" value="Bowler">
+          <div class="role-box">
+            <span class="icon">⚡</span>
+            <span class="title">Bowler</span>
+          </div>
+        </label>
+        <label class="role-card-opt">
+          <input type="radio" name="playerRole" value="All-Rounder" checked>
+          <div class="role-box">
+            <span class="icon">⭐</span>
+            <span class="title">All-Rounder</span>
+          </div>
+        </label>
+        <label class="role-card-opt">
+          <input type="radio" name="playerRole" value="Wicket Keeper / Batsman">
+          <div class="role-box">
+            <span class="icon">🧤</span>
+            <span class="title">WK-Batsman</span>
+          </div>
+        </label>
+      </div>
+    </div>
+
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+      <div class="form-group">
+        <label class="form-label">Batting Style</label>
+        <select id="battingStyle" class="form-control">
+          <option value="Right Hand Bat">Right Hand Bat</option>
+          <option value="Left Hand Bat">Left Hand Bat</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Bowling Style</label>
+        <select id="bowlingStyle" class="form-control">
+          <option value="Right Arm Fast">Right Arm Fast</option>
+          <option value="Right Arm Medium">Right Arm Medium</option>
+          <option value="Right Arm Spin">Right Arm Spin</option>
+          <option value="Left Arm Fast">Left Arm Fast</option>
+          <option value="Left Arm Spin">Left Arm Spin</option>
+          <option value="None">None (Pure Batsman)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Step 3: Photo Capture / Upload -->
+    <div class="form-group" style="margin-top: 1.5rem;">
+      <h3 style="font-size: 1.25rem; font-weight: 800; color: var(--primary-gold); margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+        <span>2.</span> Player Photo (Appears on Auction Screen) <span class="req">*</span>
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+        Take a clear selfie with your camera or upload a photo from your gallery.
+      </p>
+
+      <div class="photo-uploader">
+        <div class="photo-preview-wrap">
+          <img id="photoPreview" src="/static/images/avatar_allrounder.svg" class="photo-preview-img" alt="Player Preview">
+        </div>
+        <div class="upload-actions">
+          <!-- Mobile direct camera capture -->
+          <button type="button" id="btnCameraMobile" class="btn btn-secondary">
+            📷 Take Photo (Camera)
+          </button>
+          <!-- Desktop webcam capture -->
+          <button type="button" id="btnWebcamDesktop" class="btn btn-secondary" style="display: none;">
+            🎥 Live Camera Snapshot
+          </button>
+          <!-- File upload from gallery -->
+          <button type="button" id="btnUploadFile" class="btn btn-secondary">
+            📁 Upload from Gallery
+          </button>
+        </div>
+        
+        <!-- Hidden Inputs -->
+        <input type="file" id="photoFileInput" accept="image/*" style="display: none;">
+        <input type="file" id="photoCameraInput" accept="image/*" capture="user" style="display: none;">
+      </div>
+    </div>
+
+    <!-- Step 4: UPI Payment Section -->
+    <div class="payment-section">
+      <div class="fee-banner">
+        <div>
+          <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Registration Fee</div>
+          <div style="color: var(--text-muted); font-size: 0.85rem;">Official Tournament Entry</div>
+        </div>
+        <div class="fee-amount" id="feeAmountDisplay">₹{{ reg_fee }}</div>
+      </div>
+
+      <div class="upi-details-grid">
+        <div class="qr-box">
+          <img id="upiQrCode" src="" alt="Scan with PhonePe / GPay">
+          <div class="qr-label">Scan to Pay ₹{{ reg_fee }}</div>
+        </div>
+        <div>
+          <div style="font-size: 0.95rem; font-weight: 700; margin-bottom: 0.35rem; color: #fff;">Payee Details:</div>
+          <div style="background: rgba(0,0,0,0.4); padding: 0.6rem 0.85rem; border-radius: var(--radius-sm); border: 1px solid var(--border-glass); margin-bottom: 0.75rem; display: flex; justify-content: space-between; align-items: center;">
+            <span id="upiIdDisplay" style="font-weight: 700; color: var(--primary-gold); font-size: 0.95rem;">{{ upi_id }}</span>
+            <button type="button" id="btnCopyUpi" style="background: none; border: none; color: var(--electric-blue); font-size: 0.85rem; font-weight: 700; cursor: pointer;">Copy</button>
+          </div>
+          
+          <div style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 0.5rem;">
+            On mobile? Tap your preferred app to pay directly:
+          </div>
+
+          <div class="upi-apps-grid">
+            <a id="btnPayPhonePe" href="#" class="upi-app-btn upi-phonepe">
+              <span>🟣 PhonePe</span>
+            </a>
+            <a id="btnPayGPay" href="#" class="upi-app-btn upi-gpay">
+              <span>🔵 Google Pay</span>
+            </a>
+            <a id="btnPayPaytm" href="#" class="upi-app-btn upi-paytm">
+              <span>🟢 Paytm</span>
+            </a>
+            <a id="btnPayBhim" href="#" class="upi-app-btn upi-bhim">
+              <span>🟠 BHIM / UPI</span>
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Payment Confirmation Fields -->
+      <div style="margin-top: 1.5rem; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 1.25rem;">
+        <div class="form-group">
+          <label class="form-label">Payment App Used</label>
+          <select id="paymentMethod" class="form-control">
+            <option value="PhonePe">PhonePe</option>
+            <option value="Google Pay">Google Pay (GPay)</option>
+            <option value="Paytm">Paytm</option>
+            <option value="BHIM UPI">BHIM UPI / Other</option>
+            <option value="Cash">Cash (to Organizer)</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">UPI Reference / Transaction UTR No. <span class="req">*</span></label>
+          <input type="text" id="transactionId" class="form-control" placeholder="12-digit UPI UTR No. (e.g. 328109849201)" required>
+          <small style="color: var(--text-dim); display: block; margin-top: 0.35rem;">You will find this in your PhonePe/GPay payment receipt.</small>
+        </div>
+
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Payment Screenshot (Optional)</label>
+          <input type="file" id="paymentScreenshot" accept="image/*" class="form-control">
+        </div>
+      </div>
+    </div>
+
+    <!-- Submit Button -->
+    <div style="margin-top: 2rem;">
+      <button type="submit" id="btnSubmitReg" class="btn btn-primary" style="width: 100%; font-size: 1.15rem; padding: 1rem;">
+        Complete Registration & Submit
+      </button>
+    </div>
+  </form>
+</div>
+
+<!-- Desktop Webcam Modal -->
+<div id="webcamModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 3000; align-items: center; justify-content: center; padding: 1rem;">
+  <div style="background: var(--bg-surface); border: 2px solid var(--primary-gold); border-radius: var(--radius-lg); padding: 1.5rem; max-width: 500px; width: 100%; text-align: center;">
+    <h3 style="margin-bottom: 1rem; color: #fff;">Position Yourself in Center</h3>
+    <div style="width: 100%; height: 320px; background: #000; border-radius: var(--radius-md); overflow: hidden; margin-bottom: 1.25rem;">
+      <video id="webcamVideo" style="width: 100%; height: 100%; object-fit: cover;" autoplay playsinline></video>
+    </div>
+    <div style="display: flex; gap: 0.75rem; justify-content: center;">
+      <button type="button" id="btnCaptureSnapshot" class="btn btn-primary">📸 Snap Picture</button>
+      <button type="button" id="btnCloseWebcam" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  window.TOURNAMENT_CONFIG = {
+    upi_id: "{{ upi_id }}",
+    payee_name: "{{ payee_name }}",
+    registration_fee: {{ reg_fee }}
+  };
+  // Detect if on desktop to show webcam button
+  if (!(/Android|iPhone|iPad|iPod/i.test(navigator.userAgent))) {
+    const desktopBtn = document.getElementById('btnWebcamDesktop');
+    if (desktopBtn) desktopBtn.style.display = 'inline-flex';
+  }
+</script>
+<script src="/static/js/register.js"></script>
+{% endblock %}

@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+  <div>
+    <h1 style="font-size: 2.25rem; font-weight: 900; color: #fff;">Tournament Administration</h1>
+    <p style="color: var(--text-muted);">Manage UPI Settings, Verify Player Payments, Configure Auction Parameters.</p>
+  </div>
+  <div style="display: flex; gap: 0.75rem;">
+    <a href="/api/export-excel" class="btn btn-success">📊 Export to Excel</a>
+    <button onclick="resetAuctionState()" class="btn btn-danger">⚠️ Reset Auction</button>
+  </div>
+</div>
+
+<!-- Tournament Settings Panel -->
+<div class="glass-card" style="margin-bottom: 2rem;">
+  <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--primary-gold); margin-bottom: 1.25rem;">
+    ⚙️ Tournament & Payment Configuration
+  </h2>
+  <form id="configForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
+    <div class="form-group">
+      <label class="form-label">Tournament Name</label>
+      <input type="text" id="cfgTournamentName" class="form-control" value="{{ config.tournament_name }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">UPI ID for Payments (VPA)</label>
+      <input type="text" id="cfgUpiId" class="form-control" value="{{ config.upi_id }}" placeholder="e.g. name@upi">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Payee Name (Recipient)</label>
+      <input type="text" id="cfgPayeeName" class="form-control" value="{{ config.payee_name }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Registration Fee (₹)</label>
+      <input type="number" id="cfgRegFee" class="form-control" value="{{ config.registration_fee }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Purse per Team (₹)</label>
+      <input type="number" id="cfgPurse" class="form-control" value="{{ config.default_purse }}">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Retention Price (₹)</label>
+      <input type="number" id="cfgRetentionPrice" class="form-control" value="{{ config.retention_price }}">
+    </div>
+    <div style="grid-column: 1 / -1;">
+      <button type="submit" class="btn btn-primary">Save Settings</button>
+    </div>
+  </form>
+</div>
+
+<!-- Registered Players Management -->
+<div class="glass-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
+    <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff;">
+      📋 Registered Players ({{ registrations|length }})
+    </h2>
+    <div>
+      <input type="text" id="playerSearchInput" placeholder="Search by name, role, phone..." class="form-control" style="max-width: 280px; padding: 0.5rem 0.85rem;">
+    </div>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
+      <thead>
+        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
+          <th style="padding: 0.75rem 0.5rem;">Photo</th>
+          <th style="padding: 0.75rem 0.5rem;">Player Name</th>
+          <th style="padding: 0.75rem 0.5rem;">Role</th>
+          <th style="padding: 0.75rem 0.5rem;">Mobile</th>
+          <th style="padding: 0.75rem 0.5rem;">UPI Ref / Method</th>
+          <th style="padding: 0.75rem 0.5rem;">Fee Status</th>
+          <th style="padding: 0.75rem 0.5rem;">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="playerTableBody">
+        {% for name, p in registrations.items() %}
+        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
+          <td style="padding: 0.75rem 0.5rem;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-gold); background: #1e293b;">
+              <img src="{{ p.photo_url or '/static/images/avatar_allrounder.svg' }}" alt="{{ name }}" style="width: 100%; height: 100%; object-fit: cover;">
+            </div>
+          </td>
+          <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: #fff;">
+            {{ name }}
+            <span style="display: block; font-size: 0.75rem; color: var(--text-dim);">#{{ p.serial_no or loop.index }}</span>
+          </td>
+          <td style="padding: 0.75rem 0.5rem;">
+            <span class="badge {% if 'Bat' in p.role and 'Keep' not in p.role %}badge-batsman{% elif 'Bowl' in p.role %}badge-bowler{% elif 'Keep' in p.role %}badge-keeper{% else %}badge-allrounder{% endif %}">
+              {{ p.role }}
+            </span>
+          </td>
+          <td style="padding: 0.75rem 0.5rem; color: var(--text-muted);">{{ p.phone }}</td>
+          <td style="padding: 0.75rem 0.5rem;">
+            <span style="color: var(--primary-gold); font-weight: 600;">{{ p.transaction_id or 'Cash/Offline' }}</span>
+            <span style="display: block; font-size: 0.75rem; color: var(--text-dim);">{{ p.payment_method }}</span>
+          </td>
+          <td style="padding: 0.75rem 0.5rem;">
+            {% if p.payment_status == 'Verified' %}
+            <span style="color: var(--pitch-green); font-weight: 700;">✓ Verified</span>
+            {% else %}
+            <button onclick="verifyPayment('{{ name }}')" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Verify</button>
+            {% endif %}
+          </td>
+          <td style="padding: 0.75rem 0.5rem;">
+            <button onclick="auctionNow('{{ name }}')" class="btn btn-primary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">
+              Auction Now
+            </button>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+  document.getElementById('configForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const payload = {
+      tournament_name: document.getElementById('cfgTournamentName').value,
+      upi_id: document.getElementById('cfgUpiId').value,
+      payee_name: document.getElementById('cfgPayeeName').value,
+      registration_fee: parseInt(document.getElementById('cfgRegFee').value),
+      default_purse: parseInt(document.getElementById('cfgPurse').value),
+      retention_price: parseInt(document.getElementById('cfgRetentionPrice').value)
+    };
+
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Tournament Settings Saved Successfully!');
+        location.reload();
+      }
+    } catch (err) {
+      alert('Error saving settings: ' + err.message);
+    }
+  });
+
+  async function auctionNow(name) {
+    if (!confirm(`Bring ${name} to the auction podium right now?`)) return;
+    try {
+      const res = await fetch('/api/auction/select-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ player: name })
+      });
+      const data = await res.json();
+      if (data.success) {
+        window.location.href = '/auction';
+      } else {
+        alert(data.message);
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function verifyPayment(name) {
+    try {
+      const res = await fetch('/api/admin/verify-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name })
+      });
+      const data = await res.json();
+      if (data.success) location.reload();
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+
+  async function resetAuctionState() {
+    if (!confirm('Are you SURE you want to reset the auction? Squads and bids will be reset to start clean.')) return;
+    try {
+      const res = await fetch('/api/admin/reset-auction', { method: 'POST' });
+      const data = await res.json();
+      if (data.success) {
+        alert('Auction reset successfully!');
+        location.reload();
+      }
+    } catch (err) {
+      alert(err.message);
+    }
+  }
+</script>
+{% endblock %}
