@@ -1,193 +1,2569 @@
 {% extends "base.html" %}
 
+{% block extra_css %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+<style>
+  :root {
+    --admin-gold: #f59e0b;
+    --admin-blue: #38bdf8;
+    --admin-green: #10b981;
+    --admin-red: #ef4444;
+    --admin-card: rgba(15, 23, 42, 0.85);
+    --admin-card-border: rgba(255, 255, 255, 0.12);
+  }
+
+  body {
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif !important;
+    background: radial-gradient(circle at 50% 0%, #0f1d36 0%, #070b14 100%) !important;
+    color: #f1f5f9;
+  }
+
+  /* Strict PIN visibility rules */
+  body:not(.admin-unlocked) #adminLockScreen { display: flex !important; }
+  body:not(.admin-unlocked) #adminMainContent { display: none !important; }
+  body.admin-unlocked #adminLockScreen { display: none !important; }
+  body.admin-unlocked #adminMainContent { display: block !important; }
+
+  /* Mobile-first wrapper for Tabs 1, 2, 3, 5 */
+  .mobile-admin-shell {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 0.5rem 2.5rem 0.5rem;
+  }
+
+  /* Full-width container for Tab 4 (Live Auction Console) */
+  .auction-admin-shell {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 0.5rem 2.5rem 0.5rem;
+  }
+
+  /* 5 Categorized Navigation Tabs Bar - Full mobile responsiveness (No side cuts) */
+  .category-nav-bar {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+    padding: 0 0 0.75rem 0;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  @media (min-width: 900px) {
+    .category-nav-bar {
+      display: flex;
+      flex-wrap: nowrap;
+      gap: 0.5rem;
+    }
+    .category-tab-btn {
+      flex: 1 1 0;
+      min-width: 0;
+    }
+    .category-tab-btn.tab-auction {
+      grid-column: auto !important;
+    }
+  }
+
+  .category-tab-btn {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    padding: 0.65rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    text-align: center;
+    user-select: none;
+    min-height: 48px;
+    line-height: 1.25;
+    touch-action: manipulation;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .category-tab-btn:hover {
+    color: #fff;
+    background: rgba(30, 41, 59, 0.95);
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+  .category-tab-btn.active {
+    background: #38bdf8;
+    color: #0b1120;
+    border-color: #38bdf8;
+    box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+  }
+  .category-tab-btn.tab-retentions:hover {
+    border-color: #10b981;
+  }
+  .category-tab-btn.active.tab-retentions {
+    background: linear-gradient(135deg, #10b981, #059669) !important;
+    color: #fff !important;
+    border-color: #10b981 !important;
+    box-shadow: 0 4px 18px rgba(16, 185, 129, 0.4) !important;
+  }
+
+  /* 4. Live Auction Command Arena button on Mobile (Full width highlight) */
+  .category-tab-btn.tab-auction {
+    grid-column: span 2;
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.22), rgba(185, 28, 28, 0.38));
+    border: 1.5px solid rgba(239, 68, 68, 0.6);
+    color: #fca5a5;
+    font-size: 0.9rem;
+    font-weight: 900;
+    padding: 0.75rem 1rem;
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.25);
+  }
+  .category-tab-btn.tab-auction:hover {
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.35), rgba(185, 28, 28, 0.5));
+    color: #fff;
+    border-color: #ef4444;
+  }
+  .category-tab-btn.active.tab-auction {
+    background: linear-gradient(135deg, #ef4444, #dc2626) !important;
+    color: #fff !important;
+    border-color: #ef4444 !important;
+    box-shadow: 0 4px 22px rgba(239, 68, 68, 0.5) !important;
+  }
+
+  /* Sub-Tabs Navigation (Shared Styles) */
+  .subtab-bar {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    background: rgba(15, 23, 42, 0.9);
+    padding: 0.4rem;
+    border-radius: 14px;
+    border: 1.5px solid rgba(255, 255, 255, 0.1);
+  }
+  .subtab-btn {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    padding: 0.75rem 0.85rem;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.86rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    text-align: center;
+  }
+  .subtab-btn:hover {
+    color: #fff;
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .subtab-btn.active-blue {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #0b1120;
+    font-weight: 900;
+    box-shadow: 0 4px 15px rgba(56, 189, 248, 0.35);
+  }
+  .subtab-btn.active-red {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    font-weight: 900;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.4);
+  }
+
+  /* Mobile-first cards */
+  .mobile-admin-card {
+    background: var(--admin-card);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid var(--admin-card-border);
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+
+  .card-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.75rem;
+  }
+  .card-header-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  /* KPI Filter Chips */
+  .kpi-chip-group {
+    display: flex;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .kpi-chip {
+    padding: 0.4rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .kpi-chip:hover {
+    border-color: #38bdf8;
+    color: #fff;
+  }
+  .kpi-chip.active {
+    background: #38bdf8;
+    color: #0b1120;
+    border-color: #38bdf8;
+    font-weight: 800;
+  }
+
+  /* Player Mobile Card in Admin */
+  .admin-player-card {
+    background: rgba(11, 17, 32, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 0.95rem;
+    margin-bottom: 0.85rem;
+    transition: border-color 0.2s ease, transform 0.2s ease;
+  }
+  .admin-player-card:hover {
+    border-color: #38bdf8;
+    transform: translateY(-2px);
+  }
+  .player-top-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.65rem;
+  }
+  .player-avatar-circle {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    object-fit: cover;
+    background: #1e293b;
+    border: 2px solid #38bdf8;
+    flex-shrink: 0;
+  }
+  .player-title-info {
+    flex: 1;
+    min-width: 0;
+  }
+  .player-name-text {
+    font-weight: 800;
+    color: #fff;
+    font-size: 1rem;
+    margin: 0 0 0.15rem 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .player-detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+    font-size: 0.8rem;
+    background: rgba(15, 23, 42, 0.5);
+    padding: 0.65rem;
+    border-radius: 10px;
+    margin-bottom: 0.65rem;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .detail-label {
+    color: #94a3b8;
+    display: block;
+    font-size: 0.72rem;
+  }
+  .detail-val {
+    color: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .utr-action-box {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 8px;
+    padding: 0.45rem 0.65rem;
+    margin-bottom: 0.75rem;
+  }
+  .utr-code-text {
+    font-family: monospace;
+    font-weight: 800;
+    font-size: 0.88rem;
+    color: #38bdf8;
+    letter-spacing: 0.05em;
+  }
+
+  /* Touch-optimized Buttons */
+  .touch-btn {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    font-weight: 800;
+    font-size: 0.88rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    border: none;
+    text-decoration: none;
+    user-select: none;
+  }
+  .touch-btn:active {
+    transform: scale(0.98);
+  }
+  .touch-btn-green {
+    background: #10b981;
+    color: #fff;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  .touch-btn-red {
+    background: rgba(239, 68, 68, 0.15);
+    color: #f87171;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .touch-btn-blue {
+    background: #38bdf8;
+    color: #0b1120;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(56, 189, 248, 0.3);
+  }
+  .touch-btn-secondary {
+    background: rgba(255, 255, 255, 0.08);
+    color: #cbd5e1;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  /* Form Elements */
+  .form-group {
+    margin-bottom: 1rem;
+  }
+  .form-label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: #cbd5e1;
+    margin-bottom: 0.35rem;
+  }
+  .form-control {
+    width: 100%;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    padding: 0.75rem 0.9rem;
+    color: #fff;
+    font-size: 0.92rem;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    box-sizing: border-box;
+  }
+  .form-control:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+  }
+
+  /* Retention Badges */
+  .retention-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.6rem;
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+  .retention-player {
+    background: rgba(16, 185, 129, 0.15);
+    color: #34d399;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+  }
+  .retention-owner {
+    background: rgba(245, 158, 11, 0.15);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+  }
+
+  /* Quick-Add Missing Player Modal */
+  .admin-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.82);
+    backdrop-filter: blur(8px);
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+  }
+  .admin-modal-card {
+    background: #0f172a;
+    border: 1.5px solid #38bdf8;
+    box-shadow: 0 0 35px rgba(56, 189, 248, 0.3);
+    border-radius: 18px;
+    width: 100%;
+    max-width: 480px;
+    padding: 1.5rem;
+    animation: modalPop 0.2s ease-out;
+  }
+  @keyframes modalPop {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+  }
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+</style>
+
+<script>
+  if (sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin')) {
+    document.documentElement.classList.add('pre-authorized');
+  }
+</script>
+{% endblock %}
+
 {% block content %}
-<div style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
-  <div>
-    <h1 style="font-size: 2.25rem; font-weight: 900; color: #fff;">Tournament Administration</h1>
-    <p style="color: var(--text-muted);">Manage UPI Settings, Verify Player Payments, Configure Auction Parameters.</p>
-  </div>
-  <div style="display: flex; gap: 0.75rem;">
-    <a href="/api/export-excel" class="btn btn-success">📊 Export to Excel</a>
-    <button onclick="resetAuctionState()" class="btn btn-danger">⚠️ Reset Auction</button>
+<!-- GATEWAY 1: ADMIN PIN LOCK SCREEN (MOBILE OPTIMIZED) -->
+<div id="adminLockScreen" style="min-height: 70vh; align-items: center; justify-content: center; padding: 1.5rem 0.75rem;">
+  <div class="mobile-admin-card" style="max-width: 400px; width: 100%; text-align: center; border-color: #f59e0b; box-shadow: 0 0 35px rgba(245, 158, 11, 0.25); padding: 2.25rem 1.25rem;">
+    <div style="width: 64px; height: 64px; background: rgba(245, 158, 11, 0.15); border: 2px solid #f59e0b; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 1.25rem;">
+      🔒
+    </div>
+    <h2 style="font-size: 1.45rem; font-weight: 900; color: #fff; margin: 0 0 0.35rem 0;">Organizer Access</h2>
+    <p style="color: #94a3b8; font-size: 0.85rem; margin: 0 0 1.5rem 0; line-height: 1.4;">
+      Enter Organizer PIN to manage registrations, tournament fee & UPI, team retentions, and live bidding.
+    </p>
+
+    <form id="adminLoginForm" onsubmit="handleAdminLogin(event)">
+      <div class="form-group" style="margin-bottom: 1.25rem;">
+        <input type="password" id="adminPinInput" class="form-control" placeholder="••••" style="text-align: center; font-size: 1.6rem; letter-spacing: 0.3em; font-weight: 900; padding: 0.75rem;" maxlength="15" autofocus required>
+        <div id="adminPinError" style="display: none; color: #f87171; font-weight: 700; font-size: 0.82rem; margin-top: 0.5rem;"></div>
+      </div>
+      <button type="submit" id="btnAdminUnlock" class="touch-btn touch-btn-green" style="width: 100%; font-size: 1rem; padding: 0.85rem;">
+        Unlock Admin Portal &rarr;
+      </button>
+      <div style="margin-top: 1rem; text-align: right;">
+        <a href="javascript:void(0)" onclick="forgotPinPrompt()" style="color: #f59e0b; font-size: 0.8rem; text-decoration: underline; font-weight: 700;">
+          Forgot PIN?
+        </a>
+      </div>
+    </form>
   </div>
 </div>
 
-<!-- Tournament Settings Panel -->
-<div class="glass-card" style="margin-bottom: 2rem;">
-  <h2 style="font-size: 1.35rem; font-weight: 800; color: var(--primary-gold); margin-bottom: 1.25rem;">
-    ⚙️ Tournament & Payment Configuration
-  </h2>
-  <form id="configForm" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.25rem;">
-    <div class="form-group">
-      <label class="form-label">Tournament Name</label>
-      <input type="text" id="cfgTournamentName" class="form-control" value="{{ config.tournament_name }}">
-    </div>
-    <div class="form-group">
-      <label class="form-label">UPI ID for Payments (VPA)</label>
-      <input type="text" id="cfgUpiId" class="form-control" value="{{ config.upi_id }}" placeholder="e.g. name@upi">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Payee Name (Recipient)</label>
-      <input type="text" id="cfgPayeeName" class="form-control" value="{{ config.payee_name }}">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Registration Fee (₹)</label>
-      <input type="number" id="cfgRegFee" class="form-control" value="{{ config.registration_fee }}">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Purse per Team (₹)</label>
-      <input type="number" id="cfgPurse" class="form-control" value="{{ config.default_purse }}">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Retention Price (₹)</label>
-      <input type="number" id="cfgRetentionPrice" class="form-control" value="{{ config.retention_price }}">
-    </div>
-    <div style="grid-column: 1 / -1;">
-      <button type="submit" class="btn btn-primary">Save Settings</button>
-    </div>
-  </form>
-</div>
+<!-- GATEWAY 2: ADMIN MAIN CONTENT (PROTECTED) -->
+<div id="adminMainContent">
 
-<!-- Registered Players Management -->
-<div class="glass-card">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 1rem;">
-    <h2 style="font-size: 1.35rem; font-weight: 800; color: #fff;">
-      📋 Registered Players ({{ registrations|length }})
-    </h2>
+  <!-- TOP HEADER WITH TOURNAMENT CONTEXT & QUICK LOCK -->
+  <div style="margin-bottom: 1.25rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; padding: 0 0.5rem;">
     <div>
-      <input type="text" id="playerSearchInput" placeholder="Search by name, role, phone..." class="form-control" style="max-width: 280px; padding: 0.5rem 0.85rem;">
+      <h1 style="font-size: 1.5rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 0.45rem; margin: 0 0 0.2rem 0;">
+        <span>⚙️</span> Organizer Admin
+      </h1>
+      <p style="color: #94a3b8; font-size: 0.85rem; margin: 0;">
+        {{ tournament_name }} • Committee Console
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <button type="button" onclick="lockAdminSession()" class="touch-btn touch-btn-secondary" style="font-size: 0.8rem; padding: 0.4rem 0.75rem;">
+        🔒 Lock Admin
+      </button>
     </div>
   </div>
 
-  <div style="overflow-x: auto;">
-    <table style="width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem;">
-      <thead>
-        <tr style="border-bottom: 2px solid rgba(255,255,255,0.1); color: var(--text-muted); font-size: 0.8rem; text-transform: uppercase;">
-          <th style="padding: 0.75rem 0.5rem;">Photo</th>
-          <th style="padding: 0.75rem 0.5rem;">Player Name</th>
-          <th style="padding: 0.75rem 0.5rem;">Role</th>
-          <th style="padding: 0.75rem 0.5rem;">Mobile</th>
-          <th style="padding: 0.75rem 0.5rem;">UPI Ref / Method</th>
-          <th style="padding: 0.75rem 0.5rem;">Fee Status</th>
-          <th style="padding: 0.75rem 0.5rem;">Actions</th>
-        </tr>
-      </thead>
-      <tbody id="playerTableBody">
-        {% for name, p in registrations.items() %}
-        <tr style="border-bottom: 1px solid rgba(255,255,255,0.06);">
-          <td style="padding: 0.75rem 0.5rem;">
-            <div style="width: 44px; height: 44px; border-radius: 50%; overflow: hidden; border: 2px solid var(--border-gold); background: #1e293b;">
-              <img src="{{ p.photo_url or '/static/images/avatar_allrounder.svg' }}" alt="{{ name }}" style="width: 100%; height: 100%; object-fit: cover;">
+  <!-- 5 CATEGORIZED SECTIONS BAR (RESPONSIVE GRID FOR ZERO MOBILE CLIPPING) -->
+  <div class="category-nav-bar" id="categoryNavBar" style="padding: 0 0.5rem 0.75rem 0.5rem;">
+    <button type="button" id="tabBtnCat1" class="category-tab-btn active" onclick="switchAdminTab('cat1')" aria-label="1. Registrations">
+      <span>📋</span> 1. Registrations
+    </button>
+    <button type="button" id="tabBtnCat2" class="category-tab-btn" onclick="switchAdminTab('cat2')" aria-label="2. Teams & Purse">
+      <span>🛡️</span> 2. Teams & Purse
+    </button>
+    <button type="button" id="tabBtnCat3" class="category-tab-btn tab-retentions" onclick="switchAdminTab('cat3')" aria-label="3. Retentions">
+      <span>⭐</span> 3. Retentions
+    </button>
+    <button type="button" id="tabBtnCat5" class="category-tab-btn" onclick="switchAdminTab('cat5')" aria-label="5. Auction Reset & PIN">
+      <span>⚙️</span> 5. Auction Reset & PIN
+    </button>
+    <button type="button" id="tabBtnCat4" class="category-tab-btn tab-auction" onclick="switchAdminTab('cat4')" aria-label="4. Live Auction Command Arena">
+      <span>🔨</span> 4. Live Auction Command Arena
+      <span style="width:9px;height:9px;border-radius:50%;background:#ef4444;display:inline-block;box-shadow:0 0 8px #ef4444;animation:pulseDot 1.4s infinite;margin-left:0.35rem;"></span>
+    </button>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- TAB 1: REGISTRATION DETAILS (WITH 2 DEDICATED SUB-TABS)    -->
+  <!-- ========================================================== -->
+  <div id="category1View">
+    <div class="mobile-admin-shell">
+
+      <!-- 2 SUB-TABS: PLAYER VERIFICATION QUEUE & TOURNAMENT FEE / UPI -->
+      <div class="subtab-bar">
+        <button type="button" id="regSubTabQueue" class="subtab-btn active-blue" onclick="switchRegSubTab('queue')">
+          <span>👥</span> Player Verification Queue (<span id="pillCountQueue">{{ (registrations|length) if registrations else 0 }}</span>)
+        </button>
+        <button type="button" id="regSubTabFee" class="subtab-btn" onclick="switchRegSubTab('fee')">
+          <span>💳</span> Tournament Fee & UPI Settings
+        </button>
+      </div>
+
+      <!-- VIEW 1A: PLAYER VERIFICATION QUEUE (Shown when clicking Queue tab) -->
+      <div id="regViewQueue">
+        <div class="mobile-admin-card" style="border-color: rgba(56, 189, 248, 0.35);">
+          <div class="card-header-row">
+            <div>
+              <h2 class="card-header-title" style="color: #38bdf8;">
+                <span>👥</span> Player Verification Queue
+              </h2>
+              <span style="font-size: 0.8rem; color: #94a3b8;">Review 12-digit UTRs & approve players</span>
             </div>
-          </td>
-          <td style="padding: 0.75rem 0.5rem; font-weight: 700; color: #fff;">
-            {{ name }}
-            <span style="display: block; font-size: 0.75rem; color: var(--text-dim);">#{{ p.serial_no or loop.index }}</span>
-          </td>
-          <td style="padding: 0.75rem 0.5rem;">
-            <span class="badge {% if 'Bat' in p.role and 'Keep' not in p.role %}badge-batsman{% elif 'Bowl' in p.role %}badge-bowler{% elif 'Keep' in p.role %}badge-keeper{% else %}badge-allrounder{% endif %}">
-              {{ p.role }}
-            </span>
-          </td>
-          <td style="padding: 0.75rem 0.5rem; color: var(--text-muted);">{{ p.phone }}</td>
-          <td style="padding: 0.75rem 0.5rem;">
-            <span style="color: var(--primary-gold); font-weight: 600;">{{ p.transaction_id or 'Cash/Offline' }}</span>
-            <span style="display: block; font-size: 0.75rem; color: var(--text-dim);">{{ p.payment_method }}</span>
-          </td>
-          <td style="padding: 0.75rem 0.5rem;">
-            {% if p.payment_status == 'Verified' %}
-            <span style="color: var(--pitch-green); font-weight: 700;">✓ Verified</span>
-            {% else %}
-            <button onclick="verifyPayment('{{ name }}')" class="btn btn-secondary" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">Verify</button>
-            {% endif %}
-          </td>
-          <td style="padding: 0.75rem 0.5rem;">
-            <button onclick="auctionNow('{{ name }}')" class="btn btn-primary" style="padding: 0.3rem 0.7rem; font-size: 0.8rem;">
-              Auction Now
+          </div>
+
+          <!-- Filter Chips -->
+          <div class="kpi-chip-group">
+            <button type="button" class="kpi-chip active" id="chipAll" onclick="filterMobileAdmin('all')">
+              All (<span id="countAll">{{ (registrations|length) if registrations else 0 }}</span>)
             </button>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+            <button type="button" class="kpi-chip" id="chipPending" onclick="filterMobileAdmin('pending')" style="color: #fbbf24;">
+              ⏳ Needs Verification (<span id="countPending">0</span>)
+            </button>
+            <button type="button" class="kpi-chip" id="chipApproved" onclick="filterMobileAdmin('approved')" style="color: #34d399;">
+              ✅ Approved in Auction (<span id="countApproved">0</span>)
+            </button>
+            <button type="button" class="kpi-chip" id="chipRejected" onclick="filterMobileAdmin('rejected')" style="color: #f87171;">
+              ❌ Rejected (<span id="countRejected">0</span>)
+            </button>
+          </div>
+
+          <!-- Search Input -->
+          <input type="text" id="adminPlayerSearch" class="form-control" placeholder="🔍 Search player name or UTR..." style="font-size: 0.88rem; padding: 0.65rem 0.85rem; margin-bottom: 1rem;" oninput="applyMobileAdminSearch()">
+
+          <!-- Mobile Player Cards List -->
+          <div id="adminCardsContainer">
+            {% if registrations %}
+              {% for p_name, p_data in registrations.items() %}
+              <div class="admin-player-card" data-status="{{ 'approved' if p_data.approved else ('rejected' if p_data.payment_status == 'Payment Rejected' else 'pending') }}" data-search="{{ p_name|lower }} {{ (p_data.phone or '')|lower }} {{ (p_data.transaction_id or '')|lower }} {{ (p_data.village or '')|lower }}">
+                
+                <!-- Top Row: Photo, Name, ID, Role -->
+                <div class="player-top-row">
+                  <img src="{{ p_data.photo_url or '/static/images/avatar_allrounder.svg' }}" class="player-avatar-circle" alt="{{ p_name }}">
+                  <div class="player-title-info">
+                    <div style="display: flex; justify-content: space-between; align-items: center; gap: 0.4rem;">
+                      <h3 class="player-name-text">{{ p_name }}</h3>
+                      <span style="color: #f59e0b; font-weight: 800; font-size: 0.78rem; background: rgba(245,158,11,0.15); padding: 0.15rem 0.45rem; border-radius: 6px;">
+                        #{{ p_data.serial_no or loop.index }}
+                      </span>
+                    </div>
+                    <span style="font-size: 0.8rem; color: #38bdf8; font-weight: 700;">
+                      🏏 {{ p_data.role or 'All-Rounder' }}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Detail Grid -->
+                <div class="player-detail-grid">
+                  <div>
+                    <span class="detail-label">Mobile Number</span>
+                    <span class="detail-val">{{ p_data.phone or 'N/A' }}</span>
+                  </div>
+                  <div>
+                    <span class="detail-label">Village / Town</span>
+                    <span class="detail-val">{{ p_data.village or 'Saidapur' }}</span>
+                  </div>
+                  <div>
+                    <span class="detail-label">Batting Style</span>
+                    <span class="detail-val">{{ p_data.batting or 'Right Hand' }}</span>
+                  </div>
+                  <div>
+                    <span class="detail-label">Bowling Style</span>
+                    <span class="detail-val">{{ p_data.bowling or 'Right Arm' }}</span>
+                  </div>
+                </div>
+
+                <!-- 1-Tap UTR Verification Box -->
+                <div class="utr-action-box">
+                  <div>
+                    <span style="font-size: 0.7rem; color: #94a3b8; display: block; text-transform: uppercase;">Payment UTR (12-Digit)</span>
+                    <span class="utr-code-text">{{ p_data.transaction_id or 'NO-UTR-FOUND' }}</span>
+                  </div>
+                  {% if p_data.transaction_id %}
+                  <button type="button" class="touch-btn touch-btn-secondary" style="padding: 0.35rem 0.75rem; font-size: 0.78rem;" onclick="copyUtr('{{ p_data.transaction_id }}', this)">
+                    📋 Copy UTR
+                  </button>
+                  {% endif %}
+                </div>
+
+                <!-- Approval Actions -->
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                  {% if not p_data.approved and p_data.payment_status != 'Payment Rejected' %}
+                    <button type="button" onclick="verifyPlayerPayment('{{ p_name }}')" class="touch-btn touch-btn-green" style="flex: 2;">
+                      ✅ Approve Payment & Add to Auction
+                    </button>
+                    <button type="button" onclick="rejectPlayerPayment('{{ p_name }}')" class="touch-btn touch-btn-red" style="flex: 1;">
+                      ❌ Reject
+                    </button>
+                  {% elif p_data.payment_status == 'Payment Rejected' %}
+                    <div style="flex: 2; display: flex; align-items: center; gap: 0.4rem; color: #f87171; font-size: 0.82rem; font-weight: 700; background: rgba(239,68,68,0.1); padding: 0.4rem 0.65rem; border-radius: 8px;">
+                      <span>❌ Payment Rejected</span>
+                    </div>
+                    <button type="button" onclick="verifyPlayerPayment('{{ p_name }}')" class="touch-btn touch-btn-green" style="flex: 1.5; font-size: 0.8rem;">
+                      🔄 Re-Approve
+                    </button>
+                  {% else %}
+                    <div style="flex: 2; display: flex; align-items: center; gap: 0.4rem; color: #34d399; font-size: 0.85rem; font-weight: 800; background: rgba(16,185,129,0.1); padding: 0.4rem 0.65rem; border-radius: 8px;">
+                      <span>✅ Verified in Live Auction Pool</span>
+                    </div>
+                  {% endif %}
+
+                  <button type="button" onclick="deleteSinglePlayer('{{ p_name }}')" class="touch-btn touch-btn-secondary" style="padding: 0.4rem 0.65rem; font-size: 0.75rem; color: #f87171;" title="Delete Registration Record">
+                    🗑️
+                  </button>
+                </div>
+
+              </div>
+              {% endfor %}
+            {% else %}
+              <div style="text-align: center; padding: 2.5rem 1rem; background: rgba(0,0,0,0.2); border-radius: 14px; border: 1px dashed rgba(255,255,255,0.15);">
+                <span style="font-size: 2.75rem; display: block; margin-bottom: 0.4rem;">🏏</span>
+                <h4 style="color: #fff; font-size: 1.05rem; margin: 0 0 0.35rem 0;">No Registrations Yet</h4>
+                <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 1rem 0;">Direct players to sign up or add players directly.</p>
+                <a href="/register" target="_blank" class="touch-btn touch-btn-blue" style="display: inline-flex; width: auto; padding: 0.5rem 1.25rem;">
+                  Open Registration Portal &rarr;
+                </a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <!-- VIEW 1B: TOURNAMENT FEE & UPI SETTINGS (Shown when clicking Fee & UPI tab) -->
+      <div id="regViewFee" style="display: none;">
+        <div class="mobile-admin-card" style="border-color: rgba(245, 158, 11, 0.35);">
+          <div class="card-header-row">
+            <h2 class="card-header-title" style="color: #f59e0b;">
+              <span>💳</span> Tournament Fee & UPI Settings
+            </h2>
+          </div>
+
+          <form id="regConfigForm" onsubmit="handleRegistrationConfigSubmit(event)">
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label">Tournament Display Name</label>
+              <input type="text" id="cfgTournamentName" class="form-control" value="{{ config.tournament_name }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label">Player Registration Fee (₹)</label>
+              <input type="number" id="cfgRegFee" class="form-control" value="{{ config.registration_fee or 200 }}" required min="0">
+            </div>
+            <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label">Receiving UPI ID (PhonePe / GPay / Paytm)</label>
+              <input type="text" id="cfgUpiId" class="form-control" value="{{ config.upi_id }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 1.15rem;">
+              <label class="form-label">Account / Payee Name</label>
+              <input type="text" id="cfgPayeeName" class="form-control" value="{{ config.payee_name }}" required>
+            </div>
+
+            <button type="submit" class="touch-btn touch-btn-blue" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
+              💾 Save Registration Settings
+            </button>
+          </form>
+
+          <div style="display: flex; gap: 0.5rem; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.08);">
+            <a href="/api/export-excel" class="touch-btn touch-btn-secondary" style="flex: 1;">
+              📥 Export Excel (.xlsx)
+            </a>
+            <button type="button" onclick="confirmClearAllPlayers()" class="touch-btn touch-btn-red" style="flex: 1;">
+              🗑️ Clear ALL Players
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Public Registration Link Card -->
+        <div class="mobile-admin-card" style="border-color: rgba(56, 189, 248, 0.25); background: rgba(15, 23, 42, 0.65);">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <strong style="color: #fff; font-size: 0.92rem; display: block;">🔗 Public Player Registration Link</strong>
+              <span style="color: #94a3b8; font-size: 0.78rem;">Share this link with players to register on mobile</span>
+            </div>
+            <a href="/register" target="_blank" class="touch-btn touch-btn-blue" style="font-size: 0.8rem; padding: 0.45rem 0.9rem;">
+              Open Registration Portal ↗
+            </a>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- TAB 2: TEAMS & BUDGET SETUP (MOBILE-FIRST)                  -->
+  <!-- ========================================================== -->
+  <div id="category2View" style="display: none;">
+    <div class="mobile-admin-shell">
+      <div class="mobile-admin-card" style="border-color: rgba(245, 158, 11, 0.35);">
+        <div class="card-header-row">
+          <h2 class="card-header-title" style="color: #f59e0b;">
+            <span>🛡️</span> Franchise Teams & Budget Rules
+          </h2>
+        </div>
+
+        <form id="teamSetupForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1rem;">
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Number of Teams</label>
+              <input type="number" id="setupTeamCount" class="form-control" min="2" max="12" value="{{ (teams|length) if teams else 4 }}" required onchange="renderTeamNameInputs()">
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Purse / Team (₹)</label>
+              <input type="number" id="setupPurse" class="form-control" min="500" step="100" value="{{ config.total_purse or config.default_purse or 6000 }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Min Players / Team</label>
+              <input type="number" id="setupMinPlayers" class="form-control" min="1" max="25" value="{{ config.max_players or 10 }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Min Bid Increment (₹)</label>
+              <input type="number" id="setupMinBid" class="form-control" min="0" step="10" value="{{ config.min_bid or 50 }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Star Player Retention (₹)</label>
+              <input type="number" id="setupPlayerRetentionPrice" class="form-control" min="0" step="50" value="{{ config.retention_price or 500 }}" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+              <label class="form-label">Owner Retention (₹)</label>
+              <input type="number" id="setupOwnerRetentionPrice" class="form-control" min="0" step="50" value="{{ config.owner_retention_price or 100 }}" required>
+            </div>
+          </div>
+
+          <div style="margin-bottom: 1.25rem;">
+            <label class="form-label" style="font-weight: 800; color: #fff; margin-bottom: 0.5rem; display: block;">Franchise Team Names</label>
+            <div id="teamNamesContainer" style="display: flex; flex-direction: column; gap: 0.5rem;">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+
+          <button type="submit" class="touch-btn touch-btn-blue" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
+            💾 Save Teams & Purse Setup
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- TAB 3: DUAL RETENTIONS (MOBILE-FIRST)                      -->
+  <!-- ========================================================== -->
+  <div id="category3View" style="display: none;">
+    <div class="mobile-admin-shell">
+      <div class="mobile-admin-card" style="border-color: rgba(16, 185, 129, 0.35);">
+        <div class="card-header-row">
+          <h2 class="card-header-title" style="color: #10b981;">
+            <span>⭐</span> Retain Star Player or Owner
+          </h2>
+        </div>
+        <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 1rem 0; line-height: 1.4;">
+          Retained members are deducted from team purse and removed from live bidding rounds.
+        </p>
+
+        <form id="retentionForm">
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="form-label">Select Franchise Team</label>
+            <select id="retentionTeamSelect" class="form-control" required>
+              <option value="">-- Choose Team --</option>
+              {% for t_name in teams.keys() %}
+              <option value="{{ t_name }}">{{ t_name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 0.75rem;">
+            <label class="form-label">Retention Category</label>
+            <select id="retentionTypeSelect" class="form-control" required>
+              <option value="Player">⭐ Star Player (₹{{ config.retention_price or 500 }})</option>
+              <option value="Owner">👑 Team Owner (₹{{ config.owner_retention_price or 100 }})</option>
+            </select>
+          </div>
+
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label">Select Person</label>
+            <select id="retentionPlayerSelect" class="form-control" required>
+              <option value="">-- Choose Registered Person --</option>
+              {% for p in players %}
+              <option value="{{ p }}">{{ p }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button type="submit" class="touch-btn touch-btn-green" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
+            ⭐ Confirm Retention
+          </button>
+        </form>
+      </div>
+
+      <!-- Active Retentions Cards (Mobile-friendly instead of huge table) -->
+      <div class="mobile-admin-card" style="border-color: rgba(16, 185, 129, 0.35);">
+        <div class="card-header-row">
+          <h2 class="card-header-title" style="color: #34d399;">
+            <span>📋</span> Current Team Retentions
+          </h2>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+          {% for t_name, t_data in teams.items() %}
+          <div style="background: rgba(11, 17, 32, 0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.85rem;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+              <strong style="color: #fff; font-size: 0.95rem;">{{ t_name }}</strong>
+              <span style="color: #10b981; font-weight: 800; font-size: 0.85rem;">Purse: ₹{{ t_data.purse or t_data.budget or 6000 }}</span>
+            </div>
+
+            <!-- Retained Star Player -->
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.35rem 0; border-top: 1px dashed rgba(255,255,255,0.06);">
+              <span style="color: #94a3b8;">Star Player (₹{{ config.retention_price or 500 }}):</span>
+              {% if t_data.player_retained or t_data.retained %}
+                {% set ret_p = t_data.player_retained or t_data.retained %}
+                <span class="retention-tag retention-player">
+                  ⭐ {{ ret_p.name if ret_p is mapping else ret_p }}
+                  <button type="button" onclick="releaseRetention('{{ t_name }}', 'Player')" style="background: none; border: none; color: #f87171; cursor: pointer; font-weight: 800; margin-left: 0.25rem;">&times;</button>
+                </span>
+              {% else %}
+                <span style="color: #64748b; font-style: italic;">None</span>
+              {% endif %}
+            </div>
+
+            <!-- Retained Owner -->
+            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; padding: 0.35rem 0; border-top: 1px dashed rgba(255,255,255,0.06);">
+              <span style="color: #94a3b8;">Owner (₹{{ config.owner_retention_price or 100 }}):</span>
+              {% if t_data.owner_retained %}
+                {% set ret_o = t_data.owner_retained %}
+                <span class="retention-tag retention-owner">
+                  👑 {{ ret_o.name if ret_o is mapping else ret_o }}
+                  <button type="button" onclick="releaseRetention('{{ t_name }}', 'Owner')" style="background: none; border: none; color: #f87171; cursor: pointer; font-weight: 800; margin-left: 0.25rem;">&times;</button>
+                </span>
+              {% else %}
+                <span style="color: #64748b; font-style: italic;">None</span>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- TAB 4: LIVE AUCTION HOST CONSOLE & PLAYER POOL LINEUP      -->
+  <!-- ========================================================== -->
+  <div id="category4View" style="display: none;">
+    <div class="auction-admin-shell">
+
+      <!-- TOP COMMAND BAR: STATUS & MASTER CONTROLS -->
+      <div class="mobile-admin-card" style="border-color: rgba(239, 68, 68, 0.45); background: linear-gradient(145deg, rgba(15,23,42,0.95), rgba(30,15,20,0.85));">
+        <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.9rem;">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.2rem;">
+              <span style="font-size: 1.4rem;">&#x1F528;</span>
+              <h2 style="font-size: 1.3rem; font-weight: 900; color: #fff; margin: 0;">Live Auction Command Arena</h2>
+            </div>
+            <p style="color: #94a3b8; font-size: 0.82rem; margin: 0;">
+              Official host control arena for live player bidding, draw rounds, and pool management.
+            </p>
+          </div>
+          <div>
+            {% if state and state.auction_started %}
+            <span id="auctionStatusIndicator" class="badge" style="background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1.5px solid #10b981; font-size: 0.88rem; padding: 0.45rem 0.9rem; font-weight: 900; box-shadow: 0 0 20px rgba(16,185,129,0.3); display: inline-flex; align-items: center; gap: 0.4rem;">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: #34d399; animation: pulse 1.5s infinite;"></span>
+              &#x1F7E2; LIVE BIDDING ACTIVE
+            </span>
+            {% else %}
+            <span id="auctionStatusIndicator" class="badge" style="background: rgba(239, 68, 68, 0.2); color: #f87171; border: 1.5px solid #ef4444; font-size: 0.88rem; padding: 0.45rem 0.9rem; font-weight: 900; display: inline-flex; align-items: center; gap: 0.4rem;">
+              &#x1F534; AUCTION NOT STARTED
+            </span>
+            {% endif %}
+          </div>
+        </div>
+        <div style="display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center;">
+          <button type="button" id="btnAuctionToggle" onclick="adminToggleAuctionStarted()" class="touch-btn {% if state and state.auction_started %}touch-btn-secondary{% else %}touch-btn-green{% endif %}" style="padding: 0.75rem 1.25rem; font-size: 0.92rem; font-weight: 900; flex: 1.5; min-width: 180px;">
+            {% if state and state.auction_started %}&#x23F8;&#xFE0F; Pause Live Auction
+            {% else %}&#x1F680; Start Live Auction Now{% endif %}
+          </button>
+          <a href="/view" target="_blank" class="touch-btn touch-btn-secondary" style="flex: 1; min-width: 150px; padding: 0.75rem 0.9rem; text-align: center;">
+            &#x1F4F1; Spectator Stream &#x2197;
+          </a>
+          <button type="button" onclick="copyViewerStreamLink()" class="touch-btn touch-btn-secondary" style="padding: 0.75rem 0.9rem; font-size: 0.85rem;">
+            &#x1F4CB; Copy Stream Link
+          </button>
+        </div>
+      </div>
+
+      <!-- 2 MAIN TABS: 1. HOST AUCTION vs 2. WATCH LIVE -->
+      <div class="subtab-bar" style="margin-bottom: 1.25rem;">
+        <button type="button" id="auctionSubTabHost" class="subtab-btn active-red" onclick="switchAuctionSubTab('host')" style="min-height: 50px; font-size: 0.95rem;">
+          &#x1F3AE; 1. Host Auction Console
+        </button>
+        <button type="button" id="auctionSubTabWatch" class="subtab-btn" onclick="switchAuctionSubTab('watch')" style="min-height: 50px; font-size: 0.95rem;">
+          <span style="width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;animation:pulseDot 1.4s infinite;margin-right:0.3rem;"></span>
+          &#x1F534; 2. Watch Live Stream
+        </button>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 1. HOST AUCTION CONSOLE (twilight-kepler logic wired to server API) -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div id="auctionViewHost">
+
+        <!-- Round / Pool Status Bar -->
+        <div style="display:flex; align-items:center; gap:0.65rem; flex-wrap:wrap; margin-bottom:1rem; padding:0.75rem 1rem; background:rgba(10,16,30,0.7); border-radius:12px; border:1px solid rgba(255,255,255,0.08);">
+          <span id="hostRoundTag" class="round-tag" style="color:#f59e0b; border-color:rgba(245,158,11,0.4);">Round 1</span>
+          <span id="hostPoolStatusTag" class="round-tag" style="color:#38bdf8; border-color:rgba(56,189,248,0.35);">Connecting&#x2026;</span>
+          <span id="hostUnsoldTag" class="round-tag" style="color:#f87171; border-color:rgba(239,68,68,0.3); display:none;">Unsold: 0</span>
+          <div style="margin-left:auto; display:flex; gap:0.5rem; flex-wrap:wrap;">
+            <button type="button" onclick="openRetainedModal()" class="touch-btn touch-btn-secondary" style="font-size:0.8rem; padding:0.4rem 0.8rem; min-height:38px;">
+              &#x2B50; Retained (<span id="hostRetainedCount">0</span>)
+            </button>
+            <button type="button" id="btnHostUndo" onclick="undoLastAction()" class="touch-btn touch-btn-secondary" style="font-size:0.8rem; padding:0.4rem 0.8rem; min-height:38px;" disabled>
+              &#x21A9;&#xFE0F; Undo
+            </button>
+          </div>
+        </div>
+
+        <!-- CURRENT PLAYER CARD (HERO COCKPIT) -->
+        <div id="hostPlayerCard" class="mobile-admin-card" style="border-color:rgba(245,158,11,0.35); background:linear-gradient(145deg,rgba(18,28,50,0.95),rgba(8,12,22,0.98)); margin-bottom:1rem; padding: 1rem;">
+
+          <!-- Player Showcase -->
+          <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
+            <img id="hostPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Player"
+              style="width:90px; height:90px; border-radius:50%; border:3px solid #f59e0b; object-fit:cover; background:#1e293b; box-shadow:0 0 20px rgba(245,158,11,0.35); flex-shrink:0;">
+            <div style="flex:1; min-width:0;">
+              <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-bottom:0.25rem;">
+                <span id="hostRoleBadge" class="role-badge badge-allrounder" style="font-size:0.75rem; padding:0.15rem 0.55rem;">All-Rounder</span>
+                <span id="hostPlayerIdTag" class="player-id-tag" style="font-size:0.75rem; padding:0.15rem 0.5rem;">ID: #--</span>
+              </div>
+              <h2 id="hostPlayerName" style="font-size:1.4rem; font-weight:900; color:#fff; letter-spacing:-0.02em; margin:0 0 0.4rem 0; line-height:1.2; word-break:break-word;">
+                Waiting for Draw&#x2026;
+              </h2>
+              <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.35rem; font-size:0.78rem;">
+                <div style="background:rgba(10,16,30,0.7); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:0.3rem 0.5rem;">
+                  <span style="color:#64748b; font-size:0.65rem; display:block; text-transform:uppercase;">Bat / Bowl</span>
+                  <span style="color:#f1f5f9; font-weight:700;"><span id="hostBatting">--</span> &bull; <span id="hostBowling">--</span></span>
+                </div>
+                <div style="background:rgba(10,16,30,0.7); border:1px solid rgba(255,255,255,0.06); border-radius:6px; padding:0.3rem 0.5rem;">
+                  <span style="color:#64748b; font-size:0.65rem; display:block; text-transform:uppercase;">Village &bull; Base</span>
+                  <span style="color:#10b981; font-weight:800;"><span id="hostVillage" style="color:#f1f5f9;">--</span> &bull; <span id="hostBasePrice">&#x20B9;50</span></span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Live Bid Display & Status Odometer -->
+          <div style="background:linear-gradient(145deg,rgba(0,0,0,0.7),rgba(5,10,20,0.9)); border:1.5px solid rgba(16,185,129,0.35); border-radius:14px; padding:0.85rem 1rem; text-align:center; margin-bottom:1rem; box-shadow: 0 0 25px rgba(16,185,129,0.15);">
+            <div style="font-size:0.72rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.08em; margin-bottom:0.2rem;">Current Highest Bid</div>
+            <div id="hostBidDisplay" style="font-size:3rem; font-weight:900; color:#10b981; line-height:1; text-shadow:0 0 25px rgba(16,185,129,0.5); font-family:'Rajdhani',sans-serif;">&#x20B9;0</div>
+            <div style="margin-top:0.35rem;">
+              <span id="hostLeadingTeamTag" style="display:inline-flex; align-items:center; gap:0.35rem; background:rgba(245,158,11,0.15); color:#fbbf24; border:1px solid rgba(245,158,11,0.35); padding:0.25rem 0.85rem; border-radius:9999px; font-weight:800; font-size:0.85rem;">Click "Next Draw" to bring a player</span>
+            </div>
+          </div>
+
+          <!-- HOST CONTROLS (PIN-gated) -->
+          <div id="hostControlsBox" style="display: none;">
+
+            <!-- 1-TAP FRANCHISE QUICK BIDDING GRID -->
+            <div style="margin-bottom: 1rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+                <span style="font-size:0.78rem; font-weight:800; color:#38bdf8; text-transform:uppercase; letter-spacing:0.05em;">&#x26A1; 1-Tap Team Bid:</span>
+                <span style="font-size:0.72rem; color:#94a3b8;">Tap any team to bid &amp; assign</span>
+              </div>
+              <div id="hostTeamGrid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:0.5rem;">
+                <!-- Dynamically populated team cards with 1-tap bidding -->
+              </div>
+            </div>
+
+            <!-- BID MODIFIERS & INCREMENT SELECTOR -->
+            <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:12px; padding:0.65rem 0.75rem; margin-bottom:0.9rem;">
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+                <span style="font-size:0.75rem; font-weight:700; color:#cbd5e1;">Bid Increment &amp; Custom Amount:</span>
+              </div>
+              <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+                <!-- Preset Increment Pills -->
+                <button type="button" class="inc-pill-btn active-inc" data-amt="50" onclick="setActiveIncrement(50)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.8rem; font-weight:800; border-radius:8px; cursor:pointer; background:#38bdf8; color:#0b1120; border:none;">+50</button>
+                <button type="button" class="inc-pill-btn" data-amt="100" onclick="setActiveIncrement(100)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.8rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+100</button>
+                <button type="button" class="inc-pill-btn" data-amt="200" onclick="setActiveIncrement(200)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.8rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+200</button>
+                <button type="button" class="inc-pill-btn" data-amt="500" onclick="setActiveIncrement(500)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.8rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+500</button>
+                <button type="button" onclick="hostAdjustBid(-50)" class="touch-btn touch-btn-red" style="padding:0.45rem 0.6rem; font-size:0.8rem; font-weight:800; min-height:36px; border-radius:8px;">-50</button>
+              </div>
+
+              <!-- Direct input + Dropdown fallback -->
+              <div style="display:flex; gap:0.45rem; align-items:center; margin-top:0.5rem; flex-wrap:wrap;">
+                <div style="display:flex; align-items:center; background:rgba(10,16,30,0.8); border:1.5px solid rgba(16,185,129,0.5); border-radius:8px; overflow:hidden; flex:1; min-width:110px;">
+                  <span style="padding:0 0.5rem; color:#10b981; font-weight:900; font-size:0.95rem;">&#x20B9;</span>
+                  <input type="number" id="hostBidInput" value="50" min="50" step="50" oninput="syncBidToServer()"
+                    style="flex:1; background:transparent; border:none; color:#10b981; font-size:1rem; font-weight:900; padding:0.4rem 0.3rem; outline:none; min-width:60px; font-family:inherit;">
+                </div>
+                <select id="hostBiddingTeamSelect" class="form-control" style="flex:1.5; min-width:140px; font-size:0.82rem; padding:0.45rem 0.6rem;" onchange="syncBidToServer()">
+                  <option value="">-- Choose Team --</option>
+                  {% for t_name in (teams.keys() if teams else []) %}
+                  <option value="{{ t_name }}">{{ t_name }}</option>
+                  {% endfor %}
+                </select>
+                <button type="button" onclick="hostAssignLeadingBidder()" class="touch-btn touch-btn-blue" style="font-size:0.8rem; min-height:38px; padding:0.45rem 0.75rem; white-space:nowrap;">
+                  &#x1F4CB; Set
+                </button>
+              </div>
+            </div>
+
+            <!-- PRIMARY AUCTION ACTION BUTTONS -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.5rem; margin-bottom:0.75rem;">
+              <!-- NEXT DRAW (Full Width Hero Button) -->
+              <button type="button" onclick="drawNextPlayer()"
+                style="grid-column:span 2; display:flex; align-items:center; justify-content:center; gap:0.5rem; padding:0.9rem; background:linear-gradient(135deg,#6366f1,#4f46e5); color:#fff; border:none; border-radius:12px; font-weight:900; font-size:1.05rem; cursor:pointer; box-shadow:0 4px 18px rgba(99,102,241,0.35); min-height:52px; font-family:inherit; touch-action:manipulation;">
+                &#x1F680; Next Draw
+              </button>
+
+              <!-- SOLD! -->
+              <button type="button" onclick="confirmSellPlayer()"
+                style="display:flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.85rem; background:linear-gradient(135deg,#10b981,#059669); color:#fff; border:none; border-radius:12px; font-weight:900; font-size:0.98rem; cursor:pointer; box-shadow:0 4px 18px rgba(16,185,129,0.4); min-height:50px; font-family:inherit; touch-action:manipulation;">
+                &#x1F528; SOLD!
+              </button>
+
+              <!-- UNSOLD (Round 2) -->
+              <button type="button" onclick="markUnsold(false)"
+                style="display:flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.85rem; background:linear-gradient(135deg,#f59e0b,#d97706); color:#000; border:none; border-radius:12px; font-weight:900; font-size:0.9rem; cursor:pointer; min-height:50px; font-family:inherit; touch-action:manipulation;">
+                &#x274C; Unsold (R2)
+              </button>
+
+              <!-- PERMANENT UNSOLD -->
+              <button type="button" onclick="markUnsold(true)"
+                style="display:flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.75rem; background:rgba(239,68,68,0.15); color:#f87171; border:1px solid rgba(239,68,68,0.4); border-radius:12px; font-weight:800; font-size:0.85rem; cursor:pointer; min-height:46px; font-family:inherit; touch-action:manipulation;">
+                &#x26D4; Perm Unsold
+              </button>
+
+              <!-- UNDO -->
+              <button type="button" id="btnHostUndo" onclick="undoLastAction()"
+                style="display:flex; align-items:center; justify-content:center; gap:0.4rem; padding:0.75rem; background:rgba(255,255,255,0.08); color:#cbd5e1; border:1px solid rgba(255,255,255,0.15); border-radius:12px; font-weight:800; font-size:0.85rem; cursor:pointer; min-height:46px; font-family:inherit; touch-action:manipulation;" disabled>
+                &#x21A9;&#xFE0F; Undo
+              </button>
+
+              <!-- START ROUND 2 (Shown when Pool Exhausted) -->
+              <button type="button" id="btnHostStartRound2" onclick="startRound2()"
+                style="display:none; grid-column:span 2; align-items:center; justify-content:center; gap:0.5rem; padding:0.85rem; background:rgba(245,158,11,0.18); color:#fbbf24; border:1.5px solid rgba(245,158,11,0.5); border-radius:12px; font-weight:900; font-size:0.95rem; cursor:pointer; min-height:48px; font-family:inherit; touch-action:manipulation;">
+                &#x1F504; Start Round 2 (Unsold Pool)
+              </button>
+            </div>
+
+            <!-- PICK SPECIFIC PLAYER DRAWER -->
+            <div style="background:rgba(15,23,42,0.5); border:1px solid rgba(245,158,11,0.25); border-radius:10px; padding:0.55rem 0.75rem; display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap;">
+              <span style="font-weight:800; color:#f59e0b; font-size:0.78rem; white-space:nowrap;">&#x1F3AF; Pick Specific:</span>
+              <select id="hostPlayerDropdown" class="form-control" style="flex:1; min-width:160px; font-size:0.82rem; padding:0.35rem 0.55rem;">
+                <option value="">-- Choose Player to Bring to Block --</option>
+              </select>
+              <button type="button" onclick="hostChooseSelectedPlayer()" class="touch-btn touch-btn-secondary" style="font-size:0.78rem; padding:0.35rem 0.75rem; white-space:nowrap; min-height:36px;">
+                Bring to Block &#x2192;
+              </button>
+            </div>
+
+          </div><!-- /hostControlsBox -->
+
+          <!-- Lock screen when PIN not entered -->
+          <div id="hostUnlockBox" style="text-align:center; padding:0.75rem 0 0.25rem;">
+            <button type="button" onclick="openPinModal()" class="touch-btn touch-btn-secondary" style="font-size:0.9rem; padding:0.7rem 1.5rem; min-height:44px;">
+              &#x1F512; Unlock Host Controls (Enter PIN)
+            </button>
+          </div>
+        </div><!-- /hostPlayerCard -->
+
+        <!-- AUCTION PLAYER POOL -->
+        <div class="mobile-admin-card" style="border-color:rgba(56,189,248,0.3); margin-bottom:1rem;">
+          <div class="card-header-row">
+            <div>
+              <h3 class="card-header-title" style="color:#38bdf8; font-size:1rem;">
+                &#x1F465; Player Pool (<span id="hostPoolCount">{{ (state.auction_players|length) if (state and state.auction_players) else 0 }}</span>)
+              </h3>
+              <span style="font-size:0.78rem; color:#94a3b8;">Tap &#x1F3AF; to bring any player to the block</span>
+            </div>
+            <button type="button" onclick="openQuickAddModal()" class="touch-btn touch-btn-green" style="padding:0.5rem 0.9rem; font-size:0.82rem; min-height:40px; white-space:nowrap;">
+              &#x2795; Add Player
+            </button>
+          </div>
+
+          <!-- Pool KPI Stats -->
+          <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0.5rem; margin-bottom:1rem;">
+            <div style="background:rgba(11,17,32,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.65rem; text-align:center;">
+              <span style="color:#94a3b8; font-size:0.7rem; display:block; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.15rem;">Total</span>
+              <strong id="hostStatTotal" style="color:#38bdf8; font-size:1.4rem; font-weight:900;">{{ (state.players|length) if (state and state.players) else 0 }}</strong>
+            </div>
+            <div style="background:rgba(11,17,32,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.65rem; text-align:center;">
+              <span style="color:#94a3b8; font-size:0.7rem; display:block; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.15rem;">Remaining</span>
+              <strong id="hostStatQueue" style="color:#f59e0b; font-size:1.4rem; font-weight:900;">{{ (state.auction_players|length) if (state and state.auction_players) else 0 }}</strong>
+            </div>
+            <div style="background:rgba(11,17,32,0.85); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.65rem; text-align:center;">
+              <span style="color:#94a3b8; font-size:0.7rem; display:block; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.15rem;">Unsold</span>
+              <strong id="hostStatUnsold" style="color:#f87171; font-size:1.4rem; font-weight:900;">{{ (state.unsold_players|length) if (state and state.unsold_players) else 0 }}</strong>
+            </div>
+          </div>
+
+          <!-- Pool Search -->
+          <input type="text" id="hostPoolSearch" class="form-control" placeholder="&#x1F50D; Search player name or role..." style="font-size:0.88rem; padding:0.6rem 0.85rem; margin-bottom:0.85rem;" oninput="hostFilterPool()">
+
+          <!-- Pool Cards -->
+          <div id="hostPoolList" style="display:flex; flex-direction:column; gap:0.5rem; max-height:380px; overflow-y:auto; padding-right:0.25rem;">
+            {% if state and state.auction_players %}
+              {% for p_name in state.auction_players %}
+              {% set reg_p = registrations.get(p_name, {}) %}
+              <div class="auction-roster-card" data-search="{{ p_name|lower }} {{ (reg_p.role or '')|lower }} {{ (reg_p.village or '')|lower }}"
+                style="background:rgba(11,17,32,0.85); border:1px solid rgba(255,255,255,0.09); border-radius:10px; padding:0.65rem; display:flex; align-items:center; justify-content:space-between; gap:0.5rem;">
+                <div style="display:flex; align-items:center; gap:0.6rem; min-width:0; flex:1;">
+                  <img src="{{ reg_p.photo_url or '/static/images/avatar_allrounder.svg' }}" style="width:40px; height:40px; border-radius:50%; object-fit:cover; border:1.5px solid #38bdf8; flex-shrink:0; background:#1e293b;" alt="{{ p_name }}">
+                  <div style="min-width:0; flex:1;">
+                    <strong style="color:#fff; font-size:0.88rem; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{{ p_name }}</strong>
+                    <span style="font-size:0.72rem; color:#38bdf8;">{{ reg_p.role or 'All-Rounder' }} &middot; {{ reg_p.village or 'Saidapur' }}</span>
+                  </div>
+                </div>
+                <div style="display:flex; gap:0.3rem; flex-shrink:0;">
+                  <button type="button" onclick="bringPlayerToBlock('{{ p_name }}')" class="touch-btn touch-btn-blue" style="padding:0.3rem 0.6rem; font-size:0.72rem; font-weight:800; min-height:36px;" title="Bring to Block">&#x1F3AF;</button>
+                  <button type="button" onclick="removeFromAuction('{{ p_name }}')" class="touch-btn touch-btn-secondary" style="padding:0.3rem 0.5rem; font-size:0.72rem; color:#f87171; min-height:36px;" title="Remove">&#x2715;</button>
+                </div>
+              </div>
+              {% endfor %}
+            {% else %}
+            <div style="text-align:center; padding:2rem 1rem; color:#64748b; background:rgba(0,0,0,0.2); border-radius:12px; border:1px dashed rgba(255,255,255,0.1);">
+              <span style="font-size:2rem; display:block; margin-bottom:0.5rem;">&#x1F3CF;</span>
+              <p style="margin:0 0 0.75rem; font-size:0.88rem;">No players in auction queue yet.<br>Approve players in Tab 1 or add directly.</p>
+              <button type="button" onclick="openQuickAddModal()" class="touch-btn touch-btn-green" style="display:inline-flex; padding:0.5rem 1.25rem; font-size:0.85rem;">&#x2795; Add Player Now</button>
+            </div>
+            {% endif %}
+          </div>
+        </div>
+
+      </div><!-- /auctionViewHost -->
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- 2. WATCH LIVE STREAM VIEW -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <div id="auctionViewWatch" style="display: none;">
+
+        <div class="mobile-admin-card" style="border-color:rgba(239,68,68,0.4); background:linear-gradient(145deg,rgba(30,8,8,0.9),rgba(15,23,42,0.95)); text-align:center; padding:1.75rem 1.25rem; margin-bottom:1rem;">
+          <div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(239,68,68,0.15); border:1px solid rgba(239,68,68,0.4); color:#f87171; padding:0.35rem 1rem; border-radius:9999px; font-weight:800; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.06em; margin-bottom:1rem;">
+            <span style="width:8px;height:8px;background:#ef4444;border-radius:50%;display:inline-block;box-shadow:0 0 6px #ef4444;animation:pulseDot 1.4s infinite;"></span>
+            Live Spectator Mode
+          </div>
+          <h3 style="font-size:1.25rem; font-weight:900; color:#fff; margin:0 0 0.4rem;">&#x1F4FA; Watch the Live Auction</h3>
+          <p style="color:#94a3b8; font-size:0.85rem; margin:0 0 1.5rem; line-height:1.5;">Real-time player bids, photos &amp; team purse meters<br>optimised for any mobile device. No login needed.</p>
+          <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap;">
+            <a href="/view" target="_blank" class="touch-btn" style="background:linear-gradient(135deg,#ef4444,#b91c1c); color:#fff; padding:0.9rem 1.75rem; font-size:1rem; font-weight:900; min-height:52px; box-shadow:0 4px 18px rgba(239,68,68,0.4); text-decoration:none; display:inline-flex; align-items:center; gap:0.5rem; border-radius:12px;">
+              <span style="width:9px;height:9px;background:#fff;border-radius:50%;display:inline-block;animation:pulseDot 1.4s infinite;"></span>
+              &#x1F4F1; Open Spectator Stream &#x2197;
+            </a>
+            <button type="button" onclick="copyViewerStreamLink()" class="touch-btn touch-btn-secondary" style="padding:0.9rem 1.25rem; min-height:52px; font-size:0.95rem;">
+              &#x1F4CB; Copy Share Link
+            </button>
+          </div>
+        </div>
+
+        <!-- Embedded Live Preview -->
+        <div class="mobile-admin-card" style="padding:0.5rem; border-color:rgba(239,68,68,0.2);">
+          <div style="display:flex; justify-content:space-between; align-items:center; padding:0.5rem 0.5rem 0.75rem; flex-wrap:wrap; gap:0.5rem;">
+            <span style="font-weight:800; color:#f87171; font-size:0.88rem;">&#x1F534; Live Preview (embedded)</span>
+            <a href="/view" target="_blank" style="color:#38bdf8; font-size:0.8rem; font-weight:700; text-decoration:underline;">Full Screen &#x2197;</a>
+          </div>
+          <iframe id="watchLiveIframe" src="about:blank" data-src="/view?embed=1"
+            style="width:100%; height:640px; border:1px solid rgba(239,68,68,0.2); border-radius:12px; background:#070b14;" loading="lazy">
+          </iframe>
+        </div>
+
+      </div><!-- /auctionViewWatch -->
+
+    </div>
+  </div>
+
+  <!-- ========================================================== -->
+  <!-- TAB 5: AUCTION RESET & PIN MANAGEMENT (MOBILE-FIRST)        -->
+  <!-- ========================================================== -->
+  <div id="category5View" style="display: none;">
+    <div class="mobile-admin-shell">
+
+      <!-- CARD 1: FRESH LIVE AUCTION RESET (PRIMARY) -->
+      <div class="mobile-admin-card" style="border-color: rgba(239, 68, 68, 0.5); background: linear-gradient(145deg, rgba(35, 12, 18, 0.9), rgba(15, 23, 42, 0.95)); box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);">
+        <div class="card-header-row" style="border-bottom-color: rgba(239, 68, 68, 0.25);">
+          <div>
+            <h2 class="card-header-title" style="color: #f87171;">
+              <span>🔄</span> Fresh Live Auction Reset
+            </h2>
+            <span style="font-size: 0.78rem; color: #fca5a5;">Start a new tournament auction cycle</span>
+          </div>
+          <span class="badge" style="background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-weight: 800;">
+            ⚡ New Tournament Start
+          </span>
+        </div>
+
+        <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.85rem; margin-bottom: 1.15rem; font-size: 0.82rem; line-height: 1.6;">
+          <strong style="color: #fff; display: block; margin-bottom: 0.45rem;">📋 What happens when you reset?</strong>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.3rem;">
+            <li>💰 <strong style="color: #34d399;">Team Budgets:</strong> Restored to full starting tournament purse (₹{{ config.total_purse or config.default_purse or 6000 }}).</li>
+            <li>👥 <strong style="color: #38bdf8;">Sold Players:</strong> Cleared and restocked for a fresh bidding start.</li>
+            <li>🔄 <strong style="color: #fbbf24;">Player Queue:</strong> All approved registered players re-enter the live auction pool.</li>
+            <li>🎯 <strong style="color: #f87171;">Round Counter:</strong> Reset to Round 1 with cleared active bids.</li>
+          </ul>
+        </div>
+
+        <button type="button" onclick="confirmResetAuction()" class="touch-btn touch-btn-red" style="width: 100%; padding: 0.95rem; font-size: 1rem; font-weight: 900; box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4); min-height: 50px;">
+          🔄 Reset Live Auction (Fresh Start)
+        </button>
+      </div>
+
+      <!-- CARD 2: ORGANIZER ADMIN PIN MANAGEMENT -->
+      <div class="mobile-admin-card" style="border-color: rgba(56, 189, 248, 0.35);">
+        <div class="card-header-row">
+          <div>
+            <h2 class="card-header-title" style="color: #38bdf8;">
+              <span>🔐</span> Organizer Secret PIN
+            </h2>
+            <span style="font-size: 0.78rem; color: #94a3b8;">Protect auctioneer controls & committee settings</span>
+          </div>
+        </div>
+        <form id="pinUpdateForm" onsubmit="handlePinUpdateSubmit(event)">
+          <div class="form-group" style="margin-bottom: 0.85rem;">
+            <label class="form-label">New Secret PIN</label>
+            <input type="password" id="newAdminPin" class="form-control" placeholder="Enter new secret PIN" required>
+          </div>
+          <div class="form-group" style="margin-bottom: 1.15rem;">
+            <label class="form-label">Confirm New PIN</label>
+            <input type="password" id="confirmAdminPin" class="form-control" placeholder="Confirm new secret PIN" required>
+          </div>
+          <button type="submit" class="touch-btn touch-btn-blue" style="width: 100%; padding: 0.85rem; font-size: 0.95rem;">
+            🔑 Update Secret PIN
+          </button>
+        </form>
+      </div>
+
+      <!-- CARD 3: BACKUP EXCEL EXPORT -->
+      <div class="mobile-admin-card" style="border-color: rgba(16, 185, 129, 0.35);">
+        <div class="card-header-row">
+          <h2 class="card-header-title" style="color: #34d399;">
+            <span>📊</span> Tournament Export & Backup
+          </h2>
+        </div>
+        <p style="color: #94a3b8; font-size: 0.82rem; margin: 0 0 1rem 0;">
+          Save a timestamped copy of all team squads, prices, and remaining budgets before resetting.
+        </p>
+        <a href="/api/export-excel" class="touch-btn touch-btn-green" style="width: 100%; padding: 0.85rem; font-size: 0.95rem; text-decoration: none; text-align: center;">
+          📥 Download Styled Excel (.xlsx) Backup
+        </a>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- QUICK-ADD MISSING PLAYER MODAL (ACCESSIBLE FROM LIVE AUCTION) -->
+<div id="quickAddModal" class="admin-modal-overlay">
+  <div class="admin-modal-card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 0.65rem;">
+      <h3 style="font-size: 1.15rem; font-weight: 900; color: #38bdf8; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+        <span>➕</span> Add Missing Player to Auction
+      </h3>
+      <button type="button" onclick="closeQuickAddModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.25rem; cursor: pointer;">&times;</button>
+    </div>
+
+    <form id="quickAddForm" onsubmit="handleQuickAddSubmit(event)">
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label class="form-label">Player Full Name *</label>
+        <input type="text" id="quickName" class="form-control" placeholder="e.g. K. Suresh Anna" required>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0.85rem;">
+        <label class="form-label">Primary Playing Role *</label>
+        <select id="quickRole" class="form-control" required>
+          <option value="All-Rounder">🏏 All-Rounder</option>
+          <option value="Batsman">🏏 Top-Order Batsman</option>
+          <option value="Bowler">🎯 Fast / Spin Bowler</option>
+          <option value="Wicket-Keeper">🧤 Wicket Keeper Batsman</option>
+        </select>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; margin-bottom: 1.15rem;">
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Village / Town</label>
+          <input type="text" id="quickVillage" class="form-control" value="Saidapur">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">Mobile Number</label>
+          <input type="tel" id="quickPhone" class="form-control" placeholder="Optional">
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 0.5rem;">
+        <button type="submit" id="btnQuickSubmit" class="touch-btn touch-btn-green" style="flex: 2; padding: 0.85rem; font-size: 0.95rem;">
+          ⚡ Add to Live Auction Pool
+        </button>
+        <button type="button" onclick="closeQuickAddModal()" class="touch-btn touch-btn-secondary" style="flex: 1; padding: 0.85rem;">
+          Cancel
+        </button>
+      </div>
+    </form>
   </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
-  document.getElementById('configForm').addEventListener('submit', async (e) => {
+  const CURRENT_TEAMS = {{ (teams.keys()|list)|tojson }};
+
+  function getAdminPin() {
+    return sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin') || '';
+  }
+
+  // --- 5 CATEGORY TABS SWITCHER WITH FULL PERSISTENCE ---
+  function switchAdminTab(cat) {
+    sessionStorage.setItem('admin_active_tab', cat);
+    if (window.history.replaceState) {
+      window.history.replaceState(null, '', '#' + cat);
+    }
+
+    const tabMap = {
+      'cat1': { btn: 'tabBtnCat1', view: 'category1View' },
+      'cat2': { btn: 'tabBtnCat2', view: 'category2View' },
+      'cat3': { btn: 'tabBtnCat3', view: 'category3View' },
+      'cat4': { btn: 'tabBtnCat4', view: 'category4View' },
+      'cat5': { btn: 'tabBtnCat5', view: 'category5View' }
+    };
+
+    Object.keys(tabMap).forEach(key => {
+      const item = tabMap[key];
+      const btn = document.getElementById(item.btn);
+      const view = document.getElementById(item.view);
+      if (key === cat) {
+        btn?.classList.add('active');
+        if (view) view.style.display = 'block';
+      } else {
+        btn?.classList.remove('active');
+        if (view) view.style.display = 'none';
+      }
+    });
+
+    if (cat === 'cat4') {
+      const iframe = document.getElementById('hostAuctionIframe');
+      if (iframe && (!iframe.src || iframe.src === 'about:blank' || iframe.src.endsWith('/admin'))) {
+        iframe.src = '/auction?embed=1';
+      }
+      refreshHostConsole();
+    }
+  }
+
+  // Real-time hash listener for seamless navigation
+  window.addEventListener('hashchange', () => {
+    const newHash = window.location.hash ? window.location.hash.replace('#', '') : 'cat1';
+    if (['cat1', 'cat2', 'cat3', 'cat4', 'cat5'].includes(newHash)) {
+      switchAdminTab(newHash);
+    }
+  });
+
+  // --- TAB 1: 2 SUB-TABS (QUEUE vs FEE & UPI SETTINGS) ---
+  function switchRegSubTab(subTab) {
+    sessionStorage.setItem('admin_reg_subtab', subTab);
+    const btnQueue = document.getElementById('regSubTabQueue');
+    const btnFee = document.getElementById('regSubTabFee');
+    const viewQueue = document.getElementById('regViewQueue');
+    const viewFee = document.getElementById('regViewFee');
+
+    if (subTab === 'fee') {
+      btnFee?.classList.add('active-blue');
+      btnQueue?.classList.remove('active-blue');
+      if (viewFee) viewFee.style.display = 'block';
+      if (viewQueue) viewQueue.style.display = 'none';
+    } else {
+      btnQueue?.classList.add('active-blue');
+      btnFee?.classList.remove('active-blue');
+      if (viewQueue) viewQueue.style.display = 'block';
+      if (viewFee) viewFee.style.display = 'none';
+    }
+  }
+
+  // --- TAB 4: 2 SUB-TABS (HOST AUCTION CONSOLE vs WATCH LIVE STREAM) ---
+  function switchAuctionSubTab(subTab) {
+    sessionStorage.setItem('admin_auction_subtab', subTab);
+    const btnHost  = document.getElementById('auctionSubTabHost');
+    const btnWatch = document.getElementById('auctionSubTabWatch');
+    const viewHost  = document.getElementById('auctionViewHost');
+    const viewWatch = document.getElementById('auctionViewWatch');
+
+    if (subTab === 'watch') {
+      btnWatch?.classList.add('active-red');
+      btnHost?.classList.remove('active-red');
+      if (viewWatch) viewWatch.style.display = 'block';
+      if (viewHost)  viewHost.style.display  = 'none';
+      // Lazy-load the iframe only when tab is opened
+      const iframe = document.getElementById('watchLiveIframe');
+      if (iframe && iframe.src === 'about:blank') {
+        iframe.src = iframe.dataset.src || '/view?embed=1';
+      }
+    } else {
+      // Default: host console
+      btnHost?.classList.add('active-red');
+      btnWatch?.classList.remove('active-red');
+      if (viewHost)  viewHost.style.display  = 'block';
+      if (viewWatch) viewWatch.style.display  = 'none';
+      // Refresh host console data when switching to it
+      refreshHostConsole();
+    }
+  }
+
+  // --- HOST CONSOLE HELPER FUNCTIONS (1-TAP FAST MOBILE COCKPIT) ---
+
+  let activeIncrement = 50;
+  function setActiveIncrement(amt) {
+    activeIncrement = amt;
+    document.querySelectorAll('.inc-pill-btn').forEach(btn => {
+      const a = parseInt(btn.dataset.amt);
+      if (a === amt) {
+        btn.style.background = '#38bdf8';
+        btn.style.color = '#0b1120';
+        btn.style.border = 'none';
+      } else {
+        btn.style.background = 'rgba(255,255,255,0.08)';
+        btn.style.color = '#fff';
+        btn.style.border = '1px solid rgba(255,255,255,0.15)';
+      }
+    });
+  }
+
+  let _bidSyncTimeout = null;
+  function syncBidToServer() {
+    const pin = getAdminPin();
+    if (!pin) return;
+    const team = document.getElementById('hostBiddingTeamSelect')?.value || '';
+    const bid  = parseInt(document.getElementById('hostBidInput')?.value) || 50;
+
+    // Update local odometer immediately
+    const odo = document.getElementById('hostBidDisplay');
+    if (odo) odo.textContent = '₹' + bid;
+    const leadTag = document.getElementById('hostLeadingTeamTag');
+    if (leadTag) {
+      leadTag.textContent = team ? ('🎯 ' + team) : 'No Bids Yet';
+    }
+
+    clearTimeout(_bidSyncTimeout);
+    _bidSyncTimeout = setTimeout(() => {
+      fetch('/api/auction/set-bid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ team: team, bid: bid, pin: pin })
+      }).catch(e => console.warn('Bid sync error:', e));
+    }, 120);
+  }
+
+  function quickBidForTeam(teamName) {
+    const pin = getAdminPin();
+    if (!pin) { showToast('Enter PIN to host auction', 'warning'); openPinModal(); return; }
+
+    const curPlayer = document.getElementById('hostPlayerName')?.textContent?.trim();
+    if (!curPlayer || curPlayer.includes('Waiting for Draw')) {
+      showToast('Tap "Next Draw" to bring a player to the block first!', 'warning');
+      return;
+    }
+
+    const input = document.getElementById('hostBidInput');
+    const current = parseInt(input?.value) || 50;
+    const newBid = Math.max(50, current + activeIncrement);
+    if (input) input.value = newBid;
+
+    const sel = document.getElementById('hostBiddingTeamSelect');
+    if (sel) sel.value = teamName;
+
+    // Update displays immediately
+    document.getElementById('hostBidDisplay').textContent = '₹' + newBid;
+    document.getElementById('hostLeadingTeamTag').textContent = '🎯 ' + teamName;
+
+    // Trigger instant broadcast
+    syncBidToServer();
+    showToast(`${teamName} bids ₹${newBid}`, 'info');
+
+    // Re-render team highlights locally
+    document.querySelectorAll('#hostTeamGrid .team-quick-card').forEach(card => {
+      const isThis = card.dataset.team === teamName;
+      card.style.border = isThis ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,0.12)';
+      card.style.boxShadow = isThis ? '0 0 20px rgba(16,185,129,0.35)' : 'none';
+      const badge = card.querySelector('.team-bid-badge');
+      if (badge) {
+        badge.textContent = isThis ? '🎯 LEADING' : '+ Tap to Bid';
+        badge.style.background = isThis ? '#10b981' : 'rgba(56,189,248,0.15)';
+        badge.style.color = isThis ? '#000' : '#38bdf8';
+      }
+    });
+  }
+
+  function hostAdjustBid(amount) {
+    const input = document.getElementById('hostBidInput');
+    if (!input) return;
+    const current = parseInt(input.value) || 50;
+    input.value = Math.max(50, current + amount);
+    syncBidToServer();
+  }
+
+  function hostFilterPool() {
+    const q = (document.getElementById('hostPoolSearch')?.value || '').toLowerCase();
+    document.querySelectorAll('#hostPoolList .auction-roster-card').forEach(card => {
+      const s = (card.dataset.search || '').toLowerCase();
+      card.style.display = (!q || s.includes(q)) ? 'flex' : 'none';
+    });
+  }
+
+  function hostChooseSelectedPlayer() {
+    const sel = document.getElementById('hostPlayerDropdown');
+    if (!sel || !sel.value) { showToast('Please select a player first.', 'warning'); return; }
+    bringPlayerToBlock(sel.value);
+    sel.value = '';
+  }
+
+  function hostAssignLeadingBidder() {
+    const team = document.getElementById('hostBiddingTeamSelect')?.value;
+    const bid  = parseInt(document.getElementById('hostBidInput')?.value) || 0;
+    if (!team) { showToast('Choose a team first!', 'warning'); return; }
+    assignLeadingBidder(team, bid);
+  }
+
+  function renderHostTeamGrid(state) {
+    const grid = document.getElementById('hostTeamGrid');
+    if (!grid || !state || !state.teams) return;
+    grid.innerHTML = '';
+    const teams = state.teams;
+    const maxPurse = state.default_purse || state.total_purse || 6000;
+    const activeBidTeam = state.bidding_team || state.current_bid_team;
+
+    Object.entries(teams).forEach(([name, data]) => {
+      const spent = data.spent || 0;
+      const purse = (data.budget !== undefined) ? data.budget : ((data.purse !== undefined) ? data.purse : maxPurse);
+      const pct   = Math.max(0, Math.min(100, Math.round((purse / maxPurse) * 100)));
+      const count = (data.players || []).length + (data.player_retained ? 1 : 0) + (data.owner_retained ? 1 : 0) + (data.retained && !data.player_retained && !data.owner_retained ? 1 : 0);
+      const isBidding = (activeBidTeam === name);
+
+      const card = document.createElement('div');
+      card.className = 'team-quick-card';
+      card.dataset.team = name;
+      card.onclick = () => quickBidForTeam(name);
+      card.style.cssText = `
+        background: ${isBidding ? 'linear-gradient(145deg, rgba(16,185,129,0.25), rgba(15,23,42,0.95))' : 'rgba(11,17,32,0.85)'};
+        border: ${isBidding ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,0.12)'};
+        border-radius: 12px;
+        padding: 0.7rem 0.8rem;
+        cursor: pointer;
+        transition: all 0.15s ease;
+        box-shadow: ${isBidding ? '0 0 18px rgba(16,185,129,0.35)' : 'none'};
+        user-select: none;
+        touch-action: manipulation;
+      `;
+      card.innerHTML = `
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.3rem;">
+          <strong style="font-size:0.85rem; color:${isBidding ? '#34d399' : '#fff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</strong>
+          <span style="font-size:0.68rem; font-weight:800; background:rgba(255,255,255,0.08); padding:0.1rem 0.4rem; border-radius:9999px; color:#94a3b8; flex-shrink:0;">${count}P</span>
+        </div>
+        <div style="width:100%; height:4px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; margin-bottom:0.35rem;">
+          <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,#10b981,#34d399); border-radius:99px;"></div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
+          <span style="font-weight:900; color:#10b981;">₹${purse}</span>
+          <span class="team-bid-badge" style="background:${isBidding ? '#10b981' : 'rgba(56,189,248,0.15)'}; color:${isBidding ? '#000' : '#38bdf8'}; font-weight:800; padding:0.12rem 0.4rem; border-radius:6px; font-size:0.68rem;">
+            ${isBidding ? '🎯 LEADING' : '+ Tap to Bid'}
+          </span>
+        </div>
+      `;
+      grid.appendChild(card);
+    });
+  }
+
+  function updateHostPlayerDisplay(state) {
+    if (!state) return;
+
+    // Resolve active player name and metadata
+    const curName = (typeof state.current_player === 'string') ? state.current_player : (state.current_player?.name || '');
+    let details = state.player_details || {};
+    if ((!details.name || details.name !== curName) && curName && state.all_player_details && state.all_player_details[curName]) {
+      details = state.all_player_details[curName];
+    }
+    const hasPlayer = Boolean(curName);
+
+    const basePrice = details.base_price || details.reg_amount || state.min_bid || 50;
+    // CRITICAL: Reset bid to 0 when no active player, or to current_bid / base price when player is on block
+    const bid  = hasPlayer ? (state.current_bid || basePrice) : 0;
+    const team = state.bidding_team || state.current_bid_team || '';
+
+    // Player info
+    document.getElementById('hostPlayerName').textContent = hasPlayer ? (details.name || curName) : 'Waiting for Draw…';
+    document.getElementById('hostPlayerPhoto').src = hasPlayer ? (details.photo_url || '/static/images/avatar_allrounder.svg') : '/static/images/avatar_allrounder.svg';
+    document.getElementById('hostPlayerIdTag').textContent = hasPlayer ? ('ID: #' + (details.serial_no || details.serial || state.player_serials?.[curName] || '--')) : 'ID: #--';
+    document.getElementById('hostBatting').textContent  = hasPlayer ? (details.batting || details.batting_style || 'Right Hand') : '--';
+    document.getElementById('hostBowling').textContent  = hasPlayer ? (details.bowling || details.bowling_style || 'Right Arm') : '--';
+    document.getElementById('hostVillage').textContent  = hasPlayer ? (details.village || 'Saidapur') : '--';
+    document.getElementById('hostBasePrice').textContent = hasPlayer ? ('₹' + basePrice) : '₹50';
+
+    // Role badge
+    const roleBadge = document.getElementById('hostRoleBadge');
+    if (roleBadge) {
+      if (hasPlayer) {
+        const role = details.role || 'All-Rounder';
+        const roleLow = role.toLowerCase();
+        roleBadge.textContent = role;
+        roleBadge.className = 'role-badge ' + (
+          roleLow.includes('bat') ? 'badge-batsman' :
+          roleLow.includes('bowl') ? 'badge-bowler' :
+          roleLow.includes('keep') ? 'badge-keeper' : 'badge-allrounder'
+        );
+      } else {
+        roleBadge.textContent = 'Waiting for Draw';
+        roleBadge.className = 'role-badge badge-allrounder';
+      }
+    }
+
+    // Bid display
+    document.getElementById('hostBidDisplay').textContent = hasPlayer ? ('₹' + bid) : '₹0';
+    const bidInp = document.getElementById('hostBidInput');
+    if (bidInp && document.activeElement !== bidInp) {
+      bidInp.value = hasPlayer ? bid : basePrice;
+    }
+    document.getElementById('hostLeadingTeamTag').textContent = team ? ('🎯 ' + team) : (hasPlayer ? '⏳ No Bids Yet (Base: ₹' + basePrice + ')' : 'Click "Next Draw" to bring a player');
+    const sel = document.getElementById('hostBiddingTeamSelect');
+    if (sel && document.activeElement !== sel) {
+      sel.value = team;
+    }
+
+    // Round tag
+    document.getElementById('hostRoundTag').textContent = 'Round ' + (state.current_round || 1);
+
+    // Pool status
+    const pool = (state.auction_players || []).length;
+    const poolTag = document.getElementById('hostPoolStatusTag');
+    if (poolTag) {
+      poolTag.textContent = pool > 0 ? ('Pool: ' + pool + ' left') : (state.auction_started ? 'Pool Exhausted' : 'Not Started');
+    }
+
+    // Unsold tag
+    const unsold = (state.unsold_players || []).length;
+    const unsoldTag = document.getElementById('hostUnsoldTag');
+    if (unsoldTag) {
+      if (unsold > 0) { unsoldTag.textContent = 'Unsold: ' + unsold; unsoldTag.style.display = 'inline-flex'; }
+      else { unsoldTag.style.display = 'none'; }
+    }
+
+    // Round 2 button
+    const r2btn = document.getElementById('btnHostStartRound2');
+    if (r2btn) {
+      const showR2 = (pool === 0 && unsold > 0 && state.auction_started);
+      r2btn.style.display = showR2 ? 'flex' : 'none';
+    }
+
+    // Undo button
+    const undoBtn = document.getElementById('btnHostUndo');
+    if (undoBtn) {
+      undoBtn.disabled = !(state.history && state.history.length > 0);
+    }
+
+    // Update player dropdown
+    const dropdown = document.getElementById('hostPlayerDropdown');
+    if (dropdown && state.auction_players) {
+      const current = dropdown.value;
+      dropdown.innerHTML = '<option value="">-- Choose Player to Bring to Block --</option>';
+      state.auction_players.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p; opt.textContent = p;
+        if (p === current) opt.selected = true;
+        dropdown.appendChild(opt);
+      });
+    }
+
+    // KPI stats
+    const sq = document.getElementById('hostStatQueue');
+    const su = document.getElementById('hostStatUnsold');
+    const pc = document.getElementById('hostPoolCount');
+    if (sq) sq.textContent = pool;
+    if (su) su.textContent = unsold;
+    if (pc) pc.textContent = pool;
+
+    // Retained count
+    const retained = state.retained_players || [];
+    const rc = document.getElementById('hostRetainedCount');
+    if (rc) rc.textContent = retained.length;
+
+    // Team grid
+    renderHostTeamGrid(state);
+
+    // Auth: show/hide controls
+    const pin = getAdminPin();
+    const ctrlBox   = document.getElementById('hostControlsBox');
+    const unlockBox  = document.getElementById('hostUnlockBox');
+    if (pin) {
+      if (ctrlBox)   ctrlBox.style.display   = 'block';
+      if (unlockBox) unlockBox.style.display  = 'none';
+    } else {
+      if (ctrlBox)   ctrlBox.style.display   = 'none';
+      if (unlockBox) unlockBox.style.display  = 'block';
+    }
+  }
+
+  async function refreshHostConsole() {
+    try {
+      const res = await fetch('/api/auction/state');
+      if (!res.ok) return;
+      const data = await res.json();
+      const state = data.state || data;
+      updateHostPlayerDisplay(state);
+    } catch(e) { console.warn('Host console refresh error:', e); }
+  }
+
+  function showToast(message, type = 'info') {
+    let container = document.getElementById('toastNotificationContainer');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'toastNotificationContainer';
+      container.style.cssText = 'position: fixed; top: 20px; right: 20px; z-index: 999999; display: flex; flex-direction: column; gap: 8px; max-width: 90vw; pointer-events: none;';
+      document.body.appendChild(container);
+    }
+    const toast = document.createElement('div');
+    const colors = {
+      success: { bg: 'linear-gradient(135deg, #059669, #10b981)', border: '#34d399', text: '#ffffff' },
+      error: { bg: 'linear-gradient(135deg, #b91c1c, #ef4444)', border: '#f87171', text: '#ffffff' },
+      warning: { bg: 'linear-gradient(135deg, #d97706, #f59e0b)', border: '#fbbf24', text: '#000000' },
+      info: { bg: 'linear-gradient(135deg, #0284c7, #38bdf8)', border: '#7dd3fc', text: '#000000' }
+    };
+    const c = colors[type] || colors.info;
+    toast.style.cssText = `background: ${c.bg}; color: ${c.text}; border: 1px solid ${c.border}; padding: 0.75rem 1.1rem; border-radius: 12px; font-weight: 800; font-size: 0.88rem; box-shadow: 0 8px 24px rgba(0,0,0,0.4); pointer-events: auto; display: flex; align-items: center; gap: 0.5rem;`;
+    toast.innerHTML = `<span>${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.style.opacity = '0';
+      toast.style.transition = 'opacity 0.3s ease';
+      setTimeout(() => toast.remove(), 300);
+    }, 3000);
+  }
+
+  function openPinModal() {
+    const pin = prompt('Enter 4-Digit Organizer PIN:');
+    if (!pin) return;
+    fetch('/api/auction/verify-pin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pin: pin.trim() })
+    }).then(r => r.json()).then(res => {
+      if (res.valid || res.success) {
+        sessionStorage.setItem('kpl_auction_pin', pin.trim());
+        sessionStorage.setItem('spl_auction_pin', pin.trim());
+        document.body.classList.add('admin-unlocked');
+        showToast('Host controls unlocked!', 'success');
+        refreshHostConsole();
+      } else {
+        showToast('Invalid PIN entered.', 'error');
+      }
+    }).catch(e => showToast('Network error verifying PIN', 'error'));
+  }
+
+  // --- AUTH & PIN ---
+  function checkSessionAuth() {
+    const pin = getAdminPin();
+    if (pin) {
+      document.body.classList.add('admin-unlocked');
+    } else {
+      document.body.classList.remove('admin-unlocked');
+    }
+  }
+
+  async function handleAdminLogin(e) {
     e.preventDefault();
+    const pin = document.getElementById('adminPinInput').value.trim();
+    const err = document.getElementById('adminPinError');
+    err.style.display = 'none';
+
+    try {
+      const res = await fetch('/api/auction/verify-pin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.valid || data.success) {
+        sessionStorage.setItem('kpl_auction_pin', pin);
+        sessionStorage.setItem('spl_auction_pin', pin);
+        document.body.classList.add('admin-unlocked');
+      } else {
+        err.innerText = '❌ Invalid PIN. Please try again.';
+        err.style.display = 'block';
+      }
+    } catch(errEx) {
+      err.innerText = 'Network error verifying PIN.';
+      err.style.display = 'block';
+    }
+  }
+
+  function lockAdminSession() {
+    sessionStorage.removeItem('kpl_auction_pin');
+    sessionStorage.removeItem('spl_auction_pin');
+    document.body.classList.remove('admin-unlocked');
+    document.getElementById('adminPinInput').value = '';
+  }
+
+  function forgotPinPrompt() {
+    const key = prompt('Enter Organizer Master Recovery Key:');
+    if (!key) return;
+    if (key.trim() === 'KPL2026_MASTER' || key.trim() === 'KPL2026') {
+      const np = prompt('Enter new desired Organizer PIN:');
+      if (np && np.trim()) {
+        fetch('/api/admin/emergency-reset-pin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ recovery_key: key.trim(), new_pin: np.trim() })
+        }).then(r => r.json()).then(res => {
+          if (res.success) {
+            alert('PIN reset successful! New PIN: ' + np.trim());
+            sessionStorage.setItem('kpl_auction_pin', np.trim());
+            sessionStorage.setItem('spl_auction_pin', np.trim());
+            location.reload();
+          } else {
+            alert(res.message || 'Reset failed.');
+          }
+        });
+      }
+    } else {
+      alert('Invalid recovery key.');
+    }
+  }
+
+  // --- TAB 1: UTR COPY & VERIFICATION ACTIONS ---
+  function copyUtr(utrText, btn) {
+    navigator.clipboard.writeText(utrText).then(() => {
+      const original = btn.innerText;
+      btn.innerText = '✓ Copied';
+      btn.style.background = '#10b981';
+      btn.style.color = '#000';
+      setTimeout(() => {
+        btn.innerText = original;
+        btn.style.background = '';
+        btn.style.color = '';
+      }, 1500);
+    }).catch(err => {
+      prompt("Copy UTR Number manually:", utrText);
+    });
+  }
+
+  async function verifyPlayerPayment(playerName) {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    if (!confirm(`Approve payment for "${playerName}" and officially add to Live Auction pool?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/verify-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ name: playerName, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        sessionStorage.setItem('admin_reg_subtab', 'queue');
+        alert(data.message || 'Player verified and added to live auction!');
+        location.reload();
+      } else {
+        alert(data.message || 'Verification failed.');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  async function rejectPlayerPayment(playerName) {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const reason = prompt(`Reject payment for "${playerName}"?\nEnter reason (e.g. Invalid UTR / Not received in bank):`, 'Invalid UTR reference');
+    if (reason === null) return;
+
+    try {
+      const res = await fetch('/api/admin/reject-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ name: playerName, reason: reason, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        sessionStorage.setItem('admin_reg_subtab', 'queue');
+        alert(data.message || 'Payment marked as rejected.');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to reject payment.');
+      }
+    } catch (err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  async function deleteSinglePlayer(playerName) {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+    if (!confirm(`Are you sure you want to permanently delete player "${playerName}"?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/delete-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ player: playerName, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        sessionStorage.setItem('admin_reg_subtab', 'queue');
+        alert(data.message || 'Player deleted successfully!');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to delete player.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  // Mobile Filter Chips
+  function filterMobileAdmin(status) {
+    document.querySelectorAll('.kpi-chip').forEach(c => c.classList.remove('active'));
+    if (status === 'all') document.getElementById('chipAll')?.classList.add('active');
+    if (status === 'pending') document.getElementById('chipPending')?.classList.add('active');
+    if (status === 'approved') document.getElementById('chipApproved')?.classList.add('active');
+    if (status === 'rejected') document.getElementById('chipRejected')?.classList.add('active');
+
+    const cards = document.querySelectorAll('.admin-player-card');
+    cards.forEach(card => {
+      const cardStatus = card.getAttribute('data-status');
+      if (status === 'all' || cardStatus === status) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function applyMobileAdminSearch() {
+    const q = (document.getElementById('adminPlayerSearch')?.value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.admin-player-card');
+    cards.forEach(card => {
+      const searchData = card.getAttribute('data-search') || '';
+      if (!q || searchData.includes(q)) {
+        card.style.display = 'block';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  function updateMobileVerificationCounters() {
+    const cards = document.querySelectorAll('.admin-player-card');
+    let total = cards.length;
+    let pending = 0;
+    let approved = 0;
+    let rejected = 0;
+
+    cards.forEach(c => {
+      const s = c.getAttribute('data-status');
+      if (s === 'pending') pending++;
+      else if (s === 'approved') approved++;
+      else if (s === 'rejected') rejected++;
+    });
+
+    const elTotal = document.getElementById('countAll');
+    const elPending = document.getElementById('countPending');
+    const elApproved = document.getElementById('countApproved');
+    const elRejected = document.getElementById('countRejected');
+    const elPill = document.getElementById('pillCountQueue');
+
+    if (elTotal) elTotal.innerText = total;
+    if (elPending) elPending.innerText = pending;
+    if (elApproved) elApproved.innerText = approved;
+    if (elRejected) elRejected.innerText = rejected;
+    if (elPill) elPill.innerText = total;
+  }
+
+  // --- TAB 1: REGISTRATION & UPI CONFIG SUBMIT ---
+  async function handleRegistrationConfigSubmit(e) {
+    e.preventDefault();
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
     const payload = {
-      tournament_name: document.getElementById('cfgTournamentName').value,
-      upi_id: document.getElementById('cfgUpiId').value,
-      payee_name: document.getElementById('cfgPayeeName').value,
-      registration_fee: parseInt(document.getElementById('cfgRegFee').value),
-      default_purse: parseInt(document.getElementById('cfgPurse').value),
-      retention_price: parseInt(document.getElementById('cfgRetentionPrice').value)
+      tournament_name: document.getElementById('cfgTournamentName').value.trim(),
+      registration_fee: parseInt(document.getElementById('cfgRegFee').value) || 200,
+      upi_id: document.getElementById('cfgUpiId').value.trim(),
+      payee_name: document.getElementById('cfgPayeeName').value.trim(),
+      pin: pin
     };
 
     try {
       const res = await fetch('/api/admin/config', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
         body: JSON.stringify(payload)
       });
       const data = await res.json();
       if (data.success) {
-        alert('Tournament Settings Saved Successfully!');
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        sessionStorage.setItem('admin_reg_subtab', 'fee');
+        alert('Tournament Fee & UPI settings saved successfully!');
         location.reload();
+      } else {
+        alert(data.message || 'Failed to save settings.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  async function confirmClearAllPlayers() {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const typed = prompt("⚠️ DANGER: This will delete ALL registered players and reset tournament to fresh state!\n\nType 'RESET' to confirm:");
+    if (!typed || typed.toUpperCase() !== 'RESET') {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/clear-all-players', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        alert('All player registrations and auction records wiped clean.');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to clear players.');
       }
     } catch (err) {
-      alert('Error saving settings: ' + err.message);
+      alert("Error: " + err.message);
+    }
+  }
+
+  // --- TAB 2: TEAM SETUP & DYNAMIC INPUTS ---
+  function renderTeamNameInputs() {
+    const count = parseInt(document.getElementById('setupTeamCount').value) || 4;
+    const container = document.getElementById('teamNamesContainer');
+    container.innerHTML = '';
+
+    const defaultNames = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans", "Team 5", "Team 6", "Team 7", "Team 8"];
+    for (let i = 0; i < count; i++) {
+      const val = CURRENT_TEAMS[i] || defaultNames[i] || `Team ${i + 1}`;
+      const div = document.createElement('div');
+      div.className = 'form-group';
+      div.style.marginBottom = '0';
+      div.innerHTML = `
+        <label class="form-label" style="font-size: 0.78rem;">Team ${i + 1} Name</label>
+        <input type="text" name="team_name_${i}" class="form-control team-name-input" value="${val}" required>
+      `;
+      container.appendChild(div);
+    }
+  }
+
+  document.getElementById('teamSetupForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const teamInputs = document.querySelectorAll('.team-name-input');
+    const teams = Array.from(teamInputs).map(inp => inp.value.trim()).filter(Boolean);
+
+    const payload = {
+      team_count: teams.length,
+      teams: teams,
+      total_purse: parseInt(document.getElementById('setupPurse').value) || 6000,
+      max_players: parseInt(document.getElementById('setupMinPlayers').value) || 10,
+      min_bid: parseInt(document.getElementById('setupMinBid').value) || 50,
+      retention_price: parseInt(document.getElementById('setupPlayerRetentionPrice').value) || 500,
+      owner_retention_price: parseInt(document.getElementById('setupOwnerRetentionPrice').value) || 100,
+      pin: pin
+    };
+
+    try {
+      const res = await fetch('/api/setup-teams', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat2');
+        alert('Franchise teams & rules saved successfully!');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to save setup.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
     }
   });
 
-  async function auctionNow(name) {
-    if (!confirm(`Bring ${name} to the auction podium right now?`)) return;
+  // --- TAB 3: RETENTIONS (PERSIST TAB ON ACTION) ---
+  document.getElementById('retentionForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const team = document.getElementById('retentionTeamSelect').value;
+    const type = document.getElementById('retentionTypeSelect').value;
+    const person = document.getElementById('retentionPlayerSelect').value;
+
+    if (!team || !person) return alert('Please select both a team and a person.');
+
+    try {
+      const res = await fetch('/api/retention/retain', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ team: team, type: type, player: person, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat3');
+        alert(`Successfully retained ${person} for ${team}!`);
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to retain player.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  });
+
+  async function releaseRetention(team, type) {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+    if (!confirm(`Release ${type} retention for ${team}? Budget will be restored.`)) return;
+
+    try {
+      const res = await fetch('/api/retention/release', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ team: team, type: type, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat3');
+        alert('Retention released successfully!');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to release retention.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  // --- TAB 4: LIVE AUCTION CONTROLS & PLAYER POOL MANAGEMENT ---
+  function openQuickAddModal() {
+    document.getElementById('quickAddModal').style.display = 'flex';
+    document.getElementById('quickName').focus();
+  }
+
+  function closeQuickAddModal() {
+    document.getElementById('quickAddModal').style.display = 'none';
+    document.getElementById('quickAddForm').reset();
+  }
+
+  async function handleQuickAddSubmit(e) {
+    e.preventDefault();
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const btn = document.getElementById('btnQuickSubmit');
+    btn.disabled = true;
+    btn.innerText = '⚡ Adding Player...';
+
+    const payload = {
+      name: document.getElementById('quickName').value.trim(),
+      role: document.getElementById('quickRole').value,
+      village: document.getElementById('quickVillage').value.trim(),
+      phone: document.getElementById('quickPhone').value.trim(),
+      pin: pin
+    };
+
+    try {
+      const res = await fetch('/api/admin/quick-add-player', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat4');
+        sessionStorage.setItem('admin_auction_subtab', 'pool');
+        alert(data.message || 'Player added directly to Live Auction!');
+        closeQuickAddModal();
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to add player.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    } finally {
+      btn.disabled = false;
+      btn.innerText = '⚡ Add to Live Auction Pool';
+    }
+  }
+
+  async function removeFromAuction(playerName) {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+    if (!confirm(`Remove "${playerName}" from the live auction queue?`)) return;
+
+    try {
+      const res = await fetch('/api/admin/remove-from-auction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ player: playerName, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat4');
+        sessionStorage.setItem('admin_auction_subtab', 'host');
+        showToast(data.message || 'Player removed from auction.', 'info');
+        refreshHostConsole();
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(data.message || 'Failed to remove player.', 'error');
+      }
+    } catch(err) {
+      showToast('Error: ' + err.message, 'error');
+    }
+  }
+
+  async function bringPlayerToBlock(playerName) {
+    const pin = getAdminPin();
+    if (!pin) { showToast('Organizer PIN required.', 'warning'); openPinModal(); return; }
+
     try {
       const res = await fetch('/api/auction/select-player', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ player: name })
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ player: playerName, pin: pin })
       });
       const data = await res.json();
       if (data.success) {
-        window.location.href = '/auction';
+        showToast(`"${playerName}" is now active on the auction block!`, 'success');
+        switchAuctionSubTab('host');
+        refreshHostConsole();
       } else {
-        alert(data.message);
+        showToast(data.message || 'Failed to select player.', 'error');
       }
-    } catch (err) {
-      alert(err.message);
+    } catch(err) {
+      showToast('Error: ' + err.message, 'error');
     }
   }
 
-  async function verifyPayment(name) {
+  async function adminToggleAuctionStarted() {
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const btn = document.getElementById('btnAuctionToggle');
+    const isStarted = btn.classList.contains('touch-btn-secondary');
+    const endpoint = isStarted ? '/api/auction/pause' : '/api/auction/start';
+
     try {
-      const res = await fetch('/api/admin/verify-player', {
+      const res = await fetch(endpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name })
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
       });
       const data = await res.json();
-      if (data.success) location.reload();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat4');
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to toggle live auction status.');
+      }
     } catch (err) {
-      alert(err.message);
+      alert('Error: ' + err.message);
     }
   }
 
-  async function resetAuctionState() {
-    if (!confirm('Are you SURE you want to reset the auction? Squads and bids will be reset to start clean.')) return;
-    try {
-      const res = await fetch('/api/admin/reset-auction', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        alert('Auction reset successfully!');
-        location.reload();
-      }
-    } catch (err) {
-      alert(err.message);
+  function refreshAuctionIframe() {
+    const iframe = document.getElementById('hostAuctionIframe');
+    if (iframe) {
+      iframe.src = '/auction?embed=1&t=' + Date.now();
     }
   }
+
+  function copyViewerStreamLink() {
+    const url = window.location.origin + '/view';
+    navigator.clipboard.writeText(url).then(() => {
+      alert('Spectator stream link copied to clipboard:\n' + url + '\n\nYou can share this with players & viewers!');
+    }).catch(() => {
+      prompt('Spectator Live Stream Link:', url);
+    });
+  }
+
+  function applyAuctionPlayerSearch() {
+    const q = (document.getElementById('auctionPlayerSearch')?.value || '').toLowerCase().trim();
+    const cards = document.querySelectorAll('.auction-roster-card');
+    cards.forEach(card => {
+      const searchData = card.getAttribute('data-search') || '';
+      if (!q || searchData.includes(q)) {
+        card.style.display = 'flex';
+      } else {
+        card.style.display = 'none';
+      }
+    });
+  }
+
+  // --- TAB 5: PIN & RESET ---
+  async function handlePinUpdateSubmit(e) {
+    e.preventDefault();
+    const pin = getAdminPin();
+    if (!pin) return alert('Organizer PIN required.');
+
+    const p1 = document.getElementById('newAdminPin').value.trim();
+    const p2 = document.getElementById('confirmAdminPin').value.trim();
+    if (p1 !== p2) return alert('PIN confirmation does not match.');
+
+    try {
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ admin_pin: p1, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('kpl_auction_pin', p1);
+        sessionStorage.setItem('spl_auction_pin', p1);
+        sessionStorage.setItem('admin_active_tab', 'cat5');
+        alert('Organizer PIN updated successfully! New PIN: ' + p1);
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to update PIN.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  async function confirmResetAuction() {
+    const pin = getAdminPin();
+    if (!pin) { showToast('Organizer PIN required.', 'warning'); openPinModal(); return; }
+
+    const typed = prompt("⚠️ WARNING: This will reset the live auction completely!\n\n• Team budgets will be restored to starting purse\n• All sold player records will be cleared\n• Full verified player pool will be restocked for a fresh start\n• Auction round will reset to Round 1\n\nType 'RESET' to confirm:");
+    if (!typed || typed.trim().toUpperCase() !== 'RESET') {
+      return;
+    }
+
+    try {
+      const res = await fetch('/api/admin/reset-auction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat4');
+        alert('🎉 ' + (data.message || 'Live auction has been reset for a fresh tournament start!'));
+        location.reload();
+      } else {
+        alert(data.message || 'Failed to reset auction.');
+      }
+    } catch(err) {
+      alert('Error: ' + err.message);
+    }
+  }
+
+  // Initializers
+  checkSessionAuth();
+  renderTeamNameInputs();
+  setTimeout(updateMobileVerificationCounters, 150);
+
+  // Restore Active Category Tab (Prevents unwanted jump to Tab 1!)
+  const hashTab = window.location.hash ? window.location.hash.replace('#', '') : null;
+  const savedTab = hashTab || sessionStorage.getItem('admin_active_tab') || 'cat1';
+  if (['cat1', 'cat2', 'cat3', 'cat4', 'cat5'].includes(savedTab)) {
+    switchAdminTab(savedTab);
+  }
+
+  // Restore Active Sub-Tabs
+  const savedRegSubTab = sessionStorage.getItem('admin_reg_subtab') || 'queue';
+  if (['queue', 'fee'].includes(savedRegSubTab)) {
+    switchRegSubTab(savedRegSubTab);
+  }
+
+  const savedAuctionSubTab = sessionStorage.getItem('admin_auction_subtab') || 'host';
+  if (['host', 'watch'].includes(savedAuctionSubTab)) {
+    switchAuctionSubTab(savedAuctionSubTab);
+  }
+
+  // Kick-off the host console data load
+  if (savedTab === 'cat4') {
+    refreshHostConsole();
+  }
+
+  // Poll host console every 4s when admin is on cat4
+  setInterval(() => {
+    const activeTab = sessionStorage.getItem('admin_active_tab') || 'cat1';
+    const auctionSubTab = sessionStorage.getItem('admin_auction_subtab') || 'host';
+    if (activeTab === 'cat4' && auctionSubTab === 'host') {
+      refreshHostConsole();
+    }
+  }, 4000);
+
+  // startRound2 alias
+  window.startRound2 = function() {
+    if (!confirm('Start Round 2? All unsold players will re-enter the auction pool.')) return;
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    fetch('/api/auction/start-round2', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+      body: JSON.stringify({ pin })
+    }).then(r => r.json()).then(d => {
+      if (d.success) { showToast('Round 2 started!', 'success'); refreshHostConsole(); location.reload(); }
+      else showToast(d.message || 'Failed to start round 2', 'error');
+    }).catch(e => showToast('Network error', 'error'));
+  };
+
+  // drawNextPlayer — draws random from pool and sets it as current player
+  window.drawNextPlayer = async function() {
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    if (!pin) { showToast('Enter PIN to host auction', 'warning'); openPinModal(); return; }
+    try {
+      const res = await fetch('/api/auction/draw', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      if (data.success || data.player) {
+        showToast('Player drawn: ' + (data.player?.name || data.player), 'success');
+        document.getElementById('hostBidInput').value = data.player?.base_price || 50;
+        document.getElementById('hostBiddingTeamSelect').value = '';
+        refreshHostConsole();
+      } else showToast(data.message || 'No players left in pool', 'warning');
+    } catch(e) { showToast('Network error', 'error'); }
+  };
+
+  // confirmSellPlayer — sells current player to the currently leading bidder
+  window.confirmSellPlayer = async function() {
+    const team = document.getElementById('hostBiddingTeamSelect')?.value;
+    const bid  = parseInt(document.getElementById('hostBidInput')?.value) || 0;
+    if (!team) { showToast('Assign a team bidder first!', 'warning'); return; }
+    if (!bid)  { showToast('Enter bid amount!', 'warning'); return; }
+    if (!confirm(`SOLD! Assign current player to ${team} for ₹${bid}?`)) return;
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    try {
+      const res = await fetch('/api/auction/sold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ team, price: bid, pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('SOLD! ' + team + ' — ₹' + bid, 'success');
+        document.getElementById('hostBidInput').value = 50;
+        document.getElementById('hostBiddingTeamSelect').value = '';
+        document.getElementById('hostLeadingTeamTag').textContent = 'No Bids Yet';
+        refreshHostConsole();
+        setTimeout(() => location.reload(), 2500);
+      } else showToast(data.message || 'Failed to record sale', 'error');
+    } catch(e) { showToast('Network error', 'error'); }
+  };
+
+  // markUnsold — marks current player as unsold (permanent or round 2)
+  window.markUnsold = async function(permanent) {
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    const label = permanent ? 'permanently unsold' : 'unsold (queued for Round 2)';
+    if (!confirm(`Mark current player as ${label}?`)) return;
+    try {
+      const res = await fetch('/api/auction/unsold', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ permanent, pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(permanent ? 'Player permanently unsold.' : 'Player moved to Round 2 pool.', 'warning');
+        document.getElementById('hostBidInput').value = 50;
+        document.getElementById('hostBiddingTeamSelect').value = '';
+        refreshHostConsole();
+      } else showToast(data.message || 'Failed', 'error');
+    } catch(e) { showToast('Network error', 'error'); }
+  };
+
+  // undoLastAction — reverts the last sold/unsold action
+  window.undoLastAction = async function() {
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    if (!confirm('Undo the last auction action?')) return;
+    try {
+      const res = await fetch('/api/auction/undo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Last action undone!', 'success');
+        refreshHostConsole();
+      } else showToast(data.message || 'Nothing to undo', 'warning');
+    } catch(e) { showToast('Network error', 'error'); }
+  };
+
+  // assignLeadingBidder — sets the current bid + team without selling
+  window.assignLeadingBidder = async function(team, bid) {
+    const pin = sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin');
+    try {
+      const res = await fetch('/api/auction/set-bid', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ team, bid, pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        document.getElementById('hostBidDisplay').textContent = '₹' + bid;
+        document.getElementById('hostLeadingTeamTag').textContent = team;
+        showToast(team + ' leads with ₹' + bid, 'info');
+        refreshHostConsole();
+      } else showToast(data.message || 'Failed to update bid', 'error');
+    } catch(e) { showToast('Network error', 'error'); }
+  };
+
+  // openRetainedModal — shows retained players list
+  window.openRetainedModal = function() {
+    const btn = document.getElementById('btnHostRetained');
+    if (btn) btn.click(); // Fallback to existing retained modal if present
+    // Show simple alert as fallback
+    fetch('/api/auction/state').then(r=>r.json()).then(data => {
+      const state = data.state || data;
+      const retained = state.retained_players || [];
+      if (retained.length === 0) { showToast('No players retained yet.', 'info'); return; }
+      alert('Retained Players:\n' + retained.map((p,i) => (i+1)+'. '+p).join('\n'));
+    });
+  };
 </script>
 {% endblock %}

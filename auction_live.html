@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="/static/css/auction.css">
 <style>
   {% if viewer_mode %}
-  .control-deck, .admin-only {
+  .control-deck, .admin-only, #auctioneerAuthBox, #btnHostAuctionToggle {
     display: none !important;
   }
   .viewer-banner {
@@ -23,6 +23,41 @@
     gap: 0.5rem;
   }
   {% endif %}
+
+  /* Mobile-first optimizations for Viewers interface */
+  @media (max-width: 768px) {
+    .page-container {
+      padding: 0.5rem !important;
+    }
+    .auction-header-bar {
+      flex-direction: column;
+      align-items: flex-start !important;
+      gap: 0.5rem;
+    }
+    .auction-stage {
+      grid-template-columns: 1fr !important;
+      gap: 1rem;
+    }
+    .player-main-name {
+      font-size: 1.65rem !important;
+    }
+    .photo-frame {
+      width: 140px !important;
+      height: 140px !important;
+    }
+    .bid-amount {
+      font-size: 2.5rem !important;
+    }
+    .bid-odometer-box {
+      padding: 1.25rem 1rem !important;
+    }
+    .team-purse-sidebar {
+      margin-top: 1rem;
+    }
+    .team-card-auction {
+      padding: 0.75rem 1rem !important;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -30,7 +65,7 @@
 {% if viewer_mode %}
 <div class="viewer-banner">
   <span style="width: 8px; height: 8px; background: #fff; border-radius: 50%; display: inline-block; animation: pulse 1.5s infinite;"></span>
-  SPECTATOR LIVE MODE • VIEWING IN REAL TIME
+  SPECTATOR LIVE MODE • MOBILE LIVE STREAM
 </div>
 {% endif %}
 
@@ -40,174 +75,283 @@
       <span>🏏</span> Live Auction Arena
     </h1>
     <p style="color: var(--text-muted); font-size: 0.9rem;">
-      {% if viewer_mode %}Live Watch Stream with Player Photos & Roles{% else %}Official Bidding Console with Player Photos & Roles{% endif %}
+      {% if viewer_mode %}Mobile Live Stream with Player Photos & Real-time Bids{% else %}Official Bidding Console with Player Photos & Roles{% endif %}
     </p>
   </div>
-  <div style="display: flex; gap: 0.5rem;">
+  <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
     <span class="round-tag" id="currentRoundTag">Round 1</span>
+    <button type="button" class="btn btn-warning" onclick="openRetainedModal()" style="font-weight: 800; font-size: 0.82rem; padding: 0.35rem 0.75rem; display: inline-flex; align-items: center; gap: 0.4rem; background: rgba(245,158,11,0.2); border: 1px solid var(--primary-gold); color: #fff;">⭐ Retained Players (<span id="retainedCountBadge">0</span>)</button>
     <span class="round-tag" id="poolStatusTag" style="background: rgba(16, 185, 129, 0.15); color: var(--pitch-green); border-color: rgba(16, 185, 129, 0.4);">
       Connecting...
     </span>
+    {% if not viewer_mode %}
+    <button type="button" id="btnHostAuctionToggle" onclick="toggleAuctionStarted()" class="btn btn-success" style="display: none; font-size: 0.8rem; padding: 0.3rem 0.65rem;">
+      🚀 Start Auction
+    </button>
+    <div id="auctioneerAuthBox">
+      <button type="button" id="btnUnlockAuctioneer" onclick="openPinModal()" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.3rem 0.65rem; border-color: rgba(245, 158, 11, 0.5); color: var(--primary-gold); display: flex; align-items: center; gap: 0.35rem;">
+        <span>🔒</span> Host Controls
+      </button>
+    </div>
+    {% endif %}
   </div>
 </div>
 
 <div class="auction-stage">
   <!-- Center Main Arena -->
   <div>
-    <!-- Active Player Podium -->
-    <div id="activePlayerPodium" class="player-podium">
-      <div class="podium-header">
-        <span class="pool-status">STATUS: <strong style="color: var(--pitch-green);">UNDER THE HAMMER</strong></span>
-        <span class="pool-status" id="podiumMetaRegAmount" style="color: var(--primary-gold); font-weight: 700;">Fee Verified</span>
+    <!-- WAITING / NOT STARTED SCREEN (FOR SPECTATORS) -->
+    <div id="auctionNotStartedScreen" class="glass-card" style="display: none; text-align: center; padding: 3.5rem 1.5rem; max-width: 680px; margin: 1.5rem auto 2.5rem; border: 2px solid var(--primary-gold); box-shadow: 0 0 40px rgba(245, 158, 11, 0.25);">
+      <div style="font-size: 3.5rem; margin-bottom: 0.75rem;">🏏</div>
+      <div style="display: inline-block; background: rgba(245, 158, 11, 0.15); color: var(--primary-gold); border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.35rem 1rem; border-radius: 9999px; font-weight: 800; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 1rem;">
+        Kunsi Premier League (KPL 2026)
       </div>
+      <h2 style="font-size: 1.85rem; font-weight: 900; color: #fff; margin-bottom: 0.75rem;">Live Auction Has Not Begun</h2>
+      <p style="color: var(--text-muted); font-size: 1rem; line-height: 1.6; max-width: 500px; margin: 0 auto 1.5rem;">
+        The tournament auctioneer has not yet started the live bidding stream. Please stay on this page; player draws will automatically appear the moment the auction begins.
+      </p>
+      <div style="display: flex; gap: 0.5rem; align-items: center; justify-content: center; color: var(--primary-gold); font-size: 0.9rem; font-weight: 700;">
+        <span style="display: inline-block; width: 10px; height: 10px; background: var(--primary-gold); border-radius: 50%; animation: pulse 1s infinite;"></span>
+        Waiting for Auctioneer to begin...
+      </div>
+    </div>
 
-      <!-- Player Photo with Role Badge -->
-      <div class="player-photo-arena">
+    <!-- Active Player Card -->
+    <div class="glass-card player-active-card" id="activePlayerCard">
+      <!-- Player Showcase -->
+      <div class="player-showcase">
         <div class="photo-frame">
-          <img id="podiumPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Auction Player">
+          <img id="playerPhoto" src="/static/images/avatar_allrounder.svg" alt="Active Player">
         </div>
-        <div id="podiumPlayerRole" class="badge role-tag-floater badge-allrounder">
-          All-Rounder
+        <div class="player-meta">
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span class="role-badge" id="playerRoleBadge">All-Rounder</span>
+            <span class="player-id-tag" id="playerIdTag">ID: #--</span>
+          </div>
+          <h2 class="player-main-name" id="playerName">Waiting for Draw...</h2>
+          <div class="stats-row">
+            <div class="stat-item">
+              <span class="stat-label">Batting Style</span>
+              <span class="stat-val" id="playerBatting">Right Hand Bat</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Bowling Style</span>
+              <span class="stat-val" id="playerBowling">Right Arm Medium</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Village / Town</span>
+              <span class="stat-val" id="playerVillage">Saidapur</span>
+            </div>
+            <div class="stat-item">
+              <span class="stat-label">Base Price</span>
+              <span class="stat-val" id="playerBasePrice" style="color: var(--pitch-green); font-weight: 800;">₹50</span>
+            </div>
+          </div>
         </div>
-      </div>
-
-      <!-- Player Name & Serial -->
-      <div class="player-name-banner">
-        <span id="podiumPlayerSerial" class="player-serial-tag">#1</span>
-        <span id="podiumPlayerName" class="player-main-name">Loading Player...</span>
-      </div>
-
-      <!-- Player Meta Attributes -->
-      <div class="player-meta-row">
-        <div class="meta-chip">Bat: <strong id="podiumMetaBatting">Right Hand</strong></div>
-        <div class="meta-chip">Bowl: <strong id="podiumMetaBowling">Right Arm Fast</strong></div>
-        <div class="meta-chip">Base Price: <strong>₹50</strong></div>
       </div>
 
       <!-- Live Bidding Odometer -->
       <div class="bid-odometer-box">
         <div class="bid-label">Current Highest Bid</div>
-        <div id="currentBidDisplay" class="bid-amount" data-player="">₹0</div>
-        <div id="biddingTeamBanner" class="bidding-team-banner">Select a team to start bidding</div>
+        <div class="bid-amount" id="bidOdometer">₹0</div>
+        <div>
+          <span class="bid-team-tag" id="leadingTeamTag">No Bids Yet</span>
+        </div>
       </div>
 
+      <!-- Controls Deck (Only visible in Host Mode) -->
       {% if not viewer_mode %}
-      <!-- Bidding Controls Deck (Auctioneer Only) -->
-      <div class="control-deck">
-        <div class="team-bid-row">
-          <select id="bidTeamSelect" class="form-control" style="font-size: 1.05rem; font-weight: 700; background: rgba(30, 41, 59, 0.9);">
-            <option value="">-- Select Bidding Team --</option>
-          </select>
-          <div style="display: flex; gap: 0.5rem;">
-            <button type="button" class="btn btn-secondary" onclick="currentBidAmount = Math.max(0, currentBidAmount - 50); updateBidDisplay();">-₹50</button>
+      <div class="control-deck admin-only" id="auctioneerControls">
+
+        <!-- 1-TAP FRANCHISE QUICK BIDDING GRID -->
+        <div style="margin-bottom: 1.1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.45rem;">
+            <span style="font-size:0.82rem; font-weight:800; color:var(--primary-gold); text-transform:uppercase; letter-spacing:0.05em;">⚡ 1-Tap Team Bid:</span>
+            <span style="font-size:0.75rem; color:#94a3b8;">Tap team to increment & lead</span>
+          </div>
+          <div id="quickTeamGrid" style="display:grid; grid-template-columns:repeat(2, 1fr); gap:0.5rem;">
+            <!-- Dynamically populated 1-tap team bidding cards -->
           </div>
         </div>
 
-        <div class="increments-grid">
-          <button type="button" class="btn-inc" data-inc="50">+₹50</button>
-          <button type="button" class="btn-inc" data-inc="100">+₹100</button>
-          <button type="button" class="btn-inc" data-inc="200">+₹200</button>
-          <button type="button" class="btn-inc" data-inc="500">+₹500</button>
+        <!-- Increment Pills & Manual Adjuster -->
+        <div style="background:rgba(15,23,42,0.6); border:1px solid rgba(255,255,255,0.08); border-radius:10px; padding:0.65rem 0.75rem; margin-bottom:1rem;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.4rem;">
+            <span style="font-size:0.75rem; font-weight:700; color:#cbd5e1;">Active Increment:</span>
+          </div>
+          <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap;">
+            <button type="button" class="inc-pill-btn active-inc" data-amt="50" onclick="setActiveIncrement(50)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.82rem; font-weight:800; border-radius:8px; cursor:pointer; background:#38bdf8; color:#0b1120; border:none;">+50</button>
+            <button type="button" class="inc-pill-btn" data-amt="100" onclick="setActiveIncrement(100)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.82rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+100</button>
+            <button type="button" class="inc-pill-btn" data-amt="200" onclick="setActiveIncrement(200)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.82rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+200</button>
+            <button type="button" class="inc-pill-btn" data-amt="500" onclick="setActiveIncrement(500)" style="flex:1; min-width:55px; padding:0.45rem 0.3rem; font-size:0.82rem; font-weight:800; border-radius:8px; cursor:pointer; background:rgba(255,255,255,0.08); color:#fff; border:1px solid rgba(255,255,255,0.15);">+500</button>
+            <button type="button" class="btn-mod" onclick="adjustCurrentBid(-50)" style="padding:0.45rem 0.6rem; font-size:0.82rem; font-weight:800; border-radius:8px; background:rgba(239,68,68,0.2); border:1px solid rgba(239,68,68,0.5); color:#f87171;">-50</button>
+          </div>
+
+          <!-- Direct Dropdown Fallback -->
+          <div style="display:flex; gap:0.5rem; align-items:center; margin-top:0.6rem; flex-wrap:wrap;">
+            <select id="biddingTeamSelect" class="form-control" style="flex:1.5; min-width:140px; font-size:0.85rem; padding:0.4rem 0.6rem;">
+              <option value="">-- Choose Team --</option>
+              {% for t_name in (teams.keys() if teams else []) %}
+              <option value="{{ t_name }}">{{ t_name }}</option>
+              {% endfor %}
+            </select>
+            <button type="button" onclick="assignLeadingBidder()" class="btn btn-secondary" style="font-size:0.82rem; padding:0.4rem 0.75rem; white-space:nowrap;">
+              Set Bidder
+            </button>
+          </div>
         </div>
 
-        <div class="auction-primary-actions">
-          <button type="button" id="btnSoldAction" class="btn btn-success" style="font-size: 1.25rem; padding: 1rem;">
-            🔨 SOLD TO TEAM
-          </button>
-          <button type="button" id="btnUnsoldAction" class="btn btn-danger" style="font-size: 1.1rem;">
-            ❌ UNSOLD
+        <!-- Pick Specific Player from Pool Dropdown -->
+        <div style="background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(245, 158, 11, 0.35); border-radius: 8px; padding: 0.55rem 0.75rem; margin-bottom: 1rem; display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+          <span style="font-weight: 800; color: var(--primary-gold); font-size: 0.8rem; white-space: nowrap;">
+            🎯 Pick Specific:
+          </span>
+          <select id="selectPlayerDropdown" class="form-control" style="flex: 1; min-width: 160px; font-size: 0.82rem; padding: 0.35rem 0.55rem;">
+            <option value="">-- Choose Player to Bring to Auction --</option>
+          </select>
+          <button type="button" class="btn btn-secondary" onclick="chooseSelectedPlayer()" style="font-size: 0.8rem; padding: 0.35rem 0.7rem; white-space: nowrap;">
+            Bring to Block &rarr;
           </button>
         </div>
 
-        <div class="auction-secondary-actions">
-          <button type="button" id="btnUndoAction" class="btn btn-secondary">
-            ⏪ Undo
+        <!-- Big Action Buttons -->
+        <div class="action-buttons-grid">
+          <button type="button" class="btn-action btn-next-draw" onclick="drawNextPlayer()">
+            🚀 Next Draw
           </button>
-          <button type="button" id="btnNextPlayer" class="btn btn-secondary">
-            🎲 Draw Next
+          <button type="button" class="btn-action btn-sold" onclick="confirmSellPlayer()">
+            🔨 SOLD!
           </button>
-          <button type="button" onclick="playGavelSound()" class="btn btn-secondary">
-            🔔 Hammer
+          <button type="button" class="btn-action btn-unsold" onclick="markUnsold(false)">
+            ❌ Unsold (Round 2)
+          </button>
+          <button type="button" class="btn-action btn-perm-unsold" onclick="markUnsold(true)">
+            ⛔ Permanent Unsold
+          </button>
+        </div>
+
+        <div style="margin-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <button type="button" onclick="undoLastAction()" class="btn btn-secondary" style="font-size: 0.85rem; padding: 0.35rem 0.75rem;">
+            ↩️ Undo Last Action
+          </button>
+          <button type="button" id="btnStartRound2" onclick="startRound2()" class="btn btn-secondary" style="display: none; font-size: 0.85rem; padding: 0.35rem 0.75rem; border-color: #f59e0b; color: #f59e0b;">
+            🔄 Start Round 2 (Unsold Pool)
           </button>
         </div>
       </div>
       {% endif %}
     </div>
 
-    <!-- Empty Podium State -->
-    <div id="emptyPodiumMsg" class="glass-card" style="display: none; text-align: center; padding: 4rem 2rem;">
-      <div style="font-size: 3rem; margin-bottom: 1rem;">🏆</div>
-      <h2 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.75rem; color: #fff;">Round Complete or No Active Player</h2>
-      <p style="color: var(--text-muted); max-width: 500px; margin: 0 auto 1.5rem;">
-        {% if viewer_mode %}
+    <!-- Empty State when no active player -->
+    <div id="noActivePlayerState" class="glass-card" style="display: none; text-align: center; padding: 3rem 1.5rem;">
+      <h3 style="font-size: 1.35rem; color: #fff; margin-bottom: 0.5rem;">No Active Player on the Auction Block</h3>
+      <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem;">
         Waiting for the auctioneer to draw the next player...
-        {% else %}
-        Draw the next player from the remaining player pool or start Round 2 with unsold players.
-        {% endif %}
       </p>
       {% if not viewer_mode %}
-      <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
-        <button type="button" onclick="document.getElementById('btnNextPlayer').click()" class="btn btn-primary">
-          🎲 Draw Player
-        </button>
-        <button type="button" onclick="startRound2()" class="btn btn-secondary">
-          🔄 Start Round 2 (Unsold Players)
-        </button>
-        <a href="/admin" class="btn btn-secondary">⚙️ Admin Settings</a>
-      </div>
+      <button type="button" onclick="drawNextPlayer()" class="btn btn-primary admin-only">
+        Draw First Player &rarr;
+      </button>
       {% endif %}
     </div>
   </div>
 
-  <!-- Right Sidebar: Live Teams & Purses -->
-  <div class="teams-sidebar">
-    <div class="sidebar-header">
-      <span>TEAM PURSES & SQUADS</span>
-      <span style="font-size: 0.8rem; color: var(--pitch-green);">● LIVE</span>
-    </div>
-    <div id="teamsSidebarList" style="display: flex; flex-direction: column; gap: 0.75rem;">
-      <!-- Populated via auction.js -->
+  <!-- Right Sidebar: Team Purses & Rosters (Mobile responsive) -->
+  <div class="team-purse-sidebar">
+    <h3 style="font-size: 1.15rem; font-weight: 800; color: #fff; margin-bottom: 1rem; display: flex; align-items: center; justify-content: space-between;">
+      <span>🏆 Participating Teams</span>
+      <span style="font-size: 0.8rem; color: var(--text-muted); font-weight: 600;">{{ (teams|length) if teams else 0 }} Teams</span>
+    </h3>
+
+    <div id="teamsPurseList" style="display: flex; flex-direction: column; gap: 0.85rem;">
+      {% for t_name, t_data in (teams.items() if teams else []) %}
+      <div class="team-card-auction" id="teamCard_{{ loop.index }}" data-team="{{ t_name }}">
+        <div class="team-card-header">
+          <span class="team-card-name">{{ t_name }}</span>
+          <span class="team-squad-count">{{ (t_data.players|length) if t_data.players else 0 }} Players</span>
+        </div>
+        <div class="team-progress-bg">
+          <div class="team-progress-bar" style="width: 100%;"></div>
+        </div>
+        <div class="team-financials">
+          <span class="team-rem-budget">Purse: ₹{{ t_data.budget if t_data.budget is defined else (t_data.purse or 6000) }}</span>
+          <span class="team-spent-budget">Spent: ₹{{ t_data.spent or 0 }}</span>
+        </div>
+      </div>
+      {% endfor %}
     </div>
   </div>
 </div>
 
-<!-- Sold Celebration Overlay -->
-<div id="soldModalOverlay" class="sold-modal-overlay">
-  <canvas id="confettiCanvas" style="position: absolute; inset: 0; pointer-events: none;"></canvas>
-  <div class="sold-card-popup">
-    <div class="sold-banner">SOLD! 🔨</div>
-    <div id="soldModalPlayer" style="font-size: 2rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem;">Player Name</div>
-    <div style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 1rem;">
-      Bought by <strong id="soldModalTeam" style="color: var(--primary-gold);">Team</strong>
+<!-- SOLD CELEBRATION MODAL (Auto-dismisses in 5s or on Next Draw) -->
+<div class="sold-modal-overlay" id="soldModal" onclick="handleSoldModalBackdrop(event)">
+  <div class="sold-card-popup" style="position: relative; max-width: 440px; padding: 2rem 1.5rem;">
+    <button type="button" onclick="closeSoldModal()" style="position: absolute; top: 12px; right: 15px; background: none; border: none; color: #94a3b8; font-size: 1.6rem; cursor: pointer; line-height: 1;" title="Close Popup">&times;</button>
+    <div class="sold-banner" style="font-size: 1.3rem; margin-bottom: 0.85rem;">🎉 SOLD! 🎉</div>
+    <div style="width: 110px; height: 110px; border-radius: 50%; border: 3px solid var(--primary-gold); margin: 0 auto 0.65rem; overflow: hidden; background: #000; box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);">
+      <img id="soldPlayerPhoto" src="/static/images/avatar_allrounder.svg" style="width: 100%; height: 100%; object-fit: cover;">
     </div>
-    <div id="soldModalPrice" style="font-size: 3rem; font-weight: 900; color: var(--pitch-green); margin-bottom: 1.5rem;">₹0</div>
-    <button type="button" id="btnCloseSoldModal" class="btn btn-primary" style="width: 100%;">Continue Auction &rarr;</button>
+    <h2 id="soldPlayerName" style="font-size: 1.75rem; font-weight: 900; color: #fff; margin-bottom: 0.2rem;">-</h2>
+    <div style="margin-bottom: 0.65rem;">
+      <span id="soldPlayerRoleBadge" class="role-badge badge-allrounder" style="font-size: 0.75rem; padding: 0.2rem 0.65rem;">All-Rounder</span>
+    </div>
+    <div style="font-size: 1.05rem; color: #94a3b8; margin-bottom: 0.65rem;">
+      Purchased by <strong id="soldTeamName" style="color: var(--primary-gold); font-size: 1.25rem;">-</strong>
+    </div>
+    <div style="font-size: 2.6rem; font-weight: 900; color: var(--pitch-green); margin-bottom: 1.25rem;" id="soldFinalPrice">
+      ₹0
+    </div>
+    <div style="display: flex; gap: 0.65rem; justify-content: center; flex-wrap: wrap;">
+      {% if not viewer_mode %}
+      <button type="button" class="btn btn-primary" onclick="drawNextFromModal()" style="font-weight: 800; font-size: 0.95rem; padding: 0.5rem 1.1rem;">
+        🚀 Next Draw &rarr;
+      </button>
+      {% endif %}
+      <button type="button" class="btn btn-secondary" onclick="closeSoldModal()" style="font-size: 0.95rem; padding: 0.5rem 1rem;">
+        Continue Auction &rarr;
+      </button>
+    </div>
   </div>
 </div>
+
+<!-- HOST PIN MODAL (Only when not in viewer mode) -->
+{% if not viewer_mode %}
+<div class="sold-modal-overlay" id="pinModal">
+  <div class="sold-card-popup" style="max-width: 380px; padding: 2rem;">
+    <h3 style="font-size: 1.35rem; font-weight: 900; color: #fff; margin-bottom: 0.5rem;">🔒 Organizer Authentication</h3>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1.25rem;">Enter Organizer PIN to enable bidding and auction controls.</p>
+    <input type="password" id="inputHostPin" class="form-control" placeholder="Enter Organizer PIN" style="text-align: center; font-size: 1.25rem; margin-bottom: 1rem;">
+    <div id="pinErrorMsg" style="display: none; color: #f87171; font-size: 0.85rem; margin-bottom: 1rem; font-weight: 700;"></div>
+    <div style="display: flex; gap: 0.5rem;">
+      <button type="button" onclick="verifyHostPin()" class="btn btn-primary" style="flex: 1;">Unlock</button>
+      <button type="button" onclick="closePinModal()" class="btn btn-secondary">Cancel</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+
+<!-- RETAINED PLAYERS MODAL -->
+<div class="sold-modal-overlay" id="retainedPlayersModal" style="display: none; align-items: center; justify-content: center; z-index: 1000;" onclick="if(event.target === this) closeRetainedModal()">
+  <div class="glass-card" style="position: relative; max-width: 620px; width: 92%; max-height: 85vh; overflow-y: auto; padding: 1.75rem; border-top: 4px solid var(--primary-gold);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+      <h3 style="font-size: 1.35rem; font-weight: 900; color: #fff; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+        ⭐ Retained Players Roster
+      </h3>
+      <button type="button" onclick="closeRetainedModal()" style="background: none; border: none; color: #94a3b8; font-size: 1.8rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+    <div id="retainedModalBody">
+      <!-- Dynamic list populated by JS -->
+    </div>
+    <div style="margin-top: 1.25rem; text-align: right;">
+      <button type="button" class="btn btn-secondary" onclick="closeRetainedModal()" style="font-size: 0.9rem; padding: 0.5rem 1.25rem;">Close</button>
+    </div>
+  </div>
+</div>
+
 {% endblock %}
 
 {% block extra_js %}
-<script>
-  window.IS_VIEWER_MODE = {{ 'true' if viewer_mode else 'false' }};
-</script>
+<script src="/static/js/odometer.js"></script>
 <script src="/static/js/auction.js"></script>
-{% if not viewer_mode %}
-<script>
-  async function startRound2() {
-    if (!confirm('Start Round 2 with all unsold players?')) return;
-    try {
-      const res = await fetch('/api/auction/round2', { method: 'POST' });
-      const data = await res.json();
-      if (data.success) {
-        alert('Round 2 initiated!');
-        fetchState();
-      } else {
-        alert(data.message || 'Error starting Round 2.');
-      }
-    } catch (e) {
-      alert(e.message);
-    }
-  }
-</script>
-{% endif %}
 {% endblock %}

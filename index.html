@@ -1,71 +1,422 @@
 {% extends "base.html" %}
 
+{% block title %}KPL 2026 — Kunsi Premier League Official Portal{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Hero Section ─────────────────────────────────────── */
+  .hero-section {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+    position: relative;
+  }
+
+  .hero-season-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(245,158,11,0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245,158,11,0.35);
+    padding: 0.35rem 1rem;
+    border-radius: 9999px;
+    font-weight: 800;
+    font-size: 0.78rem;
+    text-transform: uppercase;
+    letter-spacing: 0.07em;
+    margin-bottom: 1.1rem;
+  }
+
+  .hero-title {
+    font-size: clamp(1.9rem, 6vw, 3.2rem);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 0.85rem;
+  }
+
+  .hero-title .kpl-highlight {
+    background: linear-gradient(135deg, #fbbf24, #f59e0b, #d97706);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(0.9rem, 3vw, 1.1rem);
+    color: #94a3b8;
+    line-height: 1.6;
+    max-width: 520px;
+    margin: 0 auto 1.75rem;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  /* ── Stats Strip ──────────────────────────────────────── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: rgba(15,23,42,0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 16px;
+    padding: 1.1rem 0.75rem;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .stat-card-gold::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .stat-card-blue::before  { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+  .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .stat-card-pink::before  { background: linear-gradient(90deg, #ec4899, #f472b6); }
+
+  .stat-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.18); }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    font-family: 'Rajdhani', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .stat-label-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Info Cards ───────────────────────────────────────── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .info-card {
+    background: rgba(10,16,30,0.7);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 14px;
+    padding: 1.1rem;
+  }
+
+  .info-card-title {
+    font-size: 0.85rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .info-card p {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.55;
+  }
+
+  /* ── Portal Cards ─────────────────────────────────────── */
+  .portals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.1rem;
+    margin-top: 1rem;
+  }
+
+  .portal-card {
+    background: rgba(12,18,34,0.85);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    border: 1px solid rgba(255,255,255,0.09);
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .portal-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    border-radius: 20px 20px 0 0;
+  }
+
+  .portal-card-gold { border-color: rgba(245,158,11,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+  .portal-card-gold::before { background: linear-gradient(90deg, #f59e0b, #fbbf24, #f59e0b); }
+  .portal-card-gold:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 28px rgba(245,158,11,0.2); }
+
+  .portal-card-blue { border-color: rgba(56,189,248,0.3); box-shadow: 0 8px 32px rgba(0,0,0,0.5); }
+  .portal-card-blue::before { background: linear-gradient(90deg, #38bdf8, #818cf8, #38bdf8); }
+  .portal-card-blue:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 28px rgba(56,189,248,0.2); }
+
+  .portal-card-red { border-color: rgba(239,68,68,0.5); box-shadow: 0 8px 32px rgba(239,68,68,0.18), 0 8px 32px rgba(0,0,0,0.5); }
+  .portal-card-red::before { background: linear-gradient(90deg, #ef4444, #f87171, #ef4444); }
+  .portal-card-red:hover { transform: translateY(-4px); box-shadow: 0 16px 48px rgba(0,0,0,0.6), 0 0 36px rgba(239,68,68,0.3); }
+
+  .portal-icon-wrap {
+    width: 56px;
+    height: 56px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .portal-icon-gold  { background: rgba(245,158,11,0.15); border: 1px solid rgba(245,158,11,0.3); }
+  .portal-icon-blue  { background: rgba(56,189,248,0.15); border: 1px solid rgba(56,189,248,0.3); }
+  .portal-icon-red   { background: rgba(239,68,68,0.15);  border: 1px solid rgba(239,68,68,0.3); }
+
+  .portal-tab-badge {
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 0.18rem 0.55rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    border: 1px solid;
+  }
+
+  .portal-title {
+    font-size: 1.25rem;
+    font-weight: 900;
+    color: #fff;
+    margin: 0.5rem 0 0.4rem;
+  }
+
+  .portal-desc {
+    font-size: 0.86rem;
+    color: #94a3b8;
+    line-height: 1.55;
+  }
+
+  .portal-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    font-weight: 800;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    touch-action: manipulation;
+    border: none;
+    cursor: pointer;
+  }
+  .portal-btn:active { transform: scale(0.97); }
+
+  .portal-btn-gold {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: #000;
+    box-shadow: 0 4px 18px rgba(245,158,11,0.4);
+  }
+  .portal-btn-gold:hover { box-shadow: 0 8px 24px rgba(245,158,11,0.55); transform: translateY(-1px); }
+
+  .portal-btn-blue {
+    background: linear-gradient(135deg, #38bdf8, #0284c7);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(56,189,248,0.4);
+  }
+  .portal-btn-blue:hover { box-shadow: 0 8px 24px rgba(56,189,248,0.55); transform: translateY(-1px); }
+
+  .portal-btn-red {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: #fff;
+    box-shadow: 0 4px 18px rgba(239,68,68,0.4);
+    font-size: 1rem;
+  }
+  .portal-btn-red:hover { box-shadow: 0 8px 28px rgba(239,68,68,0.55); transform: translateY(-1px); }
+
+  /* Mobile stat strip */
+  @media (max-width: 600px) {
+    .stats-strip {
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+    .stat-number { font-size: 1.65rem; }
+    .portals-grid { grid-template-columns: 1fr; }
+    .hero-title  { font-size: 1.75rem; }
+  }
+
+  @media (max-width: 350px) {
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+    .stat-number { font-size: 1.4rem; }
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div style="text-align: center; max-width: 800px; margin: 2rem auto 3rem;">
-  <div style="display: inline-block; background: rgba(245, 158, 11, 0.15); color: var(--primary-gold); border: 1px solid rgba(245, 158, 11, 0.4); padding: 0.4rem 1rem; border-radius: 9999px; font-weight: 700; font-size: 0.9rem; text-transform: uppercase; margin-bottom: 1.25rem;">
-    🏏 Season 2026 Official Portal
+
+<!-- ── Hero ──────────────────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-season-badge">
+    🏏 Season 2026 &nbsp;·&nbsp; Official Tournament Portal
   </div>
-  <h1 style="font-size: 3rem; font-weight: 900; line-height: 1.1; margin-bottom: 1rem; letter-spacing: -0.02em;">
-    {{ tournament_name }}
+  <h1 class="hero-title">
+    <span class="kpl-highlight">Kunsi</span> Premier League
+    <br><span style="font-size:0.65em; color:#94a3b8; font-weight:700; -webkit-text-fill-color:#94a3b8;">KPL 2026</span>
   </h1>
-  <p style="font-size: 1.2rem; color: var(--text-muted); line-height: 1.6;">
-    Player Registration with Instant UPI Payments & Live Big-Screen Player Auction Engine with Photos, Roles, and Real-Time Purses.
+  <p class="hero-subtitle">
+    Official Tournament Guide, Player Registration Directory,
+    and Mobile Live Auction Dashboard for all fans &amp; players.
   </p>
+  <div class="hero-cta-row">
+    <a href="/view" class="btn btn-danger" style="font-weight:900; font-size:1rem; padding:0.85rem 1.75rem;">
+      <span style="width:9px; height:9px; background:#fff; border-radius:50%; display:inline-block; animation: pulseDot 1.4s infinite;"></span>
+      Watch Live Auction
+    </a>
+    <a href="/register" class="btn btn-secondary" style="font-size:1rem; padding:0.85rem 1.5rem;">
+      📝 Register Player
+    </a>
+  </div>
+</section>
+
+<!-- ── Stats Strip ────────────────────────────────────────── -->
+<div class="stats-strip">
+  <div class="stat-card stat-card-gold">
+    <div class="stat-number" style="color:#f59e0b;">{{ total_registered }}</div>
+    <div class="stat-label-text">Players Enrolled</div>
+  </div>
+  <div class="stat-card stat-card-blue">
+    <div class="stat-number" style="color:#38bdf8;">{{ total_teams }}</div>
+    <div class="stat-label-text">Teams</div>
+  </div>
+  <div class="stat-card stat-card-green">
+    <div class="stat-number" style="color:#10b981;">₹{{ total_purse }}</div>
+    <div class="stat-label-text">Purse / Team</div>
+  </div>
+  <div class="stat-card stat-card-pink">
+    <div class="stat-number" style="color:#ec4899;">₹{{ reg_fee }}</div>
+    <div class="stat-label-text">Entry Fee</div>
+  </div>
 </div>
 
-<!-- Quick Stats Grid -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2.5rem;">
-  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
-    <div style="font-size: 2.5rem; font-weight: 900; color: var(--primary-gold);">{{ total_registered }}</div>
-    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Registered Players</div>
-  </div>
-  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
-    <div style="font-size: 2.5rem; font-weight: 900; color: var(--electric-blue);">{{ total_teams }}</div>
-    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Participating Teams</div>
-  </div>
-  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
-    <div style="font-size: 2.5rem; font-weight: 900; color: var(--pitch-green);">₹{{ total_purse }}</div>
-    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Purse per Team</div>
-  </div>
-  <div class="glass-card" style="text-align: center; padding: 1.5rem 1rem;">
-    <div style="font-size: 2.5rem; font-weight: 900; color: #ec4899;">₹{{ reg_fee }}</div>
-    <div style="color: var(--text-muted); font-weight: 600; font-size: 0.95rem; margin-top: 0.25rem;">Registration Fee</div>
+<!-- ── Tournament Overview ────────────────────────────────── -->
+<div class="glass-card" style="margin-bottom: 2rem; border-color: rgba(245,158,11,0.25); background: rgba(12,18,34,0.8);">
+  <h2 style="font-size:1.15rem; font-weight:900; color:#f59e0b; margin-bottom:1rem; display:flex; align-items:center; gap:0.45rem;">
+    📋 Tournament Overview &amp; Rules
+  </h2>
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="info-card-title">🏟️ Venue &amp; Format</div>
+      <p>Location: <strong style="color:#fff;">Saidapur Cricket Ground</strong>.<br>
+         Limited overs knockout &amp; league matches with official white ball.</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">💰 Auction Rules</div>
+      <p>Purse: <strong style="color:#10b981;">₹{{ total_purse }}</strong> / team. Min squad: 10 players.<br>
+         Min bid: ₹50 · Star Retention: ₹500 · Owner: ₹100</p>
+    </div>
+    <div class="info-card">
+      <div class="info-card-title">💳 Registration</div>
+      <p>Entry fee: <strong style="color:#ec4899;">₹{{ reg_fee }}</strong> via PhonePe / GPay / BHIM UPI.<br>
+         Submit name, mobile, role, village &amp; photo.</p>
+    </div>
   </div>
 </div>
 
-<!-- Main Action Navigation Cards -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
-  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(245, 158, 11, 0.4);">
+<!-- ── Portal Cards ───────────────────────────────────────── -->
+<h2 style="font-size:1.15rem; font-weight:900; color:#fff; margin-bottom:1rem;">
+  🚀 Explore Tournament Portals
+</h2>
+<div class="portals-grid">
+
+  <!-- Admin Card -->
+  <div class="portal-card portal-card-gold">
     <div>
-      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">📝</div>
-      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Player Registration</h2>
-      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
-        Players can register their name, mobile, role (Batsman, Bowler, All-Rounder, WK), take/upload photo, and pay registration fee instantly via PhonePe, Google Pay, or BHIM UPI.
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+        <div class="portal-icon-wrap portal-icon-gold">⚙️</div>
+        <span class="portal-tab-badge" style="color:#fbbf24; border-color:rgba(245,158,11,0.5); background:rgba(245,158,11,0.12);">
+          Tab 1 · Organizer
+        </span>
+      </div>
+      <h3 class="portal-title">Organizer Admin</h3>
+      <p class="portal-desc">
+        PIN-protected control panel. Manage tournament config, teams, purse, retentions, UPI settings, Excel export, and run the Live Auction Host Controller.
       </p>
     </div>
-    <a href="/register" class="btn btn-primary" style="width: 100%;">Register Now & Pay UPI &rarr;</a>
+    <a href="/admin" class="portal-btn portal-btn-gold" id="btn-open-admin">
+      Open Admin Console →
+    </a>
   </div>
 
-  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(16, 185, 129, 0.4);">
+  <!-- Registration Card -->
+  <div class="portal-card portal-card-blue">
     <div>
-      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">🏏</div>
-      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Live Auction Arena</h2>
-      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
-        Projector & big-screen auction dashboard! Shows player photo, role, stats, registration status, live bidding counters, sound effects, sold celebration, and team purse meters.
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+        <div class="portal-icon-wrap portal-icon-blue">📝</div>
+        <span class="portal-tab-badge" style="color:#38bdf8; border-color:rgba(56,189,248,0.5); background:rgba(56,189,248,0.12);">
+          Tab 2 · Players
+        </span>
+      </div>
+      <h3 class="portal-title">Player Registration</h3>
+      <p class="portal-desc">
+        View the complete roster of registered players with photo, role, village, &amp; payment status. Register new players instantly with one-tap UPI payment.
       </p>
     </div>
-    <a href="/auction" class="btn btn-success" style="width: 100%;">Enter Live Auction &rarr;</a>
+    <a href="/register" class="portal-btn portal-btn-blue" id="btn-open-register">
+      Open Registration Tab →
+    </a>
   </div>
 
-  <div class="glass-card" style="display: flex; flex-direction: column; justify-content: space-between; border-color: rgba(59, 130, 246, 0.4);">
+  <!-- Live Auction Card -->
+  <div class="portal-card portal-card-red">
     <div>
-      <div style="font-size: 2.5rem; margin-bottom: 0.75rem;">👥</div>
-      <h2 style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff;">Teams & Squads</h2>
-      <p style="color: var(--text-muted); line-height: 1.5; margin-bottom: 1.5rem;">
-        Live mobile-friendly squad tracker for team captains and spectators to view bought players, prices, remaining purse, and team rosters in real time.
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+        <div class="portal-icon-wrap portal-icon-red">👁️</div>
+        <span class="portal-tab-badge" style="color:#f87171; border-color:rgba(239,68,68,0.5); background:rgba(239,68,68,0.12);">
+          Tab 3 · Spectators
+        </span>
+      </div>
+      <h3 class="portal-title">🔴 Live Auction Stream</h3>
+      <p class="portal-desc">
+        Mobile-first live bidding stream. Watch player photos, real-time bid odometer, sold celebrations &amp; team purse meters from any phone or TV — no login needed.
       </p>
     </div>
-    <a href="/teams" class="btn btn-secondary" style="width: 100%;">View Team Rosters &rarr;</a>
+    <a href="/view" class="portal-btn portal-btn-red" id="btn-open-live">
+      <span style="width:9px; height:9px; background:#fff; border-radius:50%; display:inline-block; animation: pulseDot 1.4s infinite;"></span>
+      👁️ Watch Live Stream →
+    </a>
   </div>
+
 </div>
+
 {% endblock %}
