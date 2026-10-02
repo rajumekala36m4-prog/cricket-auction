@@ -7,8 +7,15 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Kunsi Premier League 2026 — Official Tournament Portal, Player Auction & Live Bidding">
-  <title>{% block title %}{{ tournament_name }} | KPL 2026{% endblock %}</title>
+  <meta name="description" content="Kunsi Premier League (KPL 2026) — Official Tournament Portal, Player Auction & Live Bidding">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Kunsi Premier League (KPL 2026)">
+  <meta property="og:description" content="Official Live Auction, Player Registration & Team Squads for Kunsi Premier League (KPL 2026)">
+  <meta property="og:site_name" content="Kunsi Premier League (KPL 2026)">
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Kunsi Premier League (KPL 2026)">
+  <meta name="twitter:description" content="Official Live Auction, Player Registration & Team Squads for Kunsi Premier League (KPL 2026)">
+  <title>{% block title %}{{ tournament_name or 'Kunsi Premier League (KPL 2026)' }}{% endblock %}</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
