@@ -571,3 +571,37 @@ footer {
   color: var(--primary-gold);
   white-space: nowrap;
 }
+
+/* ── Universal Auto-Fit 1-Tap Team Grid (Mobile-Safe) ─────── */
+#hostTeamGrid, #quickTeamGrid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 0.45rem !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  margin-bottom: 0.5rem !important;
+}
+
+@media (max-width: 320px) {
+  #hostTeamGrid, #quickTeamGrid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+.team-quick-card, .team-quick-bid-card {
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  width: 100% !important;
+  overflow: hidden !important;
+  border-radius: 12px !important;
+  padding: 0.5rem 0.55rem !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  user-select: none !important;
+  touch-action: manipulation !important;
+}
+
+.team-quick-card:active, .team-quick-bid-card:active {
+  transform: scale(0.98);
+}
+
