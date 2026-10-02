@@ -904,7 +904,20 @@ def api_setup_teams():
         if not check_auctioneer_pin(request):
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         data = request.json or {}
-        team_names = data.get('team_names', [])
+        raw_teams = data.get('team_names') or data.get('teams') or []
+        if isinstance(raw_teams, dict):
+            team_names = list(raw_teams.keys())
+        elif isinstance(raw_teams, list):
+            cleaned = []
+            for item in raw_teams:
+                if isinstance(item, dict):
+                    cleaned.append(str(item.get('name', '')).strip())
+                elif isinstance(item, str):
+                    cleaned.append(item.strip())
+            team_names = [t for t in cleaned if t]
+        else:
+            team_names = []
+
         if len(team_names) < 2:
             return jsonify({'success': False, 'message': 'At least 2 team names required'}), 400
 
