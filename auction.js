@@ -332,25 +332,28 @@ function renderQuickTeamGrid() {
       background: ${isLeading ? 'linear-gradient(145deg, rgba(16,185,129,0.25), rgba(15,23,42,0.95))' : 'rgba(11,17,32,0.85)'};
       border: ${isLeading ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,0.12)'};
       border-radius: 12px;
-      padding: 0.65rem 0.75rem;
+      padding: 0.5rem 0.55rem;
       cursor: pointer;
       transition: all 0.15s ease;
       box-shadow: ${isLeading ? '0 0 18px rgba(16,185,129,0.35)' : 'none'};
       user-select: none;
       touch-action: manipulation;
+      min-width: 0;
+      box-sizing: border-box;
+      overflow: hidden;
     `;
     card.innerHTML = `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem;">
-        <strong style="font-size:0.85rem; color:${isLeading ? '#34d399' : '#fff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${name}</strong>
-        <span style="font-size:0.68rem; font-weight:800; background:rgba(255,255,255,0.08); padding:0.1rem 0.35rem; border-radius:9999px; color:#94a3b8; flex-shrink:0;">${count}P</span>
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.25rem; min-width:0; gap:0.25rem; width:100%;">
+        <strong style="font-size:0.8rem; font-weight:800; color:${isLeading ? '#34d399' : '#fff'}; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; min-width:0; flex:1;" title="${name}">${name}</strong>
+        <span style="font-size:0.65rem; font-weight:800; background:rgba(255,255,255,0.1); padding:0.08rem 0.32rem; border-radius:9999px; color:#94a3b8; flex-shrink:0; white-space:nowrap;">${count}P</span>
       </div>
-      <div style="width:100%; height:4px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; margin-bottom:0.3rem;">
+      <div style="width:100%; height:3.5px; background:rgba(255,255,255,0.08); border-radius:99px; overflow:hidden; margin-bottom:0.3rem;">
         <div style="height:100%; width:${pct}%; background:linear-gradient(90deg,#10b981,#34d399); border-radius:99px;"></div>
       </div>
-      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem;">
-        <span style="font-weight:900; color:#10b981;">₹${purse}</span>
-        <span style="background:${isLeading ? '#10b981' : 'rgba(56,189,248,0.15)'}; color:${isLeading ? '#000' : '#38bdf8'}; font-weight:800; padding:0.1rem 0.4rem; border-radius:6px; font-size:0.68rem;">
-          ${isLeading ? '🎯 LEADING' : '+ 1-Tap Bid'}
+      <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; min-width:0; gap:0.2rem; width:100%;">
+        <span style="font-weight:900; color:#10b981; font-size:0.78rem; white-space:nowrap; flex-shrink:0;">₹${purse}</span>
+        <span style="background:${isLeading ? '#10b981' : 'rgba(56,189,248,0.15)'}; color:${isLeading ? '#000' : '#38bdf8'}; font-weight:800; padding:0.1rem 0.35rem; border-radius:6px; font-size:0.65rem; white-space:nowrap; flex-shrink:0;">
+          ${isLeading ? '🎯 LEADING' : '+ Tap to Bid'}
         </span>
       </div>
     `;
