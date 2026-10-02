@@ -1437,7 +1437,33 @@ def api_admin_reset_auction():
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         cfg = load_config()
         regs = load_registrations()
-        player_list = [p_name for p_name, p_data in regs.items() if p_data.get('approved', False)]
+        
+        # 1. Collect and sort all valid players by serial number
+        sorted_regs = sorted(regs.items(), key=lambda x: (x[1].get('serial_no', 9999), x[0]))
+        player_list = []
+        for p_name, p_data in sorted_regs:
+            # Exclude only explicitly rejected players; include approved, verified, or registered
+            if p_data.get('payment_status') != 'Payment Rejected':
+                player_list.append(p_name)
+        
+        if not player_list:
+            player_list = [p_name for p_name, _ in sorted_regs]
+            
+        # Fallback if registrations file is empty
+        if not player_list:
+            player_list = [
+                "Virat Kohli", "Rohit Sharma", "Jasprit Bumrah", "Hardik Pandya",
+                "Rishabh Pant", "Ravindra Jadeja", "Surya Kumar Yadav", "Mohammed Shami",
+                "KL Rahul", "Shubman Gill"
+            ]
+        
+        player_serials = {}
+        for idx, p in enumerate(player_list):
+            if p in regs and regs[p].get('serial_no'):
+                player_serials[p] = regs[p]['serial_no']
+            else:
+                player_serials[p] = idx + 1
+
         cur_state = load_auction_state()
         team_keys = list(cur_state.get('teams', {}).keys())
         if not team_keys:
@@ -1447,6 +1473,7 @@ def api_admin_reset_auction():
         reset_teams = {
             t: {
                 "budget": total_purse,
+                "purse": total_purse,
                 "spent": 0,
                 "players": [],
                 "retained": None,
@@ -1455,21 +1482,28 @@ def api_admin_reset_auction():
             } for t in team_keys
         }
         
-        # Fresh initial auction state
+        # 2. Fresh initial auction state (Round 1, full restocked pool, zero retentions)
         state = {
             "teams": reset_teams,
-            "players": player_list,
-            "player_serials": {p: i + 1 for i, p in enumerate(player_list)},
+            "players": list(player_list),
+            "player_serials": player_serials,
             "auction_players": list(player_list),
             "unsold_players": [],
+            "permanent_unsold_players": [],
+            "unsold": [],
+            "unsold_r1": [],
+            "unsold_r2": [],
+            "sold_players": [],
             "current_player": None,
             "current_bid": 0,
             "bidding_team": None,
             "current_bid_team": None,
             "history": [],
             "current_round": 1,
+            "round": 1,
             "auction_started": False,
             "total_purse": total_purse,
+            "default_purse": total_purse,
             "max_players": int(cfg.get("max_players", 10)),
             "min_bid": int(cfg.get("min_bid", 50)),
             "retention_price": int(cfg.get("retention_price", 500)),
@@ -1483,7 +1517,7 @@ def api_admin_reset_auction():
         save_auction_state(state)
         return jsonify({
             'success': True,
-            'message': 'Live auction reset successfully! All team budgets restored to starting purse, sold players cleared, and full verified player pool restocked.'
+            'message': f'Live auction reset successfully to Round 1! All {len(reset_teams)} team budgets restored to ₹{total_purse}, retentions cleared (0), and full player pool ({len(player_list)} players) restocked for a fresh start.'
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
