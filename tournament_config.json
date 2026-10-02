@@ -1,11 +1,16 @@
 {
-    "tournament_name": "Kunsi Premier League (SPL 2026)",
-    "upi_id": "saidapur.cricket@upi",
-    "payee_name": "Saidapur Cricket Committee",
-    "registration_fee": 200,
-    "default_purse": 5000,
+    "tournament_name": "Kunsi Premier League (KPL 2026)",
+    "upi_id": "9550887806@ybl",
+    "payee_name": "Raju",
+    "registration_fee": 10,
+    "default_purse": 6000,
     "min_bid": 50,
     "retention_price": 500,
-    "max_players": 15,
-    "currency_symbol": "\u20b9"
+    "owner_retention_price": 100,
+    "max_players": 4,
+    "currency_symbol": "\u20b9",
+    "admin_pin": "2026",
+    "total_purse": 6000,
+    "registration_open": true,
+    "pin": "2026"
 }

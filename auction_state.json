@@ -1,2218 +1,1635 @@
 {
     "teams": {
-        "a": {
-            "budget": 700,
-            "spent": 4300,
+        "Deccan Royals": {
+            "budget": 5000,
+            "spent": 1000,
             "players": [
                 {
-                    "name": "K. Prasad",
-                    "cost": 500,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "G. Vamsi",
-                    "cost": 2800,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "Ch. Vasu",
+                    "name": "Surya Kumar Yadav",
                     "cost": 100,
                     "type": "auction",
                     "round": 1
                 },
                 {
-                    "name": "M. Srinu",
-                    "cost": 100,
+                    "name": "Shubman Gill",
+                    "cost": 50,
                     "type": "auction",
                     "round": 1
                 },
                 {
-                    "name": "B. Nani",
-                    "cost": 100,
+                    "name": "Hardik Pandya",
+                    "cost": 150,
                     "type": "auction",
                     "round": 1
                 },
                 {
-                    "name": "A. Krishna",
-                    "cost": 100,
+                    "name": "Ravindra Jadeja",
+                    "cost": 200,
                     "type": "auction",
                     "round": 1
+                }
+            ],
+            "retained": {
+                "name": "Virat Kohli",
+                "cost": 500,
+                "type": "Player"
+            },
+            "player_retained": {
+                "name": "Virat Kohli",
+                "cost": 500,
+                "type": "Player"
+            },
+            "owner_retained": null
+        },
+        "Kunsi Warriors": {
+            "budget": 5800,
+            "spent": 200,
+            "players": [
+                {
+                    "name": "Jasprit Bumrah",
+                    "cost": 50,
+                    "type": "auction",
+                    "round": 2
                 },
                 {
-                    "name": "T. Mahesh",
-                    "cost": 100,
+                    "name": "Mohammed Shami",
+                    "cost": 50,
                     "type": "auction",
                     "round": 2
                 }
             ],
-            "retained": "M. Raju Anna"
+            "retained": {
+                "name": "Rohit Sharma",
+                "cost": 100,
+                "type": "Owner"
+            },
+            "player_retained": null,
+            "owner_retained": {
+                "name": "Rohit Sharma",
+                "cost": 100,
+                "type": "Owner"
+            }
         },
-        "b": {
-            "budget": 500,
-            "spent": 4500,
+        "Saidapur Super Kings": {
+            "budget": 5750,
+            "spent": 250,
             "players": [
                 {
-                    "name": "L. Suresh",
-                    "cost": 500,
+                    "name": "Rishabh Pant",
+                    "cost": 250,
                     "type": "auction",
                     "round": 1
-                },
+                }
+            ],
+            "retained": null,
+            "player_retained": null,
+            "owner_retained": null
+        },
+        "Telangana Titans": {
+            "budget": 5900,
+            "spent": 100,
+            "players": [
                 {
-                    "name": "S. Ravi",
-                    "cost": 2700,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "P. Kumar",
-                    "cost": 200,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "B. Vannu",
-                    "cost": 100,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "E. Prabhu",
-                    "cost": 100,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "K. Kishore",
-                    "cost": 100,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "K. Raghu (Putta)",
-                    "cost": 100,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "M. Gani",
-                    "cost": 100,
-                    "type": "auction",
-                    "round": 1
-                },
-                {
-                    "name": "P. Sai",
+                    "name": "KL Rahul",
                     "cost": 100,
                     "type": "auction",
                     "round": 1
                 }
             ],
-            "retained": "Sunil Anna"
+            "retained": null,
+            "player_retained": null,
+            "owner_retained": null
         }
     },
     "players": [
-        "M. Raju Anna",
-        "Sunil Anna",
-        "M. Gani",
-        "B. Vannu",
-        "E. Prabhu",
-        "K. Raghu (Putta)",
-        "S. Ravi",
-        "P. Sai",
-        "M. Srinu",
-        "B. Nani",
-        "K. Kishore",
-        "T. Mahesh",
-        "G. Vamsi",
-        "Ch. Vasu",
-        "A. Krishna",
-        "L. Suresh",
-        "K. Prasad",
-        "P. Kumar",
-        "Virat Sharma"
+        "Virat Kohli",
+        "Rohit Sharma",
+        "Jasprit Bumrah",
+        "Hardik Pandya",
+        "Rishabh Pant",
+        "Ravindra Jadeja",
+        "Surya Kumar Yadav",
+        "Mohammed Shami",
+        "KL Rahul",
+        "Shubman Gill"
     ],
-    "player_serials": {
-        "M. Raju Anna": 1,
-        "Sunil Anna": 2,
-        "M. Gani": 3,
-        "B. Vannu": 4,
-        "E. Prabhu": 5,
-        "K. Raghu (Putta)": 6,
-        "S. Ravi": 7,
-        "P. Sai": 8,
-        "M. Srinu": 9,
-        "B. Nani": 10,
-        "K. Kishore": 11,
-        "T. Mahesh": 12,
-        "G. Vamsi": 13,
-        "Ch. Vasu": 14,
-        "A. Krishna": 15,
-        "L. Suresh": 16,
-        "K. Prasad": 17,
-        "P. Kumar": 18,
-        "Virat Sharma": 19
-    },
-    "auction_players": [
-        "Virat Sharma"
-    ],
+    "player_serials": {},
+    "auction_players": [],
     "unsold_players": [],
+    "permanent_unsold_players": [],
+    "current_player": null,
+    "current_bid": 0,
+    "bidding_team": null,
     "history": [
         {
             "teams": {
-                "a": {
-                    "budget": 4500,
+                "Deccan Royals": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Saidapur Super Kings": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": null,
+            "current_bid": 0,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": false,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": null,
+            "state_version": 40
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5500,
                     "spent": 500,
                     "players": [],
-                    "retained": "M. Raju Anna"
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
                 },
-                "b": {
-                    "budget": 4500,
+                "Kunsi Warriors": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Saidapur Super Kings": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": null,
+            "current_bid": 0,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": false,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": null,
+            "state_version": 41
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5500,
                     "spent": 500,
                     "players": [],
-                    "retained": "Sunil Anna"
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
                 }
             },
             "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
             ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
+            "player_serials": {},
             "auction_players": [
-                "K. Prasad",
-                "L. Suresh",
-                "S. Ravi",
-                "P. Kumar",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
             ],
             "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": null,
+            "current_bid": 0,
+            "bidding_team": null,
             "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
+            "auction_started": false,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": null,
+            "state_version": 42
         },
         {
             "teams": {
-                "a": {
-                    "budget": 4000,
-                    "spent": 1000,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 4500,
+                "Deccan Royals": {
+                    "budget": 5500,
                     "spent": 500,
                     "players": [],
-                    "retained": "Sunil Anna"
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
                 }
             },
             "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
             ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
+            "player_serials": {},
             "auction_players": [
-                "L. Suresh",
-                "S. Ravi",
-                "P. Kumar",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
+                "Rishabh Pant",
+                "Mohammed Shami",
+                "Jasprit Bumrah",
+                "KL Rahul",
+                "Surya Kumar Yadav",
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
             ],
             "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": "Rishabh Pant",
+            "current_bid": 250,
+            "bidding_team": "Saidapur Super Kings",
             "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Rishabh Pant",
+                "timestamp": 1790905517092
+            },
+            "state_version": 44,
+            "current_bid_team": "Saidapur Super Kings"
         },
         {
             "teams": {
-                "a": {
-                    "budget": 4000,
+                "Deccan Royals": {
+                    "budget": 5500,
+                    "spent": 500,
+                    "players": [],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah",
+                "KL Rahul",
+                "Surya Kumar Yadav",
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": "Mohammed Shami",
+            "current_bid": 50,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Mohammed Shami",
+                "timestamp": 1790905517145
+            },
+            "state_version": 46,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5500,
+                    "spent": 500,
+                    "players": [],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Jasprit Bumrah",
+                "KL Rahul",
+                "Surya Kumar Yadav",
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "Jasprit Bumrah",
+            "current_bid": 50,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Jasprit Bumrah",
+                "timestamp": 1790905517174
+            },
+            "state_version": 48,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5500,
+                    "spent": 500,
+                    "players": [],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 6000,
+                    "spent": 0,
+                    "players": [],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "KL Rahul",
+                "Surya Kumar Yadav",
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "KL Rahul",
+            "current_bid": 100,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "KL Rahul",
+                "timestamp": 1790905517204
+            },
+            "state_version": 50,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5500,
+                    "spent": 500,
+                    "players": [],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Surya Kumar Yadav",
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "Surya Kumar Yadav",
+            "current_bid": 100,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Surya Kumar Yadav",
+                "timestamp": 1790905517275
+            },
+            "state_version": 52,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5400,
+                    "spent": 600,
+                    "players": [
+                        {
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Shubman Gill",
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "Shubman Gill",
+            "current_bid": 50,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Shubman Gill",
+                "timestamp": 1790905517316
+            },
+            "state_version": 54,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5350,
+                    "spent": 650,
+                    "players": [
+                        {
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Shubman Gill",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Hardik Pandya",
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "Hardik Pandya",
+            "current_bid": 150,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Hardik Pandya",
+                "timestamp": 1790905517348
+            },
+            "state_version": 56,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5200,
+                    "spent": 800,
+                    "players": [
+                        {
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Shubman Gill",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Hardik Pandya",
+                            "cost": 150,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Ravindra Jadeja"
+            ],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": "Ravindra Jadeja",
+            "current_bid": 200,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Ravindra Jadeja",
+                "timestamp": 1790905517388
+            },
+            "state_version": 58,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5000,
                     "spent": 1000,
                     "players": [
                         {
-                            "name": "K. Prasad",
-                            "cost": 500,
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Shubman Gill",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Hardik Pandya",
+                            "cost": 150,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Ravindra Jadeja",
+                            "cost": 200,
                             "type": "auction",
                             "round": 1
                         }
                     ],
-                    "retained": "M. Raju Anna"
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
                 },
-                "b": {
-                    "budget": 4000,
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [],
+            "unsold_players": [
+                "Mohammed Shami",
+                "Jasprit Bumrah"
+            ],
+            "permanent_unsold_players": [],
+            "current_player": null,
+            "current_bid": 0,
+            "bidding_team": null,
+            "current_round": 1,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "SOLD",
+                "player": "Ravindra Jadeja",
+                "team": "Deccan Royals",
+                "amount": 200,
+                "timestamp": 1790905517405
+            },
+            "state_version": 59,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5000,
                     "spent": 1000,
                     "players": [
                         {
-                            "name": "L. Suresh",
-                            "cost": 500,
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Shubman Gill",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Hardik Pandya",
+                            "cost": 150,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Ravindra Jadeja",
+                            "cost": 200,
                             "type": "auction",
                             "round": 1
                         }
                     ],
-                    "retained": "Sunil Anna"
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
                 }
             },
             "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
             ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
+            "player_serials": {},
             "auction_players": [
-                "S. Ravi",
-                "P. Kumar",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
+                "Jasprit Bumrah",
+                "Mohammed Shami"
             ],
             "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 4000,
-                    "spent": 1000,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1300,
-                    "spent": 3700,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "P. Kumar",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 4000,
-                    "spent": 1000,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1100,
-                    "spent": 3900,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "G. Vamsi",
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 1200,
-                    "spent": 3800,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1100,
-                    "spent": 3900,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "Ch. Vasu",
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 1100,
-                    "spent": 3900,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1100,
-                    "spent": 3900,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "B. Vannu",
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 1100,
-                    "spent": 3900,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1000,
-                    "spent": 4000,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "M. Srinu",
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 1000,
-                    "spent": 4000,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 1000,
-                    "spent": 4000,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "E. Prabhu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 1000,
-                    "spent": 4000,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 900,
-                    "spent": 4100,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 900,
-                    "spent": 4100,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 900,
-                    "spent": 4100,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "K. Kishore",
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 900,
-                    "spent": 4100,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "T. Mahesh",
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 900,
-                    "spent": 4100,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "A. Krishna",
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [
-                "T. Mahesh"
-            ],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "A. Krishna",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "K. Raghu (Putta)",
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [
-                "T. Mahesh"
-            ],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "A. Krishna",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 700,
-                    "spent": 4300,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Raghu (Putta)",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "M. Gani",
-                "P. Sai"
-            ],
-            "unsold_players": [
-                "T. Mahesh"
-            ],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "A. Krishna",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 600,
-                    "spent": 4400,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Raghu (Putta)",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Gani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "P. Sai"
-            ],
-            "unsold_players": [
-                "T. Mahesh"
-            ],
-            "current_round": 1,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
-        },
-        {
-            "teams": {
-                "a": {
-                    "budget": 800,
-                    "spent": 4200,
-                    "players": [
-                        {
-                            "name": "K. Prasad",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "G. Vamsi",
-                            "cost": 2800,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "Ch. Vasu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Srinu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Nani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "A. Krishna",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "M. Raju Anna"
-                },
-                "b": {
-                    "budget": 500,
-                    "spent": 4500,
-                    "players": [
-                        {
-                            "name": "L. Suresh",
-                            "cost": 500,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "S. Ravi",
-                            "cost": 2700,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Kumar",
-                            "cost": 200,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "B. Vannu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "E. Prabhu",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Kishore",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "K. Raghu (Putta)",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "M. Gani",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        },
-                        {
-                            "name": "P. Sai",
-                            "cost": 100,
-                            "type": "auction",
-                            "round": 1
-                        }
-                    ],
-                    "retained": "Sunil Anna"
-                }
-            },
-            "players": [
-                "M. Raju Anna",
-                "Sunil Anna",
-                "M. Gani",
-                "B. Vannu",
-                "E. Prabhu",
-                "K. Raghu (Putta)",
-                "S. Ravi",
-                "P. Sai",
-                "M. Srinu",
-                "B. Nani",
-                "K. Kishore",
-                "T. Mahesh",
-                "G. Vamsi",
-                "Ch. Vasu",
-                "A. Krishna",
-                "L. Suresh",
-                "K. Prasad",
-                "P. Kumar"
-            ],
-            "player_serials": {
-                "M. Raju Anna": 1,
-                "Sunil Anna": 2,
-                "M. Gani": 3,
-                "B. Vannu": 4,
-                "E. Prabhu": 5,
-                "K. Raghu (Putta)": 6,
-                "S. Ravi": 7,
-                "P. Sai": 8,
-                "M. Srinu": 9,
-                "B. Nani": 10,
-                "K. Kishore": 11,
-                "T. Mahesh": 12,
-                "G. Vamsi": 13,
-                "Ch. Vasu": 14,
-                "A. Krishna": 15,
-                "L. Suresh": 16,
-                "K. Prasad": 17,
-                "P. Kumar": 18
-            },
-            "auction_players": [
-                "T. Mahesh"
-            ],
-            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": "Jasprit Bumrah",
+            "current_bid": 0,
+            "bidding_team": null,
             "current_round": 2,
-            "total_purse": 5000,
-            "max_players": 15,
-            "min_bid": 100,
-            "retention_price": 500
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "SOLD",
+                "player": "Ravindra Jadeja",
+                "team": "Deccan Royals",
+                "amount": 200,
+                "timestamp": 1790905517405
+            },
+            "state_version": 59,
+            "current_bid_team": null
+        },
+        {
+            "teams": {
+                "Deccan Royals": {
+                    "budget": 5000,
+                    "spent": 1000,
+                    "players": [
+                        {
+                            "name": "Surya Kumar Yadav",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Shubman Gill",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Hardik Pandya",
+                            "cost": 150,
+                            "type": "auction",
+                            "round": 1
+                        },
+                        {
+                            "name": "Ravindra Jadeja",
+                            "cost": 200,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "player_retained": {
+                        "name": "Virat Kohli",
+                        "cost": 500,
+                        "type": "Player"
+                    },
+                    "owner_retained": null
+                },
+                "Kunsi Warriors": {
+                    "budget": 5850,
+                    "spent": 150,
+                    "players": [
+                        {
+                            "name": "Jasprit Bumrah",
+                            "cost": 50,
+                            "type": "auction",
+                            "round": 2
+                        }
+                    ],
+                    "retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    },
+                    "player_retained": null,
+                    "owner_retained": {
+                        "name": "Rohit Sharma",
+                        "cost": 100,
+                        "type": "Owner"
+                    }
+                },
+                "Saidapur Super Kings": {
+                    "budget": 5750,
+                    "spent": 250,
+                    "players": [
+                        {
+                            "name": "Rishabh Pant",
+                            "cost": 250,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                },
+                "Telangana Titans": {
+                    "budget": 5900,
+                    "spent": 100,
+                    "players": [
+                        {
+                            "name": "KL Rahul",
+                            "cost": 100,
+                            "type": "auction",
+                            "round": 1
+                        }
+                    ],
+                    "retained": null,
+                    "player_retained": null,
+                    "owner_retained": null
+                }
+            },
+            "players": [
+                "Virat Kohli",
+                "Rohit Sharma",
+                "Jasprit Bumrah",
+                "Hardik Pandya",
+                "Rishabh Pant",
+                "Ravindra Jadeja",
+                "Surya Kumar Yadav",
+                "Mohammed Shami",
+                "KL Rahul",
+                "Shubman Gill"
+            ],
+            "player_serials": {},
+            "auction_players": [
+                "Mohammed Shami"
+            ],
+            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "current_player": "Mohammed Shami",
+            "current_bid": 50,
+            "bidding_team": null,
+            "current_round": 2,
+            "auction_started": true,
+            "total_purse": 6000,
+            "max_players": 4,
+            "min_bid": 50,
+            "retention_price": 500,
+            "owner_retention_price": 100,
+            "last_action": {
+                "type": "DRAW",
+                "player": "Mohammed Shami",
+                "timestamp": 1790905517472
+            },
+            "state_version": 61,
+            "current_bid_team": null
         }
     ],
     "current_round": 2,
-    "total_purse": 5000,
-    "max_players": 15,
-    "min_bid": 100,
+    "auction_started": true,
+    "total_purse": 6000,
+    "max_players": 4,
+    "min_bid": 50,
     "retention_price": 500,
-    "current_player": "Virat Sharma"
+    "owner_retention_price": 100,
+    "last_action": {
+        "type": "SOLD",
+        "player": "Mohammed Shami",
+        "team": "Kunsi Warriors",
+        "amount": 50,
+        "timestamp": 1790905517490
+    },
+    "state_version": 62,
+    "current_bid_team": null
 }

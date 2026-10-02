@@ -105,7 +105,13 @@ def load_config():
                 default_config.update(cfg)
         except Exception as e:
             print("Error loading config:", e)
-        env_pin = os.environ.get('ADMIN_PIN')
+
+    # Guarantee KPL branding across all links and shares
+    t_name = default_config.get("tournament_name", "")
+    if "SPL" in t_name or not t_name:
+        default_config["tournament_name"] = "Kunsi Premier League (KPL 2026)"
+
+    env_pin = os.environ.get('ADMIN_PIN')
     if env_pin:
         default_config['admin_pin'] = env_pin.strip()
     return default_config
