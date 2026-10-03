@@ -1,16 +1,28 @@
 {
-    "tournament_name": "Kunsi Premier League (KPL 2026)",
-    "upi_id": "9550887806@ybl",
-    "payee_name": "Raju",
-    "registration_fee": 10,
-    "default_purse": 6000,
-    "min_bid": 50,
+    "tournament_name": "KPL Premier League 2026",
+    "upi_id": "kpl@upi",
+    "payee_name": "KPL Committee",
+    "registration_fee": 200,
+    "default_purse": 15000,
+    "min_bid": 100,
     "retention_price": 500,
     "owner_retention_price": 100,
-    "max_players": 4,
+    "max_players": 15,
     "currency_symbol": "\u20b9",
     "admin_pin": "2026",
-    "total_purse": 6000,
+    "timer_enabled": true,
+    "timer_duration": 120,
+    "timer_reset_on_bid": true,
+    "upi_enabled": true,
+    "total_purse": 15000,
     "registration_open": true,
-    "pin": "2026"
+    "pin": "2026",
+    "team_passcodes": {
+        "Deccan Royals": "DR26",
+        "Kunsi Warriors": "KW26",
+        "Saidapur Super Kings": "SS26",
+        "Telangana Titans": "TT26",
+        "Hyderabad Blasters": "HB26",
+        "Royal Tigers": "RT26"
+    }
 }

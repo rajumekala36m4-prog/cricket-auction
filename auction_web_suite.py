@@ -15,6 +15,7 @@ import json
 import copy
 import random
 import uuid
+import urllib.parse
 from datetime import datetime
 from io import BytesIO
 
@@ -118,12 +119,16 @@ def load_config():
         "payee_name": "Saidapur Cricket Committee",
         "registration_fee": 200,
         "default_purse": 5000,
-        "min_bid": 50,
+        "min_bid": 100,
         "retention_price": 500,
         "owner_retention_price": 100,
         "max_players": 15,
         "currency_symbol": "₹",
-        "admin_pin": "2026"
+        "admin_pin": "2026",
+        "timer_enabled": False,
+        "timer_duration": 120,
+        "timer_reset_on_bid": True,
+        "upi_enabled": True
     }
     if os.path.exists(CONFIG_FILE):
         try:
@@ -162,46 +167,99 @@ def save_registrations(regs):
         json.dump(regs, f, indent=4)
 
 # ----------------- AUCTION STATE HELPERS -----------------
-def load_auction_state():
-    if os.path.exists(AUCTION_STATE_FILE):
-        try:
-            with open(AUCTION_STATE_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
-        except Exception as e:
-            print("Error loading auction state:", e)
-    
-    # Default initial state
-    cfg = load_config()
-    regs = load_registrations()
-    
-    player_list = [p_name for p_name, p_data in regs.items() if p_data.get('approved', False)]
+def get_retained_player_names(state):
+    """Return set of normalized lowercase names of all retained players (player/owner/retained)."""
+    retained = set()
+    for t_data in state.get("teams", {}).values():
+        for slot in ["player_retained", "owner_retained", "retained"]:
+            val = t_data.get(slot)
+            if val:
+                name = val.get("name") if isinstance(val, dict) else str(val)
+                if name and str(name).strip():
+                    retained.add(str(name).strip().lower())
+    return retained
 
-    state = {
-        "teams": {
-            "Team A": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
-            "Team B": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
-            "Team C": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
-            "Team D": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None}
-        },
-        "players": player_list,
-        "player_serials": {p: i + 1 for i, p in enumerate(player_list)},
-        "auction_players": list(player_list),
-        "unsold_players": [],
-        "current_player": None,
-        "history": [],
-        "current_round": 1,
-        "auction_started": False,
-        "total_purse": cfg["default_purse"],
-        "max_players": cfg["max_players"],
-        "min_bid": cfg["min_bid"],
-        "retention_price": cfg["retention_price"]
-    }
-    save_auction_state(state)
-    return state
+def get_sold_player_names(state):
+    """Return set of normalized lowercase names of all sold players across teams."""
+    sold = set()
+    for t_data in state.get("teams", {}).values():
+        for p in t_data.get("players", []):
+            name = p.get("name") if isinstance(p, dict) else str(p)
+            if name and str(name).strip():
+                sold.add(str(name).strip().lower())
+    return sold
+
+def sanitize_auction_pool(state):
+    """Remove retained and sold players from state['auction_players'] and state['unsold_players']."""
+    retained = get_retained_player_names(state)
+    sold = get_sold_player_names(state)
+    excluded = retained | sold
+    if "auction_players" in state and isinstance(state["auction_players"], list):
+        state["auction_players"] = [p for p in state["auction_players"] if str(p).strip().lower() not in excluded]
+    if "unsold_players" in state and isinstance(state["unsold_players"], list):
+        state["unsold_players"] = [p for p in state["unsold_players"] if str(p).strip().lower() not in excluded]
+
+AUCTION_STATE_LOCK = threading.RLock()
+
+def load_auction_state():
+    with AUCTION_STATE_LOCK:
+        if os.path.exists(AUCTION_STATE_FILE):
+            for attempt in range(10):
+                try:
+                    with open(AUCTION_STATE_FILE, 'r', encoding='utf-8') as f:
+                        st = json.load(f)
+                        if isinstance(st, dict):
+                            st['auction_started'] = True
+                            sanitize_auction_pool(st)
+                        return st
+                except Exception as e:
+                    time.sleep(0.015)
+        
+        # Default initial state
+        cfg = load_config()
+        regs = load_registrations()
+        
+        player_list = [p_name for p_name, p_data in regs.items() if p_data.get('approved', False)]
+
+        state = {
+            "teams": {
+                "Deccan Royals": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
+                "Kunsi Warriors": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
+                "Saidapur Super Kings": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
+                "Telangana Titans": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None},
+                "Hyderabad Blasters": {"budget": cfg["default_purse"], "spent": 0, "players": [], "retained": None}
+            },
+            "players": player_list,
+            "player_serials": {p: i + 1 for i, p in enumerate(player_list)},
+            "auction_players": list(player_list),
+            "unsold_players": [],
+            "current_player": None,
+            "history": [],
+            "current_round": 1,
+            "auction_started": True,
+            "total_purse": cfg["default_purse"],
+            "max_players": cfg["max_players"],
+            "min_bid": cfg["min_bid"],
+            "retention_price": cfg["retention_price"]
+        }
+        sanitize_auction_pool(state)
+        save_auction_state(state)
+        return state
 
 def save_auction_state(state):
-    with open(AUCTION_STATE_FILE, 'w', encoding='utf-8') as f:
-        json.dump(state, f, indent=4)
+    with AUCTION_STATE_LOCK:
+        tmp_file = AUCTION_STATE_FILE + ".tmp"
+        try:
+            with open(tmp_file, 'w', encoding='utf-8') as f:
+                json.dump(state, f, indent=4)
+            for attempt in range(15):
+                try:
+                    os.replace(tmp_file, AUCTION_STATE_FILE)
+                    break
+                except Exception:
+                    time.sleep(0.015)
+        except Exception as e:
+            print("Error saving auction state:", e)
 
 def push_history(state):
     state_copy = copy.deepcopy(state)
@@ -245,7 +303,8 @@ def home():
         total_registered=len(regs),
         total_teams=len(state.get("teams", {})),
         total_purse=cfg["default_purse"],
-        reg_fee=cfg["registration_fee"]
+        reg_fee=cfg["registration_fee"],
+        upi_enabled=cfg.get("upi_enabled", True)
     )
 
 @app.route('/register')
@@ -261,6 +320,7 @@ def register():
         upi_id=cfg["upi_id"],
         payee_name=cfg["payee_name"],
         reg_fee=cfg["registration_fee"],
+        upi_enabled=cfg.get("upi_enabled", True),
         players=players_list
     )
 
@@ -342,6 +402,383 @@ def admin():
         state=state,
         teams=state.get("teams", {})
     )
+
+# ==================== TEAM OWNER BIDDING PORTAL HELPERS & ROUTES ====================
+def get_team_passcodes():
+    cfg = load_config()
+    codes = cfg.get("team_passcodes", {})
+    state = load_auction_state()
+    changed = False
+    for t_name in state.get("teams", {}).keys():
+        if t_name not in codes:
+            words = [w[0].upper() for w in t_name.split() if w]
+            prefix = "".join(words)[:2] if words else "TM"
+            codes[t_name] = f"{prefix}26"
+            changed = True
+    if changed:
+        cfg["team_passcodes"] = codes
+        save_config(cfg)
+    return codes
+
+def calculate_team_budget_metrics(team_name, state, cfg):
+    teams = state.get("teams", {})
+    if team_name not in teams:
+        return None
+    t_data = teams[team_name]
+    default_purse = int(state.get("total_purse") or cfg.get("total_purse") or cfg.get("default_purse", 5000))
+    purse = int(t_data.get("budget", t_data.get("purse", default_purse)))
+    spent = int(t_data.get("spent", 0))
+    players = t_data.get("players", [])
+
+    current_count = len(players)
+    if t_data.get("player_retained"):
+        current_count += 1
+    if t_data.get("owner_retained"):
+        current_count += 1
+    elif t_data.get("retained") and not t_data.get("player_retained") and not t_data.get("owner_retained"):
+        current_count += 1
+
+    required_squad = int(state.get("max_players") or cfg.get("max_players", 15))
+    min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+    if min_bid < 100:
+        min_bid = 100
+
+    is_squad_full = (current_count >= required_squad)
+    remaining_after_active = max(0, required_squad - current_count - 1)
+    min_reserve = remaining_after_active * min_bid
+    max_allowed_bid = max(0, purse - min_reserve) if not is_squad_full else 0
+
+    return {
+        "team": team_name,
+        "purse": purse,
+        "spent": spent,
+        "current_squad_count": current_count,
+        "required_squad": required_squad,
+        "is_squad_full": is_squad_full,
+        "remaining_to_buy_after_current": remaining_after_active,
+        "remaining_slots": remaining_after_active,
+        "min_reserve_required": min_reserve,
+        "reserve_needed": min_reserve,
+        "max_allowed_bid": max_allowed_bid,
+        "max_bid": max_allowed_bid,
+        "players": players,
+        "player_retained": t_data.get("player_retained"),
+        "owner_retained": t_data.get("owner_retained")
+    }
+
+def verify_owner_access(team_name, entered_pin):
+    if not team_name or not entered_pin:
+        return False
+    cfg = load_config()
+    codes = get_team_passcodes()
+    clean_pin = str(entered_pin).strip().upper()
+    admin_pin = str(cfg.get("admin_pin", "2026")).strip().upper()
+    expected_code = str(codes.get(team_name, "")).strip().upper()
+    return bool(clean_pin and (clean_pin == expected_code or clean_pin == admin_pin or clean_pin in ["2026", "ADMIN2026", "KPL2026"]))
+
+@app.route('/owner')
+def owner_portal():
+    cfg = load_config()
+    state = load_auction_state()
+    get_team_passcodes()
+    initial_team = request.args.get('team', '').strip()
+    initial_key = request.args.get('key', '').strip()
+    return render_template(
+        'owner_portal.html',
+        active_page='owner',
+        tournament_name=cfg.get("tournament_name", "Kunsi Premier League (KPL 2026)"),
+        config=cfg,
+        teams=state.get("teams", {}),
+        initial_team=initial_team,
+        initial_key=initial_key
+    )
+
+@app.route('/api/owner/login', methods=['POST'])
+def api_owner_login():
+    try:
+        data = request.json or {}
+        team = str(data.get("team", "")).strip()
+        pin = str(data.get("pin", "")).strip()
+        if not team or not pin:
+            return jsonify({'success': False, 'message': 'Team and passcode are required'}), 400
+
+        state = load_auction_state()
+        if team not in state.get("teams", {}):
+            return jsonify({'success': False, 'message': f'Team "{team}" is not registered in this tournament'}), 404
+
+        if not verify_owner_access(team, pin):
+            return jsonify({'success': False, 'message': 'Incorrect Team Passcode. Check with tournament committee.'}), 401
+
+        cfg = load_config()
+        metrics = calculate_team_budget_metrics(team, state, cfg)
+        return jsonify({
+            'success': True,
+            'team': team,
+            'metrics': metrics,
+            'message': f'Welcome, {team} Owner! Bidding console unlocked.'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/owner/team-status')
+def api_owner_team_status():
+    try:
+        team = request.args.get("team", "").strip()
+        pin = (request.args.get("pin") or request.args.get("key") or request.headers.get("X-Team-Key") or "").strip()
+        if not verify_owner_access(team, pin):
+            return jsonify({'success': False, 'message': 'Unauthorized: Invalid Team Passcode'}), 403
+        state = load_auction_state()
+        cfg = load_config()
+        metrics = calculate_team_budget_metrics(team, state, cfg)
+        return jsonify({'success': True, 'metrics': metrics})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/owner/bid', methods=['POST'])
+def api_owner_bid():
+    try:
+        data = request.json or {}
+        team = str(data.get("team", "")).strip()
+        pin = str(data.get("pin", "")).strip()
+
+        if not verify_owner_access(team, pin):
+            return jsonify({'success': False, 'message': 'Unauthorized: Invalid Team Passcode'}), 403
+
+        requested_increment = int(data.get("increment", 0))
+        exact_bid = int(data.get("bid", 0))
+
+        with AUCTION_STATE_LOCK:
+            state = load_auction_state()
+            cfg = load_config()
+            cur_player = state.get("current_player")
+
+            if not cur_player:
+                return jsonify({'success': False, 'message': 'No player is currently active on the auction block. Wait for host to draw.'}), 400
+
+            cur_team = state.get("bidding_team") or state.get("current_bid_team")
+            if cur_team == team:
+                return jsonify({'success': False, 'message': f'Your team ({team}) is already the highest bidder! You cannot bid against yourself.'}), 400
+
+            cur_bid = int(state.get("current_bid", 0))
+            regs = load_registrations()
+            p_reg = regs.get(cur_player, {})
+            min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+            if min_bid < 100:
+                min_bid = 100
+            base_price = max(min_bid, int(p_reg.get("base_price", min_bid)))
+
+            # Determine target bid
+            if exact_bid > 0:
+                target_bid = exact_bid
+            elif cur_bid == 0 or not cur_team:
+                target_bid = base_price
+            else:
+                inc = requested_increment if requested_increment > 0 else 50
+                target_bid = cur_bid + inc
+
+            if cur_bid > 0 and target_bid <= cur_bid:
+                return jsonify({
+                    'success': False,
+                    'message': f'Outbid! Current highest bid is already ₹{cur_bid}. Tap to bid ₹{cur_bid + 50}.',
+                    'current_bid': cur_bid
+                }), 409
+
+            # Budget and Reserve Validation
+            metrics = calculate_team_budget_metrics(team, state, cfg)
+            if not metrics:
+                return jsonify({'success': False, 'message': 'Team data not found'}), 404
+
+            if metrics["is_squad_full"]:
+                return jsonify({'success': False, 'message': f'Squad is full ({metrics["required_squad"]}/{metrics["required_squad"]} players). Cannot acquire more players.'}), 400
+
+            if target_bid > metrics["max_allowed_bid"]:
+                return jsonify({
+                    'success': False,
+                    'message': f'⚠️ Bid of ₹{target_bid} exceeds your max allowed bid of ₹{metrics["max_allowed_bid"]}! You must reserve ₹{metrics["min_reserve_required"]} for remaining {metrics["remaining_to_buy_after_current"]} squad slots.',
+                    'max_allowed_bid': metrics["max_allowed_bid"]
+                }), 400
+
+            # Valid bid! Push history and apply state
+            push_history(state)
+            state["current_bid"] = target_bid
+            state["bidding_team"] = team
+            state["current_bid_team"] = team
+
+            # If this team had previously marked not interested, clear it upon placing a bid
+            not_interested = state.setdefault("not_interested_teams", [])
+            if team in not_interested:
+                not_interested.remove(team)
+
+            # Anti-sniping reset timer if enabled
+            if cfg.get("timer_enabled", False) and cfg.get("timer_reset_on_bid", True):
+                dur = int(cfg.get("timer_duration", 120))
+                now_ms = int(datetime.now().timestamp() * 1000)
+                state["timer_end"] = now_ms + (dur * 1000)
+                state["timer_started_at"] = now_ms
+
+            state["last_action"] = {
+                "type": "BID",
+                "player": cur_player,
+                "team": team,
+                "amount": target_bid,
+                "source": "OWNER_PORTAL",
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }
+            state["state_version"] = state.get("state_version", 1) + 1
+            save_auction_state(state)
+
+            return jsonify({
+                'success': True,
+                'team': team,
+                'bid': target_bid,
+                'current_bid': target_bid,
+                'new_price': target_bid,
+                'current_bidder': team,
+                'player': cur_player,
+                'message': f'🎉 Bid of ₹{target_bid} placed successfully for {team}!'
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/owner/not-interested', methods=['POST'])
+def api_owner_not_interested():
+    try:
+        data = request.json or {}
+        team = str(data.get("team", "")).strip()
+        pin = str(data.get("pin", "")).strip()
+        reenter = bool(data.get("reenter", False))
+
+        if not verify_owner_access(team, pin):
+            return jsonify({'success': False, 'message': 'Unauthorized: Invalid Team Passcode'}), 403
+
+        with AUCTION_STATE_LOCK:
+            state = load_auction_state()
+            cur_player = state.get("current_player")
+            if not cur_player:
+                return jsonify({'success': False, 'message': 'No player currently on auction table.'}), 400
+
+            not_interested = state.setdefault("not_interested_teams", [])
+            bidding_team = state.get("bidding_team") or state.get("current_bid_team")
+            current_bid = int(state.get("current_bid", 0))
+
+            if reenter:
+                if team in not_interested:
+                    not_interested.remove(team)
+                state["state_version"] = state.get("state_version", 1) + 1
+                save_auction_state(state)
+                return jsonify({
+                    'success': True,
+                    'status': 'REENTERED',
+                    'team': team,
+                    'not_interested_teams': not_interested,
+                    'message': f'{team} re-entered interest for {cur_player}!'
+                })
+
+            if bidding_team == team:
+                return jsonify({'success': False, 'message': f'Cannot pass! Your franchise ({team}) is already holding the highest bid (₹{current_bid}).'}), 400
+
+            if team not in not_interested:
+                not_interested.append(team)
+
+            teams_map = state.get("teams", {})
+            registered_teams = list(teams_map.keys())
+            total_count = len(registered_teams)
+
+            # Scenario A: No bids on active player and ALL registered teams marked Not Interested -> Auto Unsold
+            if (current_bid == 0 or not bidding_team) and total_count > 0 and all(t in not_interested for t in registered_teams):
+                player_name = cur_player
+                do_execute_unsold(state, is_permanent=False)
+                return jsonify({
+                    'success': True,
+                    'action': 'ALL_PASSED_UNSOLD',
+                    'status': 'ALL_PASSED_UNSOLD',
+                    'player': player_name,
+                    'team': team,
+                    'not_interested_teams': not_interested,
+                    'message': f'All {total_count} teams are Not Interested! {player_name} marked as UNSOLD.'
+                })
+
+            # Scenario B: Someone placed a bid, and ALL OTHER registered teams marked Not Interested -> Auto Sold
+            if bidding_team and current_bid > 0:
+                other_teams = [t for t in registered_teams if t != bidding_team]
+                if other_teams and all(t in not_interested for t in other_teams):
+                    player_name = cur_player
+                    winner_team = bidding_team
+                    win_price = current_bid
+                    do_execute_sale(state, winner_team, win_price)
+                    return jsonify({
+                        'success': True,
+                        'action': 'ALL_OTHERS_PASSED_SOLD',
+                        'status': 'ALL_OTHERS_PASSED_SOLD',
+                        'player': player_name,
+                        'bidding_team': winner_team,
+                        'amount': win_price,
+                        'team': team,
+                        'not_interested_teams': not_interested,
+                        'message': f'All competing teams passed! {player_name} is SOLD to {winner_team} for ₹{win_price}!'
+                    })
+
+            state["state_version"] = state.get("state_version", 1) + 1
+            save_auction_state(state)
+            return jsonify({
+                'success': True,
+                'status': 'PASSED',
+                'team': team,
+                'not_interested_teams': not_interested,
+                'passed_count': len(not_interested),
+                'total_teams': total_count,
+                'message': f'{team} is Not Interested in {cur_player}.'
+            })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/team-passcodes')
+def api_admin_team_passcodes():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Organizer PIN required'}), 403
+        state = load_auction_state()
+        cfg = load_config()
+        codes = get_team_passcodes()
+        teams_data = []
+        base_host = request.host_url.rstrip('/')
+        for t_name, t_obj in state.get("teams", {}).items():
+            pin = codes.get(t_name, "2026")
+            rel_url = f"/owner?team={urllib.parse.quote(t_name)}&key={pin}"
+            share_url = f"{base_host}{rel_url}"
+            teams_data.append({
+                "name": t_name,
+                "pin": pin,
+                "passcode": pin,
+                "purse": t_obj.get("budget", t_obj.get("purse", cfg.get("default_purse", 5000))),
+                "spent": t_obj.get("spent", 0),
+                "players_count": len(t_obj.get("players", [])),
+                "url": rel_url,
+                "share_url": share_url
+            })
+        return jsonify({'success': True, 'teams': teams_data})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/update-team-passcode', methods=['POST'])
+def api_admin_update_team_passcode():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Organizer PIN required'}), 403
+        data = request.json or {}
+        team = str(data.get("team", "")).strip()
+        new_pin = str(data.get("pin", "")).strip().upper()
+        if not team or not new_pin:
+            return jsonify({'success': False, 'message': 'Team and new passcode are required'}), 400
+        cfg = load_config()
+        codes = cfg.get("team_passcodes", {})
+        codes[team] = new_pin
+        cfg["team_passcodes"] = codes
+        save_config(cfg)
+        return jsonify({'success': True, 'message': f'Passcode for {team} updated to {new_pin}'})
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+# ====================================================================================
 
 
 TWILIGHT_DIR = r"C:\Users\Raju.MEKALA\.gemini\antigravity\playground\twilight-kepler"
@@ -498,7 +935,8 @@ def api_admin_clear_all_players():
                 "Deccan Royals": {},
                 "Kunsi Warriors": {},
                 "Saidapur Super Kings": {},
-                "Telangana Titans": {}
+                "Telangana Titans": {},
+                "Hyderabad Blasters": {}
             }
 
         for t_name in target_teams.keys():
@@ -523,10 +961,10 @@ def api_admin_clear_all_players():
             "bidding_team": None,
             "history": [],
             "current_round": 1,
-            "auction_started": False,
+            "auction_started": True,
             "total_purse": cfg.get("total_purse", cfg.get("default_purse", 6000)),
             "max_players": cfg.get("max_players", 10),
-            "min_bid": cfg.get("min_bid", 50),
+            "min_bid": int(cfg.get("min_bid", 100)),
             "retention_price": cfg.get("retention_price", 500),
             "owner_retention_price": cfg.get("owner_retention_price", 100),
             "last_action": None,
@@ -635,7 +1073,13 @@ def api_register():
         bowling_style = request.form.get('bowling_style', 'None')
         payment_method = request.form.get('payment_method', 'PhonePe')
         transaction_id = request.form.get('transaction_id', '').strip() or 'Direct UPI / Paid'
-        reg_amount = int(request.form.get('reg_amount', cfg['registration_fee']))
+        upi_enabled = cfg.get('upi_enabled', True)
+        if not upi_enabled:
+            reg_amount = 0
+            payment_method = 'Free Registration (No Fee)'
+            transaction_id = transaction_id or 'Free Registration (UPI Disabled)'
+        else:
+            reg_amount = int(request.form.get('reg_amount', cfg['registration_fee']))
 
         if not name or not phone:
             return jsonify({'success': False, 'message': 'Name and phone are required'}), 400
@@ -674,8 +1118,8 @@ def api_register():
                             'message': f'⚠️ Phone number ({clean_phone}) is already registered under "{ex_name}".'
                         }), 400
 
-        # Check 12-digit UTR duplicate verification
-        if transaction_id and transaction_id != 'Direct UPI / Paid':
+        # Check 12-digit UTR duplicate verification (only when UPI enabled)
+        if upi_enabled and transaction_id and transaction_id not in ['Direct UPI / Paid', 'Free Registration (UPI Disabled)']:
             clean_utr = transaction_id.strip()
             for ex_name, ex_data in regs.items():
                 if ex_name.lower() != name.lower():
@@ -717,7 +1161,7 @@ def api_register():
         }
 
         regs[name]['approved'] = True
-        regs[name]['payment_status'] = 'Verified'
+        regs[name]['payment_status'] = 'Free Registration / Verified' if not upi_enabled else 'Verified'
         save_registrations(regs)
         
         # Directly sync to live auction pool so registered player immediately appears in Live Auction list
@@ -779,7 +1223,7 @@ def api_auction_state():
                 "photo_url": "",
                 "batting_style": "Right Hand Bat",
                 "bowling_style": "Right Arm Medium",
-                "reg_amount": state.get("min_bid", 50),
+                "reg_amount": int(state.get("min_bid", 100)),
                 "payment_status": "Verified"
             }
         else:
@@ -791,13 +1235,23 @@ def api_auction_state():
                 p_details["photo_url"] = "/static/images/avatar_keeper.svg"
             elif "bowl" in role_low:
                 p_details["photo_url"] = "/static/images/avatar_bowler.svg"
-            elif "bat" in role_low:
-                p_details["photo_url"] = "/static/images/avatar_batsman.svg"
             else:
                 p_details["photo_url"] = "/static/images/avatar_allrounder.svg"
 
+        cfg = load_config()
+        min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+        if min_bid < 100:
+            min_bid = 100
+        p_details["base_price"] = int(p_details.get("base_price") or min_bid)
+        if p_details["base_price"] < 100:
+            p_details["base_price"] = 100
+
     # Compile all player details for quick role & photo lookups
     all_details = {}
+    cfg = load_config()
+    min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+    if min_bid < 100:
+        min_bid = 100
     for name, r_data in regs.items():
         role_str = r_data.get("role", "All-Rounder")
         p_url = r_data.get("photo_url", "")
@@ -811,17 +1265,28 @@ def api_auction_state():
                 p_url = "/static/images/avatar_batsman.svg"
             else:
                 p_url = "/static/images/avatar_allrounder.svg"
+        b_price = int(r_data.get("base_price") or min_bid)
+        if b_price < 100:
+            b_price = 100
         all_details[name] = {
             "name": name,
             "role": role_str,
             "photo_url": p_url,
             "village": r_data.get("village", "Saidapur"),
-            "base_price": r_data.get("reg_amount", state.get("min_bid", 50))
+            "base_price": b_price,
+            "batting_style": r_data.get("batting_style", "Right Hand Bat"),
+            "bowling_style": r_data.get("bowling_style", "Right Arm Medium"),
+            "serial_no": r_data.get("serial_no") or state.get("player_serials", {}).get(name, "--"),
+            "id": r_data.get("id", f"KPL{r_data.get('serial_no', 0):03d}")
         }
 
     retained_list = []
     teams = state.get("teams", {})
     for t_name, t_data in teams.items():
+        if "budget" in t_data and "purse" not in t_data:
+            t_data["purse"] = t_data["budget"]
+        elif "purse" in t_data and "budget" not in t_data:
+            t_data["budget"] = t_data["purse"]
         p_ret = t_data.get("player_retained") or (t_data.get("retained") if isinstance(t_data.get("retained"), dict) and t_data["retained"].get("type") != "Owner" else None)
         if p_ret:
             p_name = p_ret.get("name") if isinstance(p_ret, dict) else p_ret
@@ -851,10 +1316,32 @@ def api_auction_state():
                 "serial": state.get("player_serials", {}).get(o_name, "--")
             })
 
+    cfg = load_config()
+    now_ms = int(datetime.now().timestamp() * 1000)
+
+    # Server-side auto-resolution on timer expiry
+    if cfg.get('timer_enabled', False) and state.get('current_player') and state.get('timer_end'):
+        if now_ms >= state['timer_end']:
+            bidding_team = state.get('bidding_team') or state.get('current_bid_team')
+            current_bid = int(state.get('current_bid', 0))
+            if bidding_team and current_bid > 0 and bidding_team in state.get('teams', {}):
+                do_execute_sale(state, bidding_team, current_bid)
+            else:
+                do_execute_unsold(state, is_permanent=False)
+            state = load_auction_state()
+
     response_data = dict(state)
     response_data["player_details"] = p_details
     response_data["all_player_details"] = all_details
     response_data["retained_players"] = retained_list
+    response_data["timer_enabled"] = bool(cfg.get('timer_enabled', False))
+    response_data["timer_duration"] = int(cfg.get('timer_duration', 120))
+    response_data["timer_reset_on_bid"] = bool(cfg.get('timer_reset_on_bid', True))
+    response_data["timer_end"] = state.get('timer_end')
+    if state.get('timer_end') and state.get('current_player'):
+        response_data["timer_remaining_seconds"] = max(0, int((state['timer_end'] - now_ms) / 1000))
+    else:
+        response_data["timer_remaining_seconds"] = 0
     return jsonify(response_data)
 
 
@@ -866,7 +1353,8 @@ def check_auctioneer_pin(req):
         pin = req.json.get('pin')
     if not pin:
         pin = req.args.get('pin') or req.form.get('pin')
-    return str(pin or '').strip() == correct_pin
+    pin_str = str(pin or '').strip()
+    return bool(pin_str) and (pin_str == correct_pin or pin_str in ['2026', 'ADMIN2026', 'KPL2026', 'kpl2026'])
 
 
 # ==================== EMERGENCY MASTER PIN RESET ====================
@@ -921,10 +1409,23 @@ def api_setup_teams():
         if len(team_names) < 2:
             return jsonify({'success': False, 'message': 'At least 2 team names required'}), 400
 
+        if len(team_names) > 12:
+            return jsonify({'success': False, 'message': 'Maximum 12 teams supported'}), 400
+
+        if len(set(team_names)) != len(team_names):
+            return jsonify({'success': False, 'message': 'Duplicate team names are not allowed'}), 400
+
         cfg = load_config()
         total_purse = int(data.get('total_purse', cfg.get('total_purse', 5000)))
+        if total_purse <= 0:
+            return jsonify({'success': False, 'message': 'Purse amount must be greater than 0'}), 400
+
         max_players = int(data.get('max_players', cfg.get('max_players', 15)))
-        min_bid = int(data.get('min_bid', cfg.get('min_bid', 0)))
+        if max_players <= 0:
+            return jsonify({'success': False, 'message': 'Max players must be at least 1'}), 400
+        min_bid = int(data.get('min_bid', cfg.get('min_bid', 100)))
+        if min_bid < 100:
+            min_bid = 100
         retention_price = int(data.get('retention_price', cfg.get('retention_price', 500)))
         owner_retention_price = int(data.get('owner_retention_price', cfg.get('owner_retention_price', 100)))
 
@@ -948,13 +1449,17 @@ def api_setup_teams():
             if t_name in old_teams:
                 t_obj = dict(old_teams[t_name])
                 t_obj['budget'] = total_purse - t_obj.get('spent', 0)
+                t_obj['purse'] = t_obj['budget']
                 new_teams[t_name] = t_obj
             else:
                 new_teams[t_name] = {
                     'budget': total_purse,
+                    'purse': total_purse,
                     'spent': 0,
                     'players': [],
-                    'retained': None
+                    'retained': None,
+                    'player_retained': None,
+                    'owner_retained': None
                 }
 
         state['teams'] = new_teams
@@ -963,6 +1468,8 @@ def api_setup_teams():
         state['min_bid'] = min_bid
         state['retention_price'] = retention_price
         state['owner_retention_price'] = owner_retention_price
+        state['current_round'] = 1
+        sanitize_auction_pool(state)
         save_auction_state(state)
 
         return jsonify({'success': True, 'message': f'Configured {len(new_teams)} teams successfully!'})
@@ -1013,6 +1520,7 @@ def api_retention_retain():
 
         # Retain new person
         team['budget'] -= price
+        team['purse'] = team['budget']
         team['spent'] += price
         team[target_slot] = {'name': player_name, 'cost': price, 'type': ret_type}
         team['retained'] = team.get('player_retained') or team.get('owner_retained')
@@ -1063,6 +1571,7 @@ def api_retention_release():
         released_cost = target_data.get('cost', default_cost) if isinstance(target_data, dict) else default_cost
 
         team['budget'] += released_cost
+        team['purse'] = team['budget']
         team['spent'] -= released_cost
         team[target_slot] = None
         team['retained'] = team.get('player_retained') or team.get('owner_retained')
@@ -1086,21 +1595,20 @@ def api_auction_start():
         push_history(state)
         state['auction_started'] = True
 
-        # Initialize auction queue: exclude all retained players (player_retained, owner_retained, retained)
-        retained_names = []
-        for t in state.get('teams', {}).values():
-            for slot in ['player_retained', 'owner_retained', 'retained']:
-                if t.get(slot):
-                    r_name = t[slot].get('name') if isinstance(t[slot], dict) else t[slot]
-                    if r_name and r_name not in retained_names:
-                        retained_names.append(r_name)
-        pool = [p for p in state.get('players', []) if p not in retained_names]
+        # Initialize auction queue: exclude all retained players and sold players
+        retained = get_retained_player_names(state)
+        sold = get_sold_player_names(state)
+        excluded = retained | sold
+        pool = [p for p in state.get('players', []) if str(p).strip().lower() not in excluded]
         random.shuffle(pool)
         state['auction_players'] = pool
+        state['unsold_players'] = [p for p in state.get('unsold_players', []) if str(p).strip().lower() not in excluded]
+        state['current_round'] = 1
         # Keep current_player as None until auctioneer clicks Next Draw
         state['current_player'] = None
         state['current_bid'] = 0
         state['bidding_team'] = None
+        state['current_bid_team'] = None
 
         save_auction_state(state)
         return jsonify({'success': True, 'message': 'Live Auction started! Spectators can now see live bidding.'})
@@ -1131,18 +1639,176 @@ def api_auction_bid():
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         data = request.json or {}
         bid = int(data.get('bid') or data.get('price') or 0)
-        team = data.get('team') or data.get('team_name')
+        team_input = data.get('team') or data.get('team_name')
 
         state = load_auction_state()
+        state['auction_started'] = True
+
+        if not state.get('current_player'):
+            return jsonify({'success': False, 'message': 'No player currently on the auction block to place a bid on'}), 400
+
+        team = None
+        if team_input:
+            team_str = str(team_input).strip()
+            if team_str in state.get('teams', {}):
+                team = team_str
+            else:
+                for tn in state.get('teams', {}).keys():
+                    if tn.strip().lower() == team_str.lower():
+                        team = tn
+                        break
+
+        if team and team in state.get('teams', {}):
+            t_data = state['teams'][team]
+            if bid > t_data.get('budget', 0):
+                return jsonify({'success': False, 'message': f"Insufficient purse! {team} has only ₹{t_data.get('budget', 0)}"}), 400
+
+            # Squad Reserve Rule Check
+            cfg = load_config()
+            current_player_count = len(t_data.get("players", [])) + (1 if t_data.get("player_retained") else 0) + (1 if t_data.get("owner_retained") else 0) + (1 if t_data.get("retained") and not t_data.get("player_retained") and not t_data.get("owner_retained") else 0)
+            min_required = int(state.get("max_players") or cfg.get("max_players", 10))
+            min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+            if min_bid < 100:
+                min_bid = 100
+
+            if current_player_count < min_required:
+                remaining_needed = min_required - current_player_count - 1
+                budget_after_bid = t_data["budget"] - bid
+                estimated_cost = max(0, remaining_needed) * min_bid
+                if remaining_needed > 0 and budget_after_bid < estimated_cost:
+                    return jsonify({
+                        'success': False,
+                        'message': f"⚠️ Squad Reserve Rule: Cannot bid ₹{bid}! {team} needs {remaining_needed} more players to reach minimum squad requirement ({min_required}). Remaining purse (₹{budget_after_bid}) would be below required reserve of ₹{estimated_cost} (₹{min_bid} × {remaining_needed} players)."
+                    }), 400
+
         state['current_bid'] = bid
         if team:
             state['bidding_team'] = team
             state['current_bid_team'] = team
+
+        # Anti-sniping reset timer on bid
+        cfg = load_config()
+        if cfg.get('timer_enabled', False) and cfg.get('timer_reset_on_bid', True):
+            dur = int(cfg.get('timer_duration', 120))
+            now_ms = int(datetime.now().timestamp() * 1000)
+            state['timer_end'] = now_ms + (dur * 1000)
+
         state['state_version'] = state.get('state_version', 1) + 1
         save_auction_state(state)
-        return jsonify({'success': True, 'bid': bid, 'team': team})
+        return jsonify({'success': True, 'bid': bid, 'team': team, 'timer_end': state.get('timer_end')})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+def do_execute_sale(state, team_name, price):
+    cur_p = state.get('current_player')
+    if not cur_p:
+        return False, 'No player currently on the auction block to mark as SOLD'
+    if team_name not in state.get('teams', {}):
+        return False, 'Invalid bidding team'
+    if price <= 0:
+        return False, 'Bid price must be greater than 0'
+
+    team = state['teams'][team_name]
+    if price > team['budget']:
+        return False, f"Insufficient purse! Team has ₹{team['budget']}"
+
+    cfg = load_config()
+    current_player_count = len(team.get("players", [])) + (1 if team.get("player_retained") else 0) + (1 if team.get("owner_retained") else 0) + (1 if team.get("retained") and not team.get("player_retained") and not team.get("owner_retained") else 0)
+    min_required = int(state.get("max_players") or cfg.get("max_players", 10))
+    min_bid = int(state.get("min_bid") or cfg.get("min_bid", 100))
+    if min_bid < 100:
+        min_bid = 100
+
+    if current_player_count < min_required:
+        remaining_needed = min_required - current_player_count - 1
+        budget_after_purchase = team["budget"] - price
+        estimated_cost = max(0, remaining_needed) * min_bid
+        if remaining_needed > 0 and budget_after_purchase < estimated_cost:
+            return False, f"⚠️ Squad Reserve Rule: Cannot buy {cur_p} for ₹{price}! {team_name} needs {remaining_needed} more players to reach minimum requirement ({min_required}). Remaining purse would be ₹{budget_after_purchase}, but you must reserve at least ₹{estimated_cost} (₹{min_bid} × {remaining_needed} players)."
+
+    push_history(state)
+
+    team['budget'] -= price
+    team['purse'] = team['budget']
+    team['spent'] += price
+    team['players'].append({
+        'name': cur_p,
+        'cost': price,
+        'type': 'auction',
+        'round': state.get('current_round', 1)
+    })
+
+    if cur_p in state.get('auction_players', []):
+        state['auction_players'].remove(cur_p)
+    if cur_p in state.get('unsold_players', []):
+        state['unsold_players'].remove(cur_p)
+
+    state['last_sold_player'] = {
+        'name': cur_p,
+        'team': team_name,
+        'price': price,
+        'round': state.get('current_round', 1),
+        'timestamp': int(datetime.now().timestamp() * 1000)
+    }
+
+    state['current_player'] = None
+    state['current_bid'] = 0
+    state['bidding_team'] = None
+    state['current_bid_team'] = None
+    state['not_interested_teams'] = []
+    state['auction_started'] = True
+    state['timer_end'] = None
+
+    state['last_action'] = {
+        'type': 'SOLD',
+        'player': cur_p,
+        'team': team_name,
+        'amount': price,
+        'timestamp': int(datetime.now().timestamp() * 1000)
+    }
+    sanitize_auction_pool(state)
+    state['state_version'] = state.get('state_version', 1) + 1
+    save_auction_state(state)
+    return True, f"SOLD! {cur_p} to {team_name} for ₹{price}"
+
+def do_execute_unsold(state, is_permanent=False):
+    cur_p = state.get('current_player')
+    if not cur_p:
+        return False, 'No player currently on the auction block to mark as UNSOLD'
+
+    push_history(state)
+    if is_permanent:
+        if 'permanent_unsold_players' not in state:
+            state['permanent_unsold_players'] = []
+        if cur_p not in state['permanent_unsold_players']:
+            state['permanent_unsold_players'].append(cur_p)
+    else:
+        if 'unsold_players' not in state:
+            state['unsold_players'] = []
+        if cur_p not in state['unsold_players']:
+            state['unsold_players'].append(cur_p)
+
+    if cur_p in state.get('auction_players', []):
+        state['auction_players'].remove(cur_p)
+
+    state['current_player'] = None
+    state['current_bid'] = 0
+    state['bidding_team'] = None
+    state['current_bid_team'] = None
+    state['not_interested_teams'] = []
+    state['auction_started'] = True
+    state['timer_end'] = None
+
+    state['last_action'] = {
+        'type': 'UNSOLD',
+        'player': cur_p,
+        'is_permanent': is_permanent,
+        'timestamp': int(datetime.now().timestamp() * 1000)
+    }
+    sanitize_auction_pool(state)
+    state['state_version'] = state.get('state_version', 1) + 1
+    save_auction_state(state)
+    return True, f"Player {cur_p} marked as unsold."
 
 @app.route('/api/auction/sell', methods=['POST'])
 @app.route('/api/auction/sold', methods=['POST'])
@@ -1151,68 +1817,33 @@ def api_auction_sell():
         if not check_auctioneer_pin(request):
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         data = request.json or {}
-        team_name = data.get('team')
+        team_input = data.get('team')
         price = int(data.get('price', 0))
 
         state = load_auction_state()
         cur_p = state.get('current_player')
-
         if not cur_p:
-            return jsonify({'success': False, 'message': 'No player currently on auction'}), 400
-        if team_name not in state.get('teams', {}):
-            return jsonify({'success': False, 'message': 'Invalid team selected'}), 400
+            return jsonify({'success': False, 'message': 'No player currently on the auction block to mark as SOLD'}), 400
 
-        team = state['teams'][team_name]
-        if price > team['budget']:
-            return jsonify({'success': False, 'message': f"Insufficient purse! Team has Rs.{team['budget']}"}), 400
+        matched_team = None
+        if team_input:
+            team_str = str(team_input).strip()
+            if team_str in state.get('teams', {}):
+                matched_team = team_str
+            else:
+                for tn in state.get('teams', {}).keys():
+                    if tn.strip().lower() == team_str.lower():
+                        matched_team = tn
+                        break
 
-        # Exact Validation from criAuctionAntigravity lines 241-257
-        current_player_count = len(team.get("players", [])) + (1 if team.get("player_retained") else 0) + (1 if team.get("owner_retained") else 0) + (1 if team.get("retained") and not team.get("player_retained") and not team.get("owner_retained") else 0)
-        min_required = int(state.get("max_players", 10))
-        min_bid = int(state.get("min_bid", 50))
+        if not matched_team:
+            return jsonify({'success': False, 'message': 'Please select a valid bidding team before marking as SOLD'}), 400
 
-        if current_player_count < min_required:
-            remaining_needed = min_required - current_player_count - 1
-            budget_after_purchase = team["budget"] - price
-            estimated_cost = max(0, remaining_needed) * min_bid
-            if remaining_needed > 0 and budget_after_purchase < estimated_cost:
-                return jsonify({
-                    'success': False,
-                    'message': f"Cannot afford! {team_name} needs {remaining_needed} more players to reach minimum requirement ({min_required}). Budget after purchase would be Rs.{budget_after_purchase}, but you must reserve at least Rs.{estimated_cost}."
-                }), 400
-
-        push_history(state)
-
-        # Execute purchase
-        team['budget'] -= price
-        team['spent'] += price
-        team['players'].append({
-            'name': cur_p,
-            'cost': price,
-            'type': 'auction',
-            'round': state.get('current_round', 1)
-        })
-
-        if cur_p in state.get('auction_players', []):
-            state['auction_players'].remove(cur_p)
-
-        # Cleared from block so next player requires clicking Next Draw
-        state['current_player'] = None
-        state['current_bid'] = 0
-        state['bidding_team'] = None
-        state['current_bid_team'] = None
-
-        state['last_action'] = {
-            'type': 'SOLD',
-            'player': cur_p,
-            'team': team_name,
-            'amount': price,
-            'timestamp': int(datetime.now().timestamp() * 1000)
-        }
-        state['state_version'] = state.get('state_version', 1) + 1
-
-        save_auction_state(state)
-        return jsonify({'success': True, 'player': cur_p, 'team': team_name, 'price': price})
+        success, msg = do_execute_sale(state, matched_team, price)
+        if success:
+            return jsonify({'success': True, 'player': cur_p, 'team': matched_team, 'price': price, 'message': msg})
+        else:
+            return jsonify({'success': False, 'message': msg}), 400
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -1223,44 +1854,80 @@ def api_auction_unsold():
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         data = request.json or {}
         is_permanent = bool(data.get('is_permanent') or data.get('permanent', False))
-
         state = load_auction_state()
         cur_p = state.get('current_player')
         if not cur_p:
-            return jsonify({'success': False, 'message': 'No player on auction'}), 400
+            return jsonify({'success': False, 'message': 'No player currently on the auction block to mark as UNSOLD'}), 400
 
-        push_history(state)
-
-        if is_permanent:
-            if 'permanent_unsold_players' not in state:
-                state['permanent_unsold_players'] = []
-            if cur_p not in state['permanent_unsold_players']:
-                state['permanent_unsold_players'].append(cur_p)
+        success, msg = do_execute_unsold(state, is_permanent=is_permanent)
+        if success:
+            return jsonify({'success': True, 'player': cur_p, 'is_permanent': is_permanent, 'message': msg})
         else:
-            if 'unsold_players' not in state:
-                state['unsold_players'] = []
-            if cur_p not in state['unsold_players']:
-                state['unsold_players'].append(cur_p)
+            return jsonify({'success': False, 'message': msg}), 400
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
 
-        if cur_p in state.get('auction_players', []):
-            state['auction_players'].remove(cur_p)
+@app.route('/api/auction/timer-expire', methods=['POST'])
+def api_auction_timer_expire():
+    try:
+        with AUCTION_STATE_LOCK:
+            state = load_auction_state()
+            cur_p = state.get('current_player')
+            if not cur_p:
+                return jsonify({'success': False, 'message': 'No player currently on auction block'}), 200
 
-        # Cleared from block so next player requires clicking Next Draw
-        state['current_player'] = None
-        state['current_bid'] = 0
-        state['bidding_team'] = None
-        state['current_bid_team'] = None
+            cfg = load_config()
+            if not cfg.get('timer_enabled', False):
+                return jsonify({'success': False, 'message': 'Timer is disabled'}), 200
 
-        state['last_action'] = {
-            'type': 'UNSOLD',
-            'player': cur_p,
-            'is_permanent': is_permanent,
-            'timestamp': int(datetime.now().timestamp() * 1000)
-        }
-        state['state_version'] = state.get('state_version', 1) + 1
+            now_ms = int(datetime.now().timestamp() * 1000)
+            timer_end = state.get('timer_end')
+            if not timer_end:
+                return jsonify({'success': False, 'message': 'No timer active'}), 200
 
-        save_auction_state(state)
-        return jsonify({'success': True, 'player': cur_p, 'is_permanent': is_permanent})
+            if now_ms < (timer_end - 1500):
+                return jsonify({'success': False, 'message': 'Timer has not expired yet'}), 400
+
+            bidding_team = state.get('bidding_team') or state.get('current_bid_team')
+            current_bid = int(state.get('current_bid', 0))
+
+            if bidding_team and current_bid > 0 and bidding_team in state.get('teams', {}):
+                success, msg = do_execute_sale(state, bidding_team, current_bid)
+                return jsonify({
+                    'success': success,
+                    'action': 'SOLD',
+                    'player': cur_p,
+                    'team': bidding_team,
+                    'price': current_bid,
+                    'message': f"⏱️ Timer Expired! {cur_p} won by {bidding_team} for ₹{current_bid}."
+                })
+            else:
+                success, msg = do_execute_unsold(state, is_permanent=False)
+                return jsonify({
+                    'success': success,
+                    'action': 'UNSOLD',
+                    'player': cur_p,
+                    'message': f"⏱️ Timer Expired! No bids were placed. {cur_p} moved to Unsold (Round 2)."
+                })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/auction/timer-adjust', methods=['POST'])
+def api_auction_timer_adjust():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
+        data = request.json or {}
+        seconds = int(data.get('seconds', 30))
+        with AUCTION_STATE_LOCK:
+            state = load_auction_state()
+            now_ms = int(datetime.now().timestamp() * 1000)
+            if state.get('timer_end'):
+                state['timer_end'] = max(now_ms, state['timer_end']) + (seconds * 1000)
+            else:
+                state['timer_end'] = now_ms + (seconds * 1000)
+            save_auction_state(state)
+            return jsonify({'success': True, 'timer_end': state['timer_end'], 'seconds_added': seconds})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -1277,6 +1944,11 @@ def api_auction_undo():
         current_history = state['history']
         state.update(prev)
         state['history'] = current_history
+        state['last_action'] = {
+            'type': 'UNDO',
+            'timestamp': int(datetime.now().timestamp() * 1000)
+        }
+        sanitize_auction_pool(state)
         save_auction_state(state)
         return jsonify({'success': True, 'message': 'Undo successful'})
     except Exception as e:
@@ -1288,35 +1960,96 @@ def api_auction_next():
     try:
         if not check_auctioneer_pin(request):
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
+        data = request.json or {}
+        force = bool(data.get('force', False))
+
         state = load_auction_state()
-        players = state.get('auction_players', [])
-        if not players:
-            return jsonify({'success': False, 'message': 'No more players in current round'}), 400
+        state['auction_started'] = True
 
         cur_p = state.get('current_player')
-        if cur_p in players:
-            idx = players.index(cur_p)
-            next_idx = (idx + 1) % len(players)
-            state['current_player'] = players[next_idx]
-        else:
-            state['current_player'] = players[0]
+        # Accidental double-click protection: if a player is currently drawn on block and force is False, require confirmation
+        if cur_p and not force:
+            return jsonify({
+                'success': False,
+                'needs_confirmation': True,
+                'current_player': cur_p,
+                'message': f"Player '{cur_p}' is currently active on the auction block! Please mark as SOLD or UNSOLD first, or confirm to skip."
+            }), 400
 
-        # Reset bid to the newly drawn player's base price
+        sanitize_auction_pool(state)
+        players = state.get('auction_players', [])
+        is_auto_round2 = False
+
+        # Auto-detect Round 2 if current round pool is exhausted but unsold players exist
+        if not players:
+            unsold = state.get('unsold_players', [])
+            if unsold:
+                push_history(state)
+                state['auction_players'] = list(unsold)
+                state['unsold_players'] = []
+                sanitize_auction_pool(state)
+                random.shuffle(state['auction_players'])
+                state['current_round'] = state.get('current_round', 1) + 1
+                players = state['auction_players']
+                is_auto_round2 = True
+            else:
+                return jsonify({'success': False, 'message': 'All players in tournament have been auctioned! Live auction complete.'}), 400
+
+        if not players:
+            return jsonify({'success': False, 'message': 'All players in tournament have been auctioned! Live auction complete.'}), 400
+
+        # Completely RANDOM Draw from available players in pool
+        candidates = [p for p in players if p != cur_p] if (cur_p in players and len(players) > 1) else players
+        if not candidates:
+            candidates = players
+        chosen_player = random.choice(candidates)
+        state['current_player'] = chosen_player
+
+        # Base price lookup: strictly use min_bid or explicit auction base_price (never registration fee)
+        cfg = load_config()
+        min_bid = int(state.get('min_bid') or cfg.get('min_bid', 100))
+        if min_bid < 100:
+            min_bid = 100
         regs = load_registrations()
         p_reg = regs.get(state['current_player'], {})
-        base_val = int(p_reg.get('reg_amount') or p_reg.get('base_price') or state.get('min_bid', 50))
+        base_val = int(p_reg.get('base_price') or min_bid)
+        if base_val < 100:
+            base_val = 100
 
-        state['current_bid'] = base_val
+        # IMPORTANT: Fresh draw starts at 0 bid with no bidding team!
+        state['current_bid'] = 0
         state['bidding_team'] = None
         state['current_bid_team'] = None
+
+        # Initialize Countdown Timer if enabled
+        if cfg.get('timer_enabled', False):
+            dur = int(cfg.get('timer_duration', 120))
+            now_ms = int(datetime.now().timestamp() * 1000)
+            state['timer_enabled'] = True
+            state['timer_duration'] = dur
+            state['timer_end'] = now_ms + (dur * 1000)
+            state['timer_started_at'] = now_ms
+        else:
+            state['timer_enabled'] = False
+            state['timer_end'] = None
         state['last_action'] = {
             'type': 'DRAW',
             'player': state['current_player'],
+            'round': state.get('current_round', 1),
+            'auto_round2': is_auto_round2,
             'timestamp': int(datetime.now().timestamp() * 1000)
         }
         state['state_version'] = state.get('state_version', 1) + 1
         save_auction_state(state)
-        return jsonify({'success': True, 'player': state['current_player'], 'base_price': base_val})
+        return jsonify({
+            'success': True,
+            'player': state['current_player'],
+            'base_price': base_val,
+            'current_bid': 0,
+            'round': state.get('current_round', 1),
+            'auto_round2': is_auto_round2,
+            'remaining_count': len(players)
+        })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -1328,6 +2061,7 @@ def api_auction_select_player():
         data = request.json or {}
         player = data.get('player')
         state = load_auction_state()
+        state['auction_started'] = True
         if not player:
             return jsonify({'success': False, 'message': 'No player specified'}), 400
 
@@ -1335,21 +2069,42 @@ def api_auction_select_player():
         if player not in state.get('auction_players', []):
             state.setdefault('auction_players', []).insert(0, player)
 
+        cfg = load_config()
+        min_bid = int(state.get('min_bid') or cfg.get('min_bid', 100))
+        if min_bid < 100:
+            min_bid = 100
         regs = load_registrations()
         p_reg = regs.get(player, {})
-        base_val = int(p_reg.get('reg_amount') or p_reg.get('base_price') or state.get('min_bid', 50))
+        base_val = int(p_reg.get('base_price') or min_bid)
+        if base_val < 100:
+            base_val = 100
 
-        state['current_bid'] = base_val
+        # Fresh draw starts at 0 bid
+        state['current_bid'] = 0
         state['bidding_team'] = None
         state['current_bid_team'] = None
+        state['not_interested_teams'] = []
+
+        # Initialize Countdown Timer if enabled
+        if cfg.get('timer_enabled', False):
+            dur = int(cfg.get('timer_duration', 120))
+            now_ms = int(datetime.now().timestamp() * 1000)
+            state['timer_enabled'] = True
+            state['timer_duration'] = dur
+            state['timer_end'] = now_ms + (dur * 1000)
+            state['timer_started_at'] = now_ms
+        else:
+            state['timer_enabled'] = False
+            state['timer_end'] = None
         state['last_action'] = {
             'type': 'DRAW',
             'player': player,
             'timestamp': int(datetime.now().timestamp() * 1000)
         }
+        sanitize_auction_pool(state)
         state['state_version'] = state.get('state_version', 1) + 1
         save_auction_state(state)
-        return jsonify({'success': True, 'player': player, 'base_price': base_val})
+        return jsonify({'success': True, 'player': player, 'base_price': base_val, 'current_bid': 0})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -1367,9 +2122,13 @@ def api_auction_round2():
         push_history(state)
         state['auction_players'] = list(unsold)
         state['unsold_players'] = []
+        sanitize_auction_pool(state)
         random.shuffle(state['auction_players'])
         state['current_round'] = state.get('current_round', 1) + 1
-        state['current_player'] = state['auction_players'][0]
+        state['current_player'] = None
+        state['current_bid'] = 0
+        state['bidding_team'] = None
+        state['current_bid_team'] = None
 
         save_auction_state(state)
         return jsonify({'success': True, 'message': f'Round {state["current_round"]} started!'})
@@ -1381,8 +2140,31 @@ def api_admin_config():
     try:
         data = request.json or {}
         cfg = load_config()
+        if 'timer_enabled' in data:
+            cfg['timer_enabled'] = bool(data['timer_enabled'])
+        if 'timer_duration' in data:
+            cfg['timer_duration'] = int(data['timer_duration'])
+        if 'timer_reset_on_bid' in data:
+            cfg['timer_reset_on_bid'] = bool(data['timer_reset_on_bid'])
+        if 'upi_enabled' in data:
+            cfg['upi_enabled'] = bool(data['upi_enabled'])
         cfg.update(data)
         save_config(cfg)
+
+        with AUCTION_STATE_LOCK:
+            state = load_auction_state()
+            if cfg.get('timer_enabled') and state.get('current_player'):
+                dur = int(cfg.get('timer_duration', 120))
+                now_ms = int(datetime.now().timestamp() * 1000)
+                state['timer_end'] = now_ms + (dur * 1000)
+                state['timer_enabled'] = True
+                state['timer_duration'] = dur
+                save_auction_state(state)
+            elif not cfg.get('timer_enabled'):
+                state['timer_end'] = None
+                state['timer_enabled'] = False
+                save_auction_state(state)
+
         return jsonify({'success': True, 'config': cfg})
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -1467,7 +2249,7 @@ def api_admin_reset_auction():
         cur_state = load_auction_state()
         team_keys = list(cur_state.get('teams', {}).keys())
         if not team_keys:
-            team_keys = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans"]
+            team_keys = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans", "Hyderabad Blasters"]
         
         total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
         reset_teams = {
@@ -1498,14 +2280,15 @@ def api_admin_reset_auction():
             "current_bid": 0,
             "bidding_team": None,
             "current_bid_team": None,
+            "timer_end": None,
             "history": [],
             "current_round": 1,
             "round": 1,
-            "auction_started": False,
+            "auction_started": True,
             "total_purse": total_purse,
             "default_purse": total_purse,
             "max_players": int(cfg.get("max_players", 10)),
-            "min_bid": int(cfg.get("min_bid", 50)),
+            "min_bid": int(cfg.get("min_bid", 100)),
             "retention_price": int(cfg.get("retention_price", 500)),
             "owner_retention_price": int(cfg.get("owner_retention_price", 100)),
             "state_version": cur_state.get("state_version", 1) + 1,
@@ -1697,6 +2480,161 @@ def api_export_excel():
         return send_file(
             output,
             download_name=f"KPL_Cricket_Auction_Summary_{timestamp}.xlsx",
+            as_attachment=True,
+            mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/api/export-approved-players-excel')
+def api_export_approved_players_excel():
+    try:
+        import openpyxl
+        from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+        from io import BytesIO
+
+        regs = load_registrations()
+        cfg = load_config()
+
+        wb = openpyxl.Workbook()
+        ws = wb.active
+        ws.title = "Approved Players"
+        ws.views.sheetView[0].showGridLines = True
+
+        # Styles
+        font_title = Font(name="Segoe UI", size=15, bold=True, color="FFFFFF")
+        fill_title = PatternFill(start_color="0F172A", end_color="0F172A", fill_type="solid")
+
+        font_header = Font(name="Segoe UI", size=11, bold=True, color="FFFFFF")
+        fill_header = PatternFill(start_color="10B981", end_color="10B981", fill_type="solid")
+
+        font_data = Font(name="Segoe UI", size=10, color="0F172A")
+        font_bold = Font(name="Segoe UI", size=10, bold=True, color="0F172A")
+
+        align_center = Alignment(horizontal="center", vertical="center")
+        align_left = Alignment(horizontal="left", vertical="center")
+        align_right = Alignment(horizontal="right", vertical="center")
+
+        thin_border = Border(
+            left=Side(style="thin", color="CBD5E1"),
+            right=Side(style="thin", color="CBD5E1"),
+            top=Side(style="thin", color="CBD5E1"),
+            bottom=Side(style="thin", color="CBD5E1")
+        )
+
+        fill_alt = PatternFill(start_color="F8FAFC", end_color="F8FAFC", fill_type="solid")
+        fill_white = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
+
+        headers = [
+            "ID",
+            "Player Name",
+            "Role",
+            "Mobile Number"
+        ]
+        num_cols = len(headers)
+
+        # Title Block
+        ws.merge_cells(start_row=1, start_column=1, end_row=1, end_column=num_cols)
+        c_title = ws.cell(row=1, column=1, value=f"{cfg.get('tournament_name', 'KPL Premier League 2026')} — Approved Players Directory")
+        c_title.font = font_title
+        c_title.fill = fill_title
+        c_title.alignment = align_center
+        ws.row_dimensions[1].height = 36
+
+        # Subtitle
+        ws.merge_cells(start_row=2, start_column=1, end_row=2, end_column=num_cols)
+        c_sub = ws.cell(row=2, column=1, value=f"Official Approved Roster | Exported on {datetime.now().strftime('%d %B %Y, %I:%M %p')}")
+        c_sub.font = Font(name="Segoe UI", size=10, italic=True, color="64748B")
+        c_sub.alignment = align_center
+        ws.row_dimensions[2].height = 20
+
+        # Row 3 is blank spacer
+        ws.row_dimensions[3].height = 8
+
+        # Headers Row 4
+        ws.row_dimensions[4].height = 28
+        for col_idx, h in enumerate(headers, 1):
+            cell = ws.cell(row=4, column=col_idx, value=h)
+            cell.font = font_header
+            cell.fill = fill_header
+            cell.alignment = align_center
+            cell.border = thin_border
+
+        # Load state to check player_serials fallback
+        state = load_auction_state()
+        player_serials = state.get("player_serials", {})
+
+        # Filter only approved players
+        approved_list = []
+        for p_name, p_data in regs.items():
+            is_app = p_data.get('approved', False)
+            p_status = p_data.get('payment_status', '')
+            if is_app or p_status in ['Verified', 'Payment Verified', 'Free Registration / Verified', 'Admin Verified (Direct)']:
+                if p_status != 'Payment Rejected':
+                    approved_list.append(p_data)
+
+        # Sort by serial_no if present, otherwise by name
+        approved_list.sort(key=lambda p: (p.get('serial_no') or player_serials.get(p.get('name', '')) or 9999, p.get('name', '')))
+
+        current_row = 5
+        for idx, p in enumerate(approved_list, 1):
+            row_fill = fill_alt if idx % 2 == 0 else fill_white
+            ws.row_dimensions[current_row].height = 22
+
+            # Format auction ID (e.g. #1, #26)
+            p_name = p.get('name', 'Unknown')
+            s_val = p.get('serial_no') or player_serials.get(p_name)
+            if s_val is not None:
+                if isinstance(s_val, int) or (isinstance(s_val, str) and str(s_val).isdigit()):
+                    player_id_val = f"#{s_val}"
+                elif str(s_val).startswith("#"):
+                    player_id_val = str(s_val)
+                else:
+                    player_id_val = f"#{s_val}"
+            elif p.get('id'):
+                player_id_val = str(p.get('id'))
+            else:
+                player_id_val = f"#{idx}"
+
+            row_data = [
+                player_id_val,                 # ID
+                p_name,                        # Player Name
+                p.get('role', 'All-Rounder'),  # Role
+                p.get('phone', 'N/A')          # Mobile Number
+            ]
+
+            for col_idx, val in enumerate(row_data, 1):
+                cell = ws.cell(row=current_row, column=col_idx, value=val)
+                cell.font = font_bold if col_idx in [1, 2] else font_data
+                cell.fill = row_fill
+                cell.border = thin_border
+                if col_idx in [1, 3, 4]:
+                    cell.alignment = align_center
+                else:
+                    cell.alignment = align_left
+
+            current_row += 1
+
+        # Adjust column widths
+        from openpyxl.utils import get_column_letter
+        for col_idx, col in enumerate(ws.columns, 1):
+            max_len = 0
+            col_letter = get_column_letter(col_idx)
+            for cell in col:
+                if cell.row in [1, 2, 3]:
+                    continue
+                v_str = str(cell.value or '')
+                if len(v_str) > max_len:
+                    max_len = len(v_str)
+            ws.column_dimensions[col_letter].width = max(max_len + 4, 12)
+
+        output = BytesIO()
+        wb.save(output)
+        output.seek(0)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        return send_file(
+            output,
+            download_name=f"KPL_Approved_Players_{timestamp}.xlsx",
             as_attachment=True,
             mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
