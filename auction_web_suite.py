@@ -209,7 +209,8 @@ def load_auction_state():
                     with open(AUCTION_STATE_FILE, 'r', encoding='utf-8') as f:
                         st = json.load(f)
                         if isinstance(st, dict):
-                            st['auction_started'] = True
+                            if 'auction_started' not in st:
+                                st['auction_started'] = False
                             sanitize_auction_pool(st)
                         return st
                 except Exception as e:
@@ -1658,6 +1659,20 @@ def api_auction_bid():
                         team = tn
                         break
 
+        if bid < 0:
+            return jsonify({'success': False, 'message': 'Bid amount cannot be negative'}), 400
+
+        cur_lead_team = state.get('bidding_team') or state.get('current_bid_team')
+        cur_bid = int(state.get('current_bid', 0))
+        allow_same = bool(data.get('force') or data.get('allow_same_team', False))
+
+        # Check self-outbidding: A team cannot outbid themselves!
+        if team and cur_lead_team and team == cur_lead_team and cur_bid > 0 and bid > cur_bid and not allow_same:
+            return jsonify({
+                'success': False,
+                'message': f"⚠️ {team} is already the highest bidder at ₹{cur_bid}! Another team must place the next bid."
+            }), 400
+
         if team and team in state.get('teams', {}):
             t_data = state['teams'][team]
             if bid > t_data.get('budget', 0):
@@ -2209,6 +2224,65 @@ def api_admin_reject_player():
             save_auction_state(state)
             return jsonify({'success': True, 'message': f'Player "{name}" payment marked as Rejected.'})
         return jsonify({'success': False, 'message': 'Player not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+@app.route('/api/admin/fresh-tournament-reset', methods=['POST'])
+@app.route('/api/admin/start-fresh-tournament', methods=['POST'])
+def api_admin_fresh_tournament_reset():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
+
+        # 1. Clear registrations.json completely (wipe all registered players)
+        save_registrations({})
+
+        # 2. Reset tournament_config.json team passcodes
+        cfg = load_config()
+        cfg['team_passcodes'] = {}
+        save_config(cfg)
+
+        # 3. Reset auction_state.json completely (wipe teams, empty players, stop live auction)
+        total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
+        cur_state = load_auction_state()
+        fresh_state = {
+            "teams": {},
+            "players": [],
+            "player_serials": {},
+            "auction_players": [],
+            "unsold_players": [],
+            "permanent_unsold_players": [],
+            "unsold": [],
+            "unsold_r1": [],
+            "unsold_r2": [],
+            "sold_players": [],
+            "current_player": None,
+            "current_bid": 0,
+            "bidding_team": None,
+            "current_bid_team": None,
+            "timer_end": None,
+            "history": [],
+            "current_round": 1,
+            "round": 1,
+            "auction_started": False,
+            "total_purse": total_purse,
+            "default_purse": total_purse,
+            "max_players": int(cfg.get("max_players", 10)),
+            "min_bid": int(cfg.get("min_bid", 100)),
+            "retention_price": int(cfg.get("retention_price", 500)),
+            "owner_retention_price": int(cfg.get("owner_retention_price", 100)),
+            "state_version": cur_state.get("state_version", 1) + 1,
+            "last_action": {
+                "type": "FRESH_TOURNAMENT_RESET",
+                "timestamp": int(datetime.now().timestamp() * 1000)
+            }
+        }
+        save_auction_state(fresh_state)
+
+        return jsonify({
+            'success': True,
+            'message': 'Fresh Tournament Initialized! All registered players deleted, teams cleared, and live auction stopped.'
+        })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
