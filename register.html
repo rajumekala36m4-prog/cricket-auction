@@ -565,6 +565,7 @@
         </div>
       </div>
 
+      {% if upi_enabled is not defined or upi_enabled %}
       <!-- CARD D: TOURNAMENT ENTRY FEE & INSTANT UPI APPS -->
       <div class="form-section-card" style="border-color: rgba(16, 185, 129, 0.35);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.6rem;">
@@ -627,6 +628,22 @@
           </span>
         </div>
       </div>
+      {% else %}
+      <!-- CARD D: FREE REGISTRATION (UPI DISABLED) -->
+      <div class="form-section-card" style="border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.08); padding: 1.5rem; text-align: center;">
+        <div style="font-size: 2.25rem; margin-bottom: 0.4rem;">🎉</div>
+        <div class="section-label" style="color: #34d399; font-size: 1.15rem; font-weight: 800; justify-content: center; margin-bottom: 0.35rem;">
+          Free Player Registration Active
+        </div>
+        <p style="color: #94a3b8; font-size: 0.88rem; max-width: 480px; margin: 0 auto 0.75rem; line-height: 1.5;">
+          The tournament committee has waived the player registration fee. You can register your profile <strong>100% free</strong> without any UPI payment or UTR verification!
+        </p>
+        <span style="display: inline-block; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.4); padding: 0.3rem 0.85rem; border-radius: 9999px; font-weight: 800; font-size: 0.82rem;">
+          ⚡ Fee Skipped by Organizers
+        </span>
+        <input type="hidden" id="regUtr" value="Free Registration (UPI Disabled)">
+      </div>
+      {% endif %}
 
       <!-- SUBMIT ACTION -->
       <button type="submit" id="btnSubmitMobile" class="submit-reg-btn">
@@ -924,11 +941,18 @@
   async function handleMobileSubmit(e) {
     e.preventDefault();
 
-    const utr = document.getElementById('regUtr').value.trim();
-    if (!utr || utr.length < 6) {
-      alert('Please enter your valid 12-digit UPI Reference / UTR Number from your payment app.');
-      document.getElementById('regUtr').focus();
-      return;
+    const isUpiEnabled = {{ 'true' if (upi_enabled is not defined or upi_enabled) else 'false' }};
+    const utrEl = document.getElementById('regUtr');
+    let utr = utrEl ? utrEl.value.trim() : '';
+
+    if (isUpiEnabled) {
+      if (!utr || utr.length < 6) {
+        alert('Please enter your valid 12-digit UPI Reference / UTR Number from your payment app.');
+        if (utrEl) utrEl.focus();
+        return;
+      }
+    } else {
+      utr = 'Free Registration (UPI Disabled)';
     }
 
     const btn = document.getElementById('btnSubmitMobile');
@@ -960,8 +984,8 @@
         // Show Neat Verification Pending Modal
         document.getElementById('modalPlayerName').textContent = pName;
         document.getElementById('modalPlayerId').textContent = data.player_id || 'Submitted';
-        document.getElementById('modalAmount').textContent = '₹' + (data.reg_amount || 200) + ' Paid';
-        document.getElementById('modalUtr').textContent = utr;
+        document.getElementById('modalAmount').textContent = (data.reg_amount && data.reg_amount > 0) ? ('₹' + data.reg_amount + ' Paid') : 'Free Registration';
+        document.getElementById('modalUtr').textContent = isUpiEnabled ? utr : 'Waived (No Fee)';
 
         const shareMsg = encodeURIComponent(
           `🏏 KPL 2026 Registration Submitted\n` +

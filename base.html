@@ -20,7 +20,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Rajdhani:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/static/css/style.css">
+  <link rel="stylesheet" href="/static/css/style.css?v=20261002_kpl_v4">
 
   <style>
     /* Embed mode (iframe inside Admin) */
@@ -74,6 +74,11 @@
           <a href="/view" id="nav-viewers" class="nav-link tab-viewers {% if active_page == 'view' %}active{% endif %}" aria-label="Live Auction Viewers" title="Mobile Live Auction Stream">
             <span class="live-pulse-dot" aria-hidden="true"></span>
             <span>🔴 Live</span>
+          </a>
+        </li>
+        <li>
+          <a href="/owner" id="nav-owner" class="nav-link tab-owner {% if active_page == 'owner' %}active{% endif %}" aria-label="Team Owner Portal" title="Franchise Owner Bidding Portal">
+            👑 <span>Owner</span>
           </a>
         </li>
       </ul>
