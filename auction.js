@@ -289,6 +289,8 @@ function setActiveIncrement(amt) {
   });
 }
 
+let _isQuickBidding = false;
+
 function quickBidTeam(teamName) {
   if (!requirePinAuth(() => quickBidTeam(teamName))) return;
 
@@ -296,6 +298,16 @@ function quickBidTeam(teamName) {
     showToast('Click "Next Draw" to bring a player to the block first!', 'warning');
     return;
   }
+
+  // Prevent team from outbidding itself!
+  if (currentBiddingTeam && currentBiddingTeam === teamName && currentBidAmount > 0) {
+    showToast(`⚠️ ${teamName} is already the highest bidder at ₹${currentBidAmount}! Another team must bid.`, 'warning');
+    return;
+  }
+
+  if (_isQuickBidding) return;
+  _isQuickBidding = true;
+  setTimeout(() => { _isQuickBidding = false; }, 350);
 
   const p = (auctionState.all_player_details && auctionState.all_player_details[auctionState.current_player]) || auctionState.player_details || {};
   const basePrice = Math.max(100, Number(p.base_price || auctionState.min_bid || 100));
@@ -340,7 +352,7 @@ function renderQuickTeamGrid() {
       border: ${isLeading ? '2px solid #10b981' : '1.5px solid rgba(255,255,255,0.12)'};
       border-radius: 12px;
       padding: 0.5rem 0.55rem;
-      cursor: pointer;
+      cursor: ${isLeading ? 'default' : 'pointer'};
       transition: all 0.15s ease;
       box-shadow: ${isLeading ? '0 0 18px rgba(16,185,129,0.35)' : 'none'};
       user-select: none;
@@ -369,6 +381,8 @@ function renderQuickTeamGrid() {
 }
 
 // --- BID ADJUSTER (+50, +100, +200, +500, -50) ---
+let _isBidAdjusting = false;
+
 function adjustCurrentBid(delta) {
   if (!requirePinAuth(() => adjustCurrentBid(delta))) return;
 
@@ -385,6 +399,17 @@ function adjustCurrentBid(delta) {
     if (teamSelect) teamSelect.focus();
     return;
   }
+
+  // Prevent same team from outbidding itself!
+  if (delta > 0 && currentBiddingTeam && selectedTeam === currentBiddingTeam && currentBidAmount > 0) {
+    showToast(`⚠️ ${selectedTeam} is already the highest bidder at ₹${currentBidAmount}! Select a different team to outbid them.`, 'warning');
+    if (teamSelect) teamSelect.focus();
+    return;
+  }
+
+  if (_isBidAdjusting) return;
+  _isBidAdjusting = true;
+  setTimeout(() => { _isBidAdjusting = false; }, 300);
 
   playChimeSound();
   currentBidAmount = Math.max(0, currentBidAmount + delta);
@@ -414,7 +439,10 @@ function assignLeadingBidder() {
 }
 
 // --- DRAW NEXT PLAYER ---
+let _isDrawInFlight = false;
+
 async function drawNextPlayer(force = false) {
+  if (_isDrawInFlight) return;
   closeSoldModal();
   closeUnsoldModal();
   if (!requirePinAuth(() => drawNextPlayer(force))) return;
@@ -426,6 +454,7 @@ async function drawNextPlayer(force = false) {
     force = true;
   }
 
+  _isDrawInFlight = true;
   try {
     const pin = getAuctioneerPin();
     const res = await fetch('/api/auction/next', {
@@ -454,11 +483,14 @@ async function drawNextPlayer(force = false) {
     }
   } catch (e) {
     showToast('Error drawing player: ' + e.message, 'error');
+  } finally {
+    _isDrawInFlight = false;
   }
 }
 
 // --- CONFIRM SOLD PLAYER ---
 async function confirmSellPlayer() {
+  if (isAuctioneerActing) return;
   if (!requirePinAuth(confirmSellPlayer)) return;
 
   if (!auctionState || !auctionState.current_player) {
