@@ -7,6 +7,7 @@ let currentBiddingTeam = null;
 let pollTimer = null;
 let isAuctioneerActing = false;
 let lastActionTimestamp = 0;
+let poolActiveFilter = 'all';
 
 // --- TOAST NOTIFICATIONS (NO BLOCKING POPUPS) ---
 function showToast(message, type = 'info') {
@@ -33,12 +34,13 @@ function showToast(message, type = 'info') {
 
 // --- PIN HELPERS ---
 function getAuctioneerPin() {
-  return sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin') || '';
+  return sessionStorage.getItem('kpl_auction_pin') || sessionStorage.getItem('spl_auction_pin') || localStorage.getItem('kpl_auction_pin') || '2026';
 }
 
 function setAuctioneerPin(pin) {
   sessionStorage.setItem('kpl_auction_pin', pin);
   sessionStorage.setItem('spl_auction_pin', pin);
+  localStorage.setItem('kpl_auction_pin', pin);
 }
 
 function requirePinAuth(callback) {
@@ -253,22 +255,19 @@ function playChimeSound() {
 }
 
 // --- REAL-TIME BID BROADCAST ---
-let broadcastTimeout = null;
 function broadcastBid(amount, team) {
   if (window.IS_VIEWER_MODE) return;
   const pin = getAuctioneerPin();
-  if (!pin) return;
-
-  clearTimeout(broadcastTimeout);
-  broadcastTimeout = setTimeout(async () => {
-    try {
-      await fetch('/api/auction/bid', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
-        body: JSON.stringify({ bid: amount, team: team, pin: pin })
-      });
-    } catch(e) {}
-  }, 100);
+  fetch('/api/auction/bid', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+    body: JSON.stringify({ bid: amount, team: team, pin: pin })
+  }).then(r => r.json()).then(data => {
+    if (!data.success) {
+      showToast(data.message || 'Bid rejected', 'error');
+      fetchState();
+    }
+  }).catch(e => console.warn('Broadcast error:', e));
 }
 
 // --- ACTIVE INCREMENT & 1-TAP QUICK TEAM BIDDING ---
@@ -298,8 +297,16 @@ function quickBidTeam(teamName) {
     return;
   }
 
+  const p = (auctionState.all_player_details && auctionState.all_player_details[auctionState.current_player]) || auctionState.player_details || {};
+  const basePrice = Math.max(100, Number(p.base_price || auctionState.min_bid || 100));
+
   playChimeSound();
-  currentBidAmount = Math.max(50, currentBidAmount + activeIncrement);
+  // First bid rule: if no team is leading or currentBidAmount is 0, start at base price (e.g. 100)
+  if (!currentBiddingTeam || currentBidAmount === 0) {
+    currentBidAmount = basePrice;
+  } else {
+    currentBidAmount = currentBidAmount + (activeIncrement || 50);
+  }
   currentBiddingTeam = teamName;
 
   const teamSelect = document.getElementById('biddingTeamSelect') || document.getElementById('bidTeamSelect');
@@ -407,26 +414,43 @@ function assignLeadingBidder() {
 }
 
 // --- DRAW NEXT PLAYER ---
-async function drawNextPlayer() {
+async function drawNextPlayer(force = false) {
   closeSoldModal();
-  if (!requirePinAuth(drawNextPlayer)) return;
+  closeUnsoldModal();
+  if (!requirePinAuth(() => drawNextPlayer(force))) return;
+
+  if (!force && auctionState && auctionState.current_player) {
+    const pName = auctionState.current_player;
+    const ok = confirm(`⚠️ "${pName}" is currently active on the auction block!\n\nDo you want to SKIP and draw a new player without selling or marking unsold?`);
+    if (!ok) return;
+    force = true;
+  }
 
   try {
     const pin = getAuctioneerPin();
     const res = await fetch('/api/auction/next', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
-      body: JSON.stringify({ pin: pin })
+      body: JSON.stringify({ pin: pin, force: force })
     });
     const data = await res.json();
     if (data.success) {
       playChimeSound();
       currentBidAmount = data.base_price || 50;
       currentBiddingTeam = null;
-      showToast(`🎯 Drawn: ${data.player} (Base: ₹${currentBidAmount})`, 'success');
+      if (data.auto_round2) {
+        showToast(`🔥 Round 2 (Unsold Pool) Commenced! Drawn: ${data.player}`, 'success');
+      } else {
+        showToast(`🎯 Drawn: ${data.player} (Base: ₹${currentBidAmount})`, 'success');
+      }
       fetchState();
+    } else if (data.needs_confirmation) {
+      const ok = confirm(`⚠️ ${data.message}\n\nDo you wish to skip anyway?`);
+      if (ok) {
+        drawNextPlayer(true);
+      }
     } else {
-      showToast(data.message || 'No more players available in current round.', 'warning');
+      showToast(data.message || 'No more players available in tournament.', 'warning');
     }
   } catch (e) {
     showToast('Error drawing player: ' + e.message, 'error');
@@ -580,9 +604,9 @@ async function startRound2() {
   }
 }
 
-// --- CLOSE CELEBRATION MODAL ---
-// --- SOLD MODAL HELPERS ---
+// --- SOLD & UNSOLD MODAL HELPERS ---
 window._soldDismissTimer = null;
+window._unsoldDismissTimer = null;
 window._lastSoldPlayer = null;
 
 function closeSoldModal() {
@@ -597,15 +621,90 @@ function closeSoldModal() {
   }
 }
 
+function closeUnsoldModal() {
+  if (window._unsoldDismissTimer) {
+    clearTimeout(window._unsoldDismissTimer);
+    window._unsoldDismissTimer = null;
+  }
+  const modal = document.getElementById('unsoldModal');
+  if (modal) {
+    modal.classList.remove('active');
+    modal.style.display = 'none';
+  }
+}
+
 function handleSoldModalBackdrop(e) {
   if (e.target === document.getElementById('soldModal') || e.target.classList.contains('sold-modal-overlay')) {
     closeSoldModal();
   }
 }
 
+function handleUnsoldModalBackdrop(e) {
+  if (e.target === document.getElementById('unsoldModal') || e.target.classList.contains('sold-modal-overlay')) {
+    closeUnsoldModal();
+  }
+}
+
 async function drawNextFromModal() {
   closeSoldModal();
+  closeUnsoldModal();
   await drawNextPlayer();
+}
+
+async function drawNextFromUnsoldModal() {
+  closeUnsoldModal();
+  closeSoldModal();
+  await drawNextPlayer();
+}
+
+function triggerUnsoldModal(player, isPermanent) {
+  closeSoldModal();
+  const modal = document.getElementById('unsoldModal');
+  if (!modal) return;
+  const nameEl = document.getElementById('unsoldPlayerName');
+  const bannerEl = document.getElementById('unsoldModalBanner');
+  const subEl = document.getElementById('unsoldModalSubtitle');
+  const photoEl = document.getElementById('unsoldPlayerPhoto');
+  const roleBadge = document.getElementById('unsoldPlayerRoleBadge');
+
+  if (nameEl) nameEl.textContent = player || '-';
+  if (bannerEl) {
+    bannerEl.textContent = isPermanent ? '⛔ PERMANENTLY UNSOLD ⛔' : '❌ UNSOLD (ROUND 2) ❌';
+  }
+  if (subEl) {
+    subEl.textContent = isPermanent ? 
+      'No bids were placed. This player is permanently excluded from the tournament.' :
+      'No bids were placed. This player has been queued for Round 2 (Unsold Pool).';
+  }
+
+  const playerInfo = (auctionState?.all_player_details && auctionState.all_player_details[player]) ||
+                     (auctionState?.player_details?.name === player ? auctionState.player_details : null);
+
+  const roleName = playerInfo?.role || 'All-Rounder';
+  if (roleBadge) {
+    roleBadge.textContent = roleName;
+    roleBadge.className = 'role-badge ' + getRoleBadgeClass(roleName);
+  }
+
+  if (photoEl) {
+    let photoSrc = playerInfo?.photo_url;
+    if (!photoSrc) {
+      const r = (roleName).toLowerCase();
+      if (r.includes('keep')) photoSrc = '/static/images/avatar_keeper.svg';
+      else if (r.includes('bowl')) photoSrc = '/static/images/avatar_bowler.svg';
+      else if (r.includes('bat')) photoSrc = '/static/images/avatar_batsman.svg';
+      else photoSrc = '/static/images/avatar_allrounder.svg';
+    }
+    photoEl.src = photoSrc;
+  }
+
+  modal.style.display = 'flex';
+  modal.classList.add('active');
+
+  if (window._unsoldDismissTimer) clearTimeout(window._unsoldDismissTimer);
+  window._unsoldDismissTimer = setTimeout(() => {
+    closeUnsoldModal();
+  }, 4500);
 }
 
 // --- PICK SPECIFIC PLAYER FROM LIST ---
@@ -656,7 +755,6 @@ function triggerCelebrationModal(player, team, price) {
   if (teamEl) teamEl.textContent = team || '-';
   if (priceEl) priceEl.textContent = '₹' + (price || 0).toLocaleString('en-IN');
 
-  // Look up detailed player information
   const playerInfo = (auctionState?.all_player_details && auctionState.all_player_details[player]) ||
                      (auctionState?.player_details?.name === player ? auctionState.player_details : null);
 
@@ -683,7 +781,6 @@ function triggerCelebrationModal(player, team, price) {
     modal.classList.add('active');
   }
 
-  // Auto-dismiss celebration after 5 seconds so nobody is stuck!
   if (window._soldDismissTimer) clearTimeout(window._soldDismissTimer);
   window._soldDismissTimer = setTimeout(() => {
     closeSoldModal();
@@ -701,7 +798,7 @@ function updateBidDisplay() {
 
   if (tagEl) {
     if (currentBiddingTeam) {
-      tagEl.textContent = `Leading: ${currentBiddingTeam}`;
+      tagEl.textContent = `🎯 Leading: ${currentBiddingTeam}`;
       tagEl.style.background = 'rgba(245, 158, 11, 0.25)';
       tagEl.style.color = '#fbbf24';
       tagEl.style.borderColor = 'rgba(245, 158, 11, 0.5)';
@@ -723,7 +820,7 @@ function updateBidDisplay() {
 async function fetchState() {
   if (isAuctioneerActing) return;
   try {
-    const res = await fetch('/api/auction/state');
+    const res = await fetch('/api/auction/state?_t=' + Date.now(), { cache: 'no-store' });
     if (!res.ok) return;
     const data = await res.json();
     renderAuctionState(data);
@@ -735,20 +832,19 @@ async function fetchState() {
 function startStatePolling() {
   fetchState();
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(fetchState, 1000);
+  pollTimer = setInterval(fetchState, 400);
 }
 
 function renderAuctionState(state) {
   if (!state) return;
   auctionState = state;
-  // Auto-close celebration modal if active player advances or draw occurred
-  if (state.last_action && (state.last_action.type === 'DRAW' || state.current_player !== window._lastSoldPlayer)) {
-    if (document.getElementById('soldModal')?.style.display === 'flex') {
-      closeSoldModal();
-    }
+
+  if (state.last_action && state.last_action.type === 'DRAW') {
+    closeSoldModal();
+    closeUnsoldModal();
   }
 
-  // Populate Remaining Player Picker Dropdown
+  // Populate Remaining Player Picker Dropdown for Host
   const pickerDropdown = document.getElementById('selectPlayerDropdown');
   if (pickerDropdown && state.auction_players) {
     const currentVal = pickerDropdown.value;
@@ -761,7 +857,6 @@ function renderAuctionState(state) {
       }).join('');
     if (currentVal) pickerDropdown.value = currentVal;
   }
-
 
   // Connection tag
   const poolTag = document.getElementById('poolStatusTag');
@@ -792,22 +887,14 @@ function renderAuctionState(state) {
     }
   }
 
-  // Waiting screen for spectators
+  // Always display Active Stage for spectators and host
   const notStartedScreen = document.getElementById('auctionNotStartedScreen');
+  if (notStartedScreen) notStartedScreen.style.display = 'none';
+
   const activeCard = document.getElementById('activePlayerCard') || document.getElementById('activePlayerPodium');
-  const emptyState = document.getElementById('noActivePlayerState') || document.getElementById('emptyPodiumMsg');
+  if (activeCard) activeCard.style.display = 'block';
 
   const isViewer = window.IS_VIEWER_MODE || !document.getElementById('auctioneerControls');
-
-  if (!state.auction_started && isViewer) {
-    if (notStartedScreen) notStartedScreen.style.display = 'block';
-    if (activeCard) activeCard.style.display = 'none';
-    if (emptyState) emptyState.style.display = 'none';
-    renderTeams(state.teams);
-    return;
-  } else {
-    if (notStartedScreen) notStartedScreen.style.display = 'none';
-  }
 
   // Active Player Data
   const nameEl = document.getElementById('playerName') || document.getElementById('podiumPlayerName');
@@ -823,9 +910,11 @@ function renderAuctionState(state) {
   const nextDrawBtn = document.querySelector('.btn-next-draw');
 
   if (state.current_player) {
+    if (activeCard) activeCard.style.display = 'block';
+
     const p = state.player_details || {};
     if (nameEl) nameEl.textContent = state.current_player;
-    if (idTag) idTag.textContent = 'ID: #' + (state.player_serials?.[state.current_player] || '--');
+    if (idTag) idTag.textContent = 'ID: #' + (state.player_serials?.[state.current_player] || p.serial_no || '--');
 
     const roleName = p.role || 'All-Rounder';
     if (roleBadge) {
@@ -836,9 +925,11 @@ function renderAuctionState(state) {
     if (battingEl) battingEl.textContent = p.batting_style || 'Right Hand Bat';
     if (bowlingEl) bowlingEl.textContent = p.bowling_style || 'Right Arm Medium';
     if (villageEl) villageEl.textContent = p.village || 'Saidapur';
-    if (basePriceEl) basePriceEl.textContent = '₹' + (p.base_price || state.min_bid || 50);
+    const computedBase = Math.max(100, Number(p.base_price || state.min_bid || 100));
+    if (basePriceEl) basePriceEl.textContent = '₹' + computedBase;
 
     if (photoEl) {
+      photoEl.onerror = function() { this.onerror = null; this.src = '/static/images/avatar_allrounder.svg'; };
       photoEl.src = p.photo_url || '/static/images/avatar_allrounder.svg';
     }
 
@@ -846,22 +937,22 @@ function renderAuctionState(state) {
     unsoldBtns.forEach(btn => { btn.disabled = false; btn.style.opacity = '1'; btn.style.cursor = 'pointer'; });
     if (nextDrawBtn) nextDrawBtn.style.boxShadow = 'none';
 
-    const curBid = state.current_bid || p.base_price || state.min_bid || 50;
+    const baseVal = computedBase;
+    const curBid = (state.current_bid !== undefined && state.current_bid !== null) ? state.current_bid : 0;
     const curTeam = state.bidding_team || state.current_bid_team || null;
 
     if (isViewer) {
-      // Spectator live sync: update odometer directly from server state
       const odo = document.getElementById('bidOdometer');
       if (odo) odo.textContent = '₹' + curBid.toLocaleString('en-IN');
       const leadTag = document.getElementById('leadingTeamTag');
       if (leadTag) {
-        if (curTeam) {
+        if (curTeam && curBid > 0) {
           leadTag.textContent = `🎯 Leading: ${curTeam}`;
           leadTag.style.background = 'rgba(245, 158, 11, 0.25)';
           leadTag.style.color = '#fbbf24';
           leadTag.style.borderColor = 'rgba(245, 158, 11, 0.5)';
         } else {
-          leadTag.textContent = 'No Bids Yet';
+          leadTag.textContent = `No Bids Yet • Base: ₹${baseVal}`;
           leadTag.style.background = 'rgba(255, 255, 255, 0.08)';
           leadTag.style.color = '#94a3b8';
           leadTag.style.borderColor = 'rgba(255, 255, 255, 0.15)';
@@ -875,14 +966,80 @@ function renderAuctionState(state) {
         updateBidDisplay();
       }
     }
+
+    // Spectator Live Countdown Timer Update
+    const vTimerBox = document.getElementById('viewerTimerBox');
+    const vTimerClock = document.getElementById('viewerTimerClock');
+    const vTimerBar = document.getElementById('viewerTimerBar');
+    const vTimerStatus = document.getElementById('viewerTimerStatusText');
+    const vTimerPulse = document.getElementById('viewerTimerPulse');
+
+    if (state.timer_enabled && state.timer_end) {
+      if (vTimerBox) vTimerBox.style.display = 'block';
+      const nowMs = Date.now();
+      const remainingSec = Math.max(0, Math.round((state.timer_end - nowMs) / 1000));
+      const totalDur = state.timer_duration || 120;
+      const pct = Math.min(100, Math.max(0, (remainingSec / totalDur) * 100));
+
+      const m = Math.floor(remainingSec / 60);
+      const s = remainingSec % 60;
+      const formattedTime = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
+
+      if (vTimerClock) vTimerClock.textContent = formattedTime;
+      if (vTimerBar) vTimerBar.style.width = `${pct}%`;
+
+      if (remainingSec === 0) {
+        if (vTimerClock) {
+          vTimerClock.style.color = '#ef4444';
+          vTimerClock.classList.add('timer-pulse-red');
+        }
+        if (vTimerBar) vTimerBar.style.background = '#ef4444';
+        if (vTimerPulse) vTimerPulse.style.background = '#ef4444';
+        if (vTimerStatus) vTimerStatus.textContent = '⏱️ Bidding Closed! Resolving winner...';
+      } else if (remainingSec <= 10) {
+        if (vTimerClock) {
+          vTimerClock.style.color = '#ef4444';
+          vTimerClock.classList.add('timer-pulse-red');
+        }
+        if (vTimerBar) vTimerBar.style.background = '#ef4444';
+        if (vTimerPulse) vTimerPulse.style.background = '#ef4444';
+        if (vTimerStatus) vTimerStatus.textContent = '⚠️ Final Call! Bidding closing...';
+      } else if (remainingSec <= 30) {
+        if (vTimerClock) {
+          vTimerClock.style.color = '#fbbf24';
+          vTimerClock.classList.remove('timer-pulse-red');
+        }
+        if (vTimerBar) vTimerBar.style.background = 'linear-gradient(90deg, #f59e0b, #ef4444)';
+        if (vTimerPulse) vTimerPulse.style.background = '#f59e0b';
+        if (vTimerStatus) vTimerStatus.textContent = '⏱️ Auto-awards on 00:00';
+      } else {
+        if (vTimerClock) {
+          vTimerClock.style.color = '#fbbf24';
+          vTimerClock.classList.remove('timer-pulse-red');
+        }
+        if (vTimerBar) vTimerBar.style.background = 'linear-gradient(90deg, #10b981, #34d399)';
+        if (vTimerPulse) vTimerPulse.style.background = '#10b981';
+        if (vTimerStatus) vTimerStatus.textContent = '⏱️ Auto-awards on 00:00';
+      }
+    } else {
+      if (vTimerBox) vTimerBox.style.display = 'none';
+    }
   } else {
-    // Podium is empty / waiting for next draw
-    if (nameEl) nameEl.innerHTML = '<span style="color:#f59e0b">Ready for Next Draw</span>';
+    const vTimerBox = document.getElementById('viewerTimerBox');
+    if (vTimerBox) vTimerBox.style.display = 'none';
+    // Empty block state (Waiting for next draw)
+    if (activeCard) activeCard.style.display = 'block';
+    const lastUnsold = state.last_action && state.last_action.type === 'UNSOLD' ? state.last_action.player : null;
+    if (nameEl) {
+      nameEl.innerHTML = lastUnsold ? 
+        `<span style="color:#f87171">❌ ${lastUnsold} (UNSOLD)</span>` : 
+        `<span style="color:#f59e0b">⏳ Ready for Next Draw</span>`;
+    }
     if (idTag) idTag.textContent = 'ID: #--';
     if (photoEl) photoEl.src = '/static/images/avatar_allrounder.svg';
     if (roleBadge) {
-      roleBadge.textContent = 'Podium Ready';
-      roleBadge.className = 'role-badge badge-allrounder';
+      roleBadge.textContent = lastUnsold ? 'Marked Unsold' : 'Podium Ready';
+      roleBadge.className = lastUnsold ? 'role-badge badge-bowler' : 'role-badge badge-allrounder';
     }
     if (battingEl) battingEl.textContent = '--';
     if (bowlingEl) bowlingEl.textContent = '--';
@@ -892,7 +1049,12 @@ function renderAuctionState(state) {
     const odo = document.getElementById('bidOdometer');
     if (odo) odo.textContent = '₹0';
     const leadTag = document.getElementById('leadingTeamTag');
-    if (leadTag) leadTag.textContent = 'Click "Next Draw" to bring a player';
+    if (leadTag) {
+      leadTag.textContent = lastUnsold ? `Moved to Unsold Pool • Ready for Next Draw` : `Waiting for Auctioneer Draw`;
+      leadTag.style.background = lastUnsold ? 'rgba(239, 68, 68, 0.18)' : 'rgba(255, 255, 255, 0.08)';
+      leadTag.style.color = lastUnsold ? '#f87171' : '#94a3b8';
+      leadTag.style.borderColor = lastUnsold ? 'rgba(239, 68, 68, 0.4)' : 'rgba(255, 255, 255, 0.15)';
+    }
 
     if (soldBtn) { soldBtn.disabled = true; soldBtn.style.opacity = '0.35'; soldBtn.style.cursor = 'not-allowed'; }
     unsoldBtns.forEach(btn => { btn.disabled = true; btn.style.opacity = '0.35'; btn.style.cursor = 'not-allowed'; });
@@ -901,17 +1063,28 @@ function renderAuctionState(state) {
     currentBidAmount = 0;
   }
 
-  // Celebration trigger for spectators
+  // Celebration and announcement triggers for spectators
   if (isViewer && state.last_action && state.last_action.timestamp > lastActionTimestamp) {
     lastActionTimestamp = state.last_action.timestamp;
     const act = state.last_action;
     if (act.type === 'SOLD') {
+      closeUnsoldModal();
       playGavelSound();
       playFanfareSound();
       triggerCelebrationModal(act.player, act.team, act.amount);
     } else if (act.type === 'UNSOLD') {
+      closeSoldModal();
       playBuzzerSound();
+      showToast(`❌ ${act.player} marked ${act.is_permanent ? 'Permanently Unsold' : 'UNSOLD (Queued for Round 2)'}`, 'warning');
+      triggerUnsoldModal(act.player, act.is_permanent);
     } else if (act.type === 'UNDO') {
+      closeSoldModal();
+      closeUnsoldModal();
+      playChimeSound();
+      showToast('↩️ Last action undone by Auctioneer', 'info');
+    } else if (act.type === 'DRAW') {
+      closeSoldModal();
+      closeUnsoldModal();
       playChimeSound();
     }
   }
@@ -924,7 +1097,41 @@ function renderAuctionState(state) {
     r2Btn.style.display = (hasUnsold && round1Finished) ? 'inline-block' : 'none';
   }
 
+  // Last Sold Player Live Ticker Display (Viewer & Host)
+  const lastSoldName = document.getElementById('lastSoldTickerName');
+  const lastSoldTeam = document.getElementById('lastSoldTickerTeam');
+  const lastSoldPrice = document.getElementById('lastSoldTickerPrice');
+
+  if (state.last_sold_player && state.last_sold_player.name) {
+    if (lastSoldName) lastSoldName.textContent = state.last_sold_player.name;
+    if (lastSoldTeam) lastSoldTeam.textContent = state.last_sold_player.team;
+    if (lastSoldPrice) lastSoldPrice.textContent = '₹' + Number(state.last_sold_player.price || 0).toLocaleString('en-IN');
+  } else {
+    // Scan teams for the most recent purchase if any
+    let mostRecent = null;
+    if (state.teams) {
+      Object.entries(state.teams).forEach(([tName, tData]) => {
+        (tData.players || []).forEach(p => {
+          if (!mostRecent || (p.round && p.round >= (mostRecent.round || 1))) {
+            mostRecent = { name: p.name, team: tName, price: p.cost, round: p.round };
+          }
+        });
+      });
+    }
+    if (mostRecent) {
+      if (lastSoldName) lastSoldName.textContent = mostRecent.name;
+      if (lastSoldTeam) lastSoldTeam.textContent = mostRecent.team;
+      if (lastSoldPrice) lastSoldPrice.textContent = '₹' + Number(mostRecent.price || 0).toLocaleString('en-IN');
+    } else {
+      if (lastSoldName) lastSoldName.textContent = 'Waiting for first sale...';
+      if (lastSoldTeam) lastSoldTeam.textContent = '-';
+      if (lastSoldPrice) lastSoldPrice.textContent = '₹0';
+    }
+  }
+
   renderTeams(state.teams);
+  renderRemainingPool();
+  renderActivityFeed();
 }
 
 function getRoleBadgeClass(role) {
@@ -942,7 +1149,6 @@ function renderTeams(teams) {
 
   if (!teams) return;
 
-  // Update team select dropdown if empty
   if (select && select.options.length <= 1) {
     const prev = select.value;
     select.innerHTML = '<option value="">-- Choose Team --</option>';
@@ -955,7 +1161,6 @@ function renderTeams(teams) {
     if (prev) select.value = prev;
   }
 
-  // Update sidebar purse cards
   if (container) {
     let html = '';
     let idx = 1;
@@ -975,7 +1180,7 @@ function renderTeams(teams) {
       if (pRet) {
         const rName = (typeof pRet === 'object') ? pRet.name : pRet;
         const rCost = (typeof pRet === 'object') ? (pRet.cost || 500) : 500;
-        retChips += `<div style="margin-top:0.35rem; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:4px; padding:0.2rem 0.45rem; font-size:0.75rem; color:#fef08a; display:flex; justify-content:space-between; align-items:center;">
+        retChips += `<div style="margin-top:0.35rem; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.35); border-radius:6px; padding:0.2rem 0.45rem; font-size:0.75rem; color:#fef08a; display:flex; justify-content:space-between; align-items:center;">
           <span>⭐ <strong>${rName}</strong></span>
           <span style="color:var(--primary-gold); font-weight:700;">₹${rCost}</span>
         </div>`;
@@ -983,7 +1188,7 @@ function renderTeams(teams) {
       if (oRet) {
         const oName = (typeof oRet === 'object') ? oRet.name : oRet;
         const oCost = (typeof oRet === 'object') ? (oRet.cost || 100) : 100;
-        retChips += `<div style="margin-top:0.25rem; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:4px; padding:0.2rem 0.45rem; font-size:0.75rem; color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
+        retChips += `<div style="margin-top:0.25rem; background:rgba(59,130,246,0.15); border:1px solid rgba(59,130,246,0.35); border-radius:6px; padding:0.2rem 0.45rem; font-size:0.75rem; color:#93c5fd; display:flex; justify-content:space-between; align-items:center;">
           <span>👑 <strong>${oName}</strong></span>
           <span style="color:#93c5fd; font-weight:700;">₹${oCost}</span>
         </div>`;
@@ -993,7 +1198,7 @@ function renderTeams(teams) {
         <div class="team-card-auction" id="teamCard_${idx}" data-team="${tName}">
           <div class="team-card-header">
             <span class="team-card-name">${tName}</span>
-            <span class="team-squad-count">${squadCount} Players</span>
+            <span class="team-squad-count">${squadCount} / 10 Players</span>
           </div>
           <div class="team-progress-bg" style="background: rgba(255,255,255,0.08); height: 6px; border-radius: 9999px; overflow: hidden; margin: 0.4rem 0;">
             <div class="team-progress-bar" style="width: ${pct}%; background: linear-gradient(90deg, #10b981, #059669); height: 100%;"></div>
@@ -1003,6 +1208,11 @@ function renderTeams(teams) {
             <span class="team-spent-budget" style="color: #94a3b8;">Spent: ₹${(tData.spent || 0).toLocaleString('en-IN')}</span>
           </div>
           ${retChips}
+          <div style="margin-top: 0.5rem; text-align: right;">
+            <button type="button" class="btn-view-squad" onclick="openTeamSquadModal('${tName}')">
+              <span>👁️</span> View Full Squad &rarr;
+            </button>
+          </div>
         </div>
       `;
       idx++;
@@ -1011,9 +1221,375 @@ function renderTeams(teams) {
 
     const retBadge = document.getElementById('retainedCountBadge');
     if (retBadge) retBadge.textContent = totalRet;
+
+    const teamsCountBadge = document.getElementById('teamsCountBadge');
+    if (teamsCountBadge) teamsCountBadge.textContent = `${Object.keys(teams).length} Teams`;
   }
 }
 
+// --- TEAM SQUAD DETAILS MODAL ---
+function openTeamSquadModal(teamName) {
+  const modal = document.getElementById('teamSquadModal');
+  const teamTitle = document.getElementById('squadModalTeamName');
+  const finSummary = document.getElementById('squadModalFinSummary');
+  const body = document.getElementById('squadModalBody');
+
+  if (!modal || !body || !auctionState || !auctionState.teams) return;
+
+  const team = auctionState.teams[teamName];
+  if (!team) {
+    showToast('Team details not found', 'warning');
+    return;
+  }
+
+  const allDetails = auctionState.all_player_details || {};
+  const purse = team.budget !== undefined ? team.budget : (team.purse || 0);
+  const spent = team.spent || 0;
+  const pRet = team.player_retained || (team.retained && team.retained.type !== 'Owner' ? team.retained : null);
+  const oRet = team.owner_retained || (team.retained && team.retained.type === 'Owner' ? team.retained : null);
+  const players = team.players || [];
+  const totalCount = players.length + (pRet ? 1 : 0) + (oRet ? 1 : 0);
+
+  if (teamTitle) teamTitle.textContent = `🏆 ${teamName} Squad`;
+  if (finSummary) finSummary.innerHTML = `Remaining Purse: <strong style="color:#34d399">₹${purse.toLocaleString('en-IN')}</strong> | Spent: <strong style="color:#fbbf24">₹${spent.toLocaleString('en-IN')}</strong> | Squad: <strong>${totalCount} / 10 Players</strong>`;
+
+  let html = '';
+
+  // 1. Retained Players Section
+  if (pRet || oRet) {
+    html += `<div style="margin-bottom: 1rem;"><h4 style="font-size: 0.95rem; font-weight: 800; color: #fbbf24; margin-bottom: 0.4rem; text-transform: uppercase;">⭐ Retained Franchise Players</h4><div style="display:flex; flex-direction:column; gap:0.4rem;">`;
+    if (pRet) {
+      const pName = typeof pRet === 'object' ? pRet.name : pRet;
+      const pCost = typeof pRet === 'object' ? (pRet.cost || 500) : 500;
+      const pInfo = allDetails[pName] || {};
+      html += `
+        <div style="background: rgba(245,158,11,0.12); border: 1px solid rgba(245,158,11,0.35); border-radius: 10px; padding: 0.6rem 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <img src="${pInfo.photo_url || '/static/images/avatar_allrounder.svg'}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1.5px solid #f59e0b;">
+            <div>
+              <div style="font-weight:800; color:#fff; font-size:0.92rem;">${pName}</div>
+              <span class="role-badge ${getRoleBadgeClass(pInfo.role)}" style="font-size:0.7rem; padding:0.1rem 0.4rem;">${pInfo.role || 'Player'}</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:0.72rem; color:#fef08a; display:block;">Player Retained</span>
+            <strong style="color:#fbbf24; font-size:0.95rem;">₹${pCost}</strong>
+          </div>
+        </div>
+      `;
+    }
+    if (oRet) {
+      const oName = typeof oRet === 'object' ? oRet.name : oRet;
+      const oCost = typeof oRet === 'object' ? (oRet.cost || 100) : 100;
+      const oInfo = allDetails[oName] || {};
+      html += `
+        <div style="background: rgba(59,130,246,0.12); border: 1px solid rgba(59,130,246,0.35); border-radius: 10px; padding: 0.6rem 0.8rem; display: flex; justify-content: space-between; align-items: center;">
+          <div style="display:flex; align-items:center; gap:0.6rem;">
+            <img src="${oInfo.photo_url || '/static/images/avatar_allrounder.svg'}" style="width:36px; height:36px; border-radius:50%; object-fit:cover; border:1.5px solid #3b82f6;">
+            <div>
+              <div style="font-weight:800; color:#fff; font-size:0.92rem;">${oName}</div>
+              <span class="role-badge badge-allrounder" style="font-size:0.7rem; padding:0.1rem 0.4rem; background:#3b82f6;">Team Owner</span>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:0.72rem; color:#93c5fd; display:block;">Owner Retained</span>
+            <strong style="color:#93c5fd; font-size:0.95rem;">₹${oCost}</strong>
+          </div>
+        </div>
+      `;
+    }
+    html += `</div></div>`;
+  }
+
+  // 2. Auction Purchased Players
+  html += `<div><h4 style="font-size: 0.95rem; font-weight: 800; color: #34d399; margin-bottom: 0.4rem; text-transform: uppercase;">🔨 Auction Purchased Players (${players.length})</h4>`;
+  if (!players || players.length === 0) {
+    html += `<div style="background: rgba(15,23,42,0.6); border: 1px dashed rgba(255,255,255,0.15); border-radius: 10px; padding: 1.5rem; text-align: center; color: #94a3b8; font-size: 0.85rem;">No auction players purchased by this team yet.</div>`;
+  } else {
+    html += `<div style="display:flex; flex-direction:column; gap:0.45rem;">`;
+    players.forEach((p, idx) => {
+      const pName = p.name;
+      const pCost = p.cost || 0;
+      const pRound = p.round || 1;
+      const pInfo = allDetails[pName] || {};
+      const roleStr = pInfo.role || 'Player';
+      const pSerial = auctionState.player_serials?.[pName] ? `#${auctionState.player_serials[pName]}` : `#${idx + 1}`;
+      const village = pInfo.village || 'Saidapur';
+
+      html += `
+        <div style="background: rgba(15,23,42,0.7); border: 1px solid rgba(255,255,255,0.08); border-radius: 10px; padding: 0.55rem 0.75rem; display: flex; justify-content: space-between; align-items: center; transition: all 0.15s ease;">
+          <div style="display:flex; align-items:center; gap:0.65rem;">
+            <img src="${pInfo.photo_url || '/static/images/avatar_allrounder.svg'}" style="width:38px; height:38px; border-radius:50%; object-fit:cover; border:1.5px solid #10b981; background:#000;">
+            <div>
+              <div style="display:flex; align-items:center; gap:0.35rem;">
+                <span style="font-size:0.72rem; color:#94a3b8; font-weight:700;">${pSerial}</span>
+                <strong style="color:#fff; font-size:0.92rem;">${pName}</strong>
+              </div>
+              <div style="display:flex; align-items:center; gap:0.35rem; margin-top:0.15rem;">
+                <span class="role-badge ${getRoleBadgeClass(roleStr)}" style="font-size:0.68rem; padding:0.08rem 0.35rem;">${roleStr}</span>
+                <span style="font-size:0.72rem; color:#94a3b8;">📍 ${village}</span>
+              </div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:0.7rem; background:rgba(56,189,248,0.15); color:#38bdf8; font-weight:800; padding:0.1rem 0.35rem; border-radius:4px; display:inline-block; margin-bottom:0.15rem;">Round ${pRound}</span>
+            <div style="font-weight:900; color:#34d399; font-size:1.05rem;">₹${pCost.toLocaleString('en-IN')}</div>
+          </div>
+        </div>
+      `;
+    });
+    html += `</div>`;
+  }
+  html += `</div>`;
+
+  body.innerHTML = html;
+  modal.style.display = 'flex';
+}
+
+function closeTeamSquadModal() {
+  const modal = document.getElementById('teamSquadModal');
+  if (modal) modal.style.display = 'none';
+}
+window.openTeamSquadModal = openTeamSquadModal;
+window.closeTeamSquadModal = closeTeamSquadModal;
+
+// --- REMAINING PLAYER POOL RENDERING & FILTERING ---
+function setPoolFilter(filterType, btnEl) {
+  poolActiveFilter = filterType;
+  document.querySelectorAll('.pool-pill-btn').forEach(btn => btn.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+  renderRemainingPool();
+}
+window.setPoolFilter = setPoolFilter;
+
+function filterRemainingPool() {
+  renderRemainingPool();
+}
+window.filterRemainingPool = filterRemainingPool;
+
+function renderRemainingPool() {
+  const container = document.getElementById('poolGridContainer');
+  if (!container || !auctionState) return;
+
+  const pool = auctionState.auction_players || [];
+  const allDetails = auctionState.all_player_details || {};
+  const searchVal = (document.getElementById('poolSearchInput')?.value || '').toLowerCase().trim();
+
+  let countAll = 0;
+  let countBat = 0;
+  let countBowl = 0;
+  let countAR = 0;
+  let countWK = 0;
+
+  // Compute counts
+  pool.forEach(pName => {
+    countAll++;
+    const pInfo = allDetails[pName] || {};
+    const r = (pInfo.role || '').toLowerCase();
+    if (r.includes('keep')) countWK++;
+    else if (r.includes('bowl')) countBowl++;
+    else if (r.includes('bat')) countBat++;
+    else countAR++;
+  });
+
+  const elCountAll = document.getElementById('pillCountAll');
+  const elCountBat = document.getElementById('pillCountBat');
+  const elCountBowl = document.getElementById('pillCountBowl');
+  const elCountAR = document.getElementById('pillCountAR');
+  const elCountWK = document.getElementById('pillCountWK');
+  const elHeaderCount = document.getElementById('poolHeaderCount');
+
+  if (elCountAll) elCountAll.textContent = countAll;
+  if (elCountBat) elCountBat.textContent = countBat;
+  if (elCountBowl) elCountBowl.textContent = countBowl;
+  if (elCountAR) elCountAR.textContent = countAR;
+  if (elCountWK) elCountWK.textContent = countWK;
+  if (elHeaderCount) elHeaderCount.textContent = countAll;
+
+  // Filter pool items
+  const filtered = pool.filter(pName => {
+    const pInfo = allDetails[pName] || {};
+    const r = (pInfo.role || '').toLowerCase();
+    const v = (pInfo.village || '').toLowerCase();
+    const nameLow = pName.toLowerCase();
+
+    // Role filter
+    if (poolActiveFilter === 'batsman' && (!r.includes('bat') || r.includes('keep'))) return false;
+    if (poolActiveFilter === 'bowler' && !r.includes('bowl')) return false;
+    if (poolActiveFilter === 'keeper' && !r.includes('keep')) return false;
+    if (poolActiveFilter === 'allrounder' && (r.includes('bat') && !r.includes('round') || r.includes('bowl') && !r.includes('round') || r.includes('keep'))) return false;
+
+    // Search filter
+    if (searchVal) {
+      if (!nameLow.includes(searchVal) && !v.includes(searchVal) && !r.includes(searchVal)) {
+        return false;
+      }
+    }
+    return true;
+  });
+
+  if (filtered.length === 0) {
+    container.innerHTML = `<div style="grid-column: 1 / -1; text-align: center; padding: 2rem; color: #94a3b8; font-size: 0.9rem; background: rgba(15,23,42,0.5); border-radius: 10px;">No matching remaining players in pool.</div>`;
+    return;
+  }
+
+  let html = '';
+  filtered.forEach(pName => {
+    const pInfo = allDetails[pName] || {};
+    const roleStr = pInfo.role || 'All-Rounder';
+    const village = pInfo.village || 'Saidapur';
+    const basePrice = Math.max(100, Number(pInfo.base_price || auctionState.min_bid || 100));
+    const serial = auctionState.player_serials?.[pName] ? `#${auctionState.player_serials[pName]}` : '';
+
+    html += `
+      <div class="pool-player-item">
+        <img src="${pInfo.photo_url || '/static/images/avatar_allrounder.svg'}" class="pool-player-photo" alt="${pName}">
+        <div style="min-width: 0; flex: 1;">
+          <div style="display:flex; align-items:center; gap:0.3rem;">
+            ${serial ? `<span style="font-size:0.7rem; color:#94a3b8; font-weight:800;">${serial}</span>` : ''}
+            <strong style="color:#fff; font-size:0.85rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="${pName}">${pName}</strong>
+          </div>
+          <div style="display:flex; align-items:center; gap:0.3rem; margin-top:0.2rem;">
+            <span class="role-badge ${getRoleBadgeClass(roleStr)}" style="font-size:0.65rem; padding:0.05rem 0.35rem;">${roleStr}</span>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.3rem; font-size:0.75rem;">
+            <span style="color:#94a3b8;">📍 ${village}</span>
+            <span style="color:#34d399; font-weight:800;">₹${basePrice}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  container.innerHTML = html;
+}
+
+// --- LIVE ACTIVITY FEED RENDERING ---
+function renderActivityFeed() {
+  const container = document.getElementById('activityFeedList');
+  if (!container || !auctionState) return;
+
+  const teams = auctionState.teams || {};
+  const unsold = auctionState.unsold_players || [];
+  const allDetails = auctionState.all_player_details || {};
+
+  const events = [];
+
+  // 1. Gather all sold events
+  Object.entries(teams).forEach(([tName, tData]) => {
+    (tData.players || []).forEach(p => {
+      events.push({
+        type: 'SOLD',
+        player: p.name,
+        team: tName,
+        cost: p.cost,
+        round: p.round || 1
+      });
+    });
+  });
+
+  // 2. Gather unsold events
+  unsold.forEach(pName => {
+    events.push({
+      type: 'UNSOLD',
+      player: pName
+    });
+  });
+
+  if (events.length === 0) {
+    container.innerHTML = `<div style="text-align: center; padding: 1.5rem; color: #94a3b8; font-size: 0.85rem; background: rgba(15,23,42,0.5); border-radius: 8px;">No auction events recorded yet. Sold & Unsold history will appear here in real time.</div>`;
+    return;
+  }
+
+  // Reverse order (latest first)
+  const reversed = [...events].reverse().slice(0, 15);
+  let html = '';
+
+  reversed.forEach(ev => {
+    const pInfo = allDetails[ev.player] || {};
+    const roleStr = pInfo.role || 'Player';
+
+    if (ev.type === 'SOLD') {
+      html += `
+        <div class="activity-item">
+          <div style="display:flex; align-items:center; gap:0.55rem;">
+            <span style="font-size:1.1rem;">🎉</span>
+            <div>
+              <strong style="color:#fff;">${ev.player}</strong>
+              <span class="role-badge ${getRoleBadgeClass(roleStr)}" style="font-size:0.65rem; padding:0.05rem 0.3rem; margin-left:0.3rem;">${roleStr}</span>
+              <div style="font-size:0.75rem; color:#94a3b8; margin-top:0.1rem;">Sold to <strong style="color:var(--primary-gold);">${ev.team}</strong> (Round ${ev.round})</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <strong style="color:#34d399; font-size:0.95rem;">₹${ev.cost?.toLocaleString('en-IN')}</strong>
+          </div>
+        </div>
+      `;
+    } else {
+      html += `
+        <div class="activity-item unsold-act">
+          <div style="display:flex; align-items:center; gap:0.55rem;">
+            <span style="font-size:1.1rem;">❌</span>
+            <div>
+              <strong style="color:#fff;">${ev.player}</strong>
+              <span class="role-badge ${getRoleBadgeClass(roleStr)}" style="font-size:0.65rem; padding:0.05rem 0.3rem; margin-left:0.3rem;">${roleStr}</span>
+              <div style="font-size:0.75rem; color:#f87171; margin-top:0.1rem;">Marked Unsold (Available in Round 2)</div>
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <span style="font-size:0.75rem; color:#f87171; font-weight:800;">UNSOLD</span>
+          </div>
+        </div>
+      `;
+    }
+  });
+
+  container.innerHTML = html;
+}
+
+// --- MOBILE TAB SWITCHER ---
+function switchViewerTab(tabId, btnEl) {
+  document.querySelectorAll('.viewer-tab-btn').forEach(b => b.classList.remove('active'));
+  if (btnEl) btnEl.classList.add('active');
+
+  const liveStage = document.getElementById('activePlayerCard');
+  const teamsSec = document.getElementById('teamsSection');
+  const poolSec = document.getElementById('poolSection');
+  const actSec = document.getElementById('activitySection');
+
+  if (window.innerWidth <= 768) {
+    if (tabId === 'liveStageTab') {
+      if (liveStage) liveStage.style.display = 'block';
+      if (teamsSec) teamsSec.style.display = 'none';
+      if (poolSec) poolSec.style.display = 'none';
+      if (actSec) actSec.style.display = 'none';
+    } else if (tabId === 'teamsTab') {
+      if (liveStage) liveStage.style.display = 'none';
+      if (teamsSec) teamsSec.style.display = 'block';
+      if (poolSec) poolSec.style.display = 'none';
+      if (actSec) actSec.style.display = 'none';
+    } else if (tabId === 'poolTab') {
+      if (liveStage) liveStage.style.display = 'none';
+      if (teamsSec) teamsSec.style.display = 'none';
+      if (poolSec) poolSec.style.display = 'block';
+      if (actSec) actSec.style.display = 'none';
+    } else if (tabId === 'activityTab') {
+      if (liveStage) liveStage.style.display = 'none';
+      if (teamsSec) teamsSec.style.display = 'none';
+      if (poolSec) poolSec.style.display = 'none';
+      if (actSec) actSec.style.display = 'block';
+    }
+  } else {
+    // On desktop, keep all sections visible in their responsive grid
+    if (liveStage) liveStage.style.display = 'block';
+    if (teamsSec) teamsSec.style.display = 'block';
+    if (poolSec) poolSec.style.display = 'block';
+    if (actSec) actSec.style.display = 'block';
+  }
+}
+window.switchViewerTab = switchViewerTab;
+
+// --- RETAINED PLAYERS MODAL ---
 function openRetainedModal() {
   const modal = document.getElementById('retainedPlayersModal');
   const body = document.getElementById('retainedModalBody');
@@ -1099,7 +1675,7 @@ function closeRetainedModal() {
 window.openRetainedModal = openRetainedModal;
 window.closeRetainedModal = closeRetainedModal;
 
-// --- EXPORT TO WINDOW (CRITICAL FOR BUTTON CLICKS) ---
+// --- EXPORT TO WINDOW (CRITICAL FOR INLINE ONCLICK EVENTS) ---
 window.drawNextPlayer = drawNextPlayer;
 window.adjustCurrentBid = adjustCurrentBid;
 window.stepBid = stepBid;
@@ -1114,6 +1690,9 @@ window.verifyHostPin = verifyHostPin;
 window.closeSoldModal = closeSoldModal;
 window.lockAuctioneer = lockAuctioneer;
 window.showToast = showToast;
+window.chooseSelectedPlayer = chooseSelectedPlayer;
+window.drawNextFromModal = drawNextFromModal;
+window.handleSoldModalBackdrop = handleSoldModalBackdrop;
 
 // --- INITIALIZATION ---
 document.addEventListener('DOMContentLoaded', () => {
