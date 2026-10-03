@@ -1517,22 +1517,52 @@
   <div id="category5View" style="display: none;">
     <div class="mobile-admin-shell">
 
-      <!-- CARD 1: FRESH LIVE AUCTION RESET (PRIMARY) -->
-      <div class="mobile-admin-card" style="border-color: rgba(239, 68, 68, 0.5); background: linear-gradient(145deg, rgba(35, 12, 18, 0.9), rgba(15, 23, 42, 0.95)); box-shadow: 0 0 25px rgba(239, 68, 68, 0.25);">
-        <div class="card-header-row" style="border-bottom-color: rgba(239, 68, 68, 0.25);">
+      <!-- CARD 0: START FRESH TOURNAMENT (FULL FACTORY RESET) -->
+      <div class="mobile-admin-card" style="border-color: rgba(239, 68, 68, 0.85); background: linear-gradient(145deg, rgba(50, 10, 18, 0.95), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(239, 68, 68, 0.35); position: relative; overflow: hidden; margin-bottom: 1.5rem;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);"></div>
+        <div class="card-header-row" style="border-bottom-color: rgba(239, 68, 68, 0.3);">
           <div>
-            <h2 class="card-header-title" style="color: #f87171;">
-              <span>🔄</span> Fresh Live Auction Reset
+            <h2 class="card-header-title" style="color: #f87171; display: flex; align-items: center; gap: 0.5rem;">
+              <span>🏆</span> Start Fresh Tournament
             </h2>
-            <span style="font-size: 0.78rem; color: #fca5a5;">Start a new tournament auction cycle</span>
+            <span style="font-size: 0.78rem; color: #fca5a5;">Factory Wipe: Delete all registered players, delete teams &amp; stop live auction</span>
           </div>
-          <span class="badge" style="background: rgba(239, 68, 68, 0.25); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.4); font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-weight: 800;">
-            ⚡ New Tournament Start
+          <span class="badge" style="background: rgba(239, 68, 68, 0.3); color: #fecaca; border: 1px solid rgba(239, 68, 68, 0.6); font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 9999px; font-weight: 800; letter-spacing: 0.04em;">
+            ⚠️ FULL FACTORY RESET
+          </span>
+        </div>
+
+        <div style="background: rgba(10, 16, 30, 0.85); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 0.95rem; margin-bottom: 1.15rem; font-size: 0.82rem; line-height: 1.65;">
+          <strong style="color: #fff; display: block; margin-bottom: 0.5rem; font-size: 0.88rem;">💥 What happens when you Start Fresh Tournament?</strong>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.4rem;">
+            <li>🗑️ <strong style="color: #f87171;">Delete All Registered Players:</strong> Clears all registered players from the project database (<code style="color:#fca5a5; background: rgba(0,0,0,0.4); padding: 0.1rem 0.35rem; border-radius: 4px;">registrations.json</code> is wiped clean).</li>
+            <li>🛡️ <strong style="color: #f87171;">Delete All Teams:</strong> Removes all teams, squad rosters, team passcodes, and retentions.</li>
+            <li>🛑 <strong style="color: #f87171;">Stop Live Auction:</strong> Live auction broadcast is stopped; active bidding, unsold pools, and history are wiped.</li>
+            <li>✨ <strong style="color: #34d399;">100% Brand New Season:</strong> Provides a clean slate to register new players and set up new teams for the upcoming tournament.</li>
+          </ul>
+        </div>
+
+        <button type="button" id="btnStartFreshTournament" onclick="confirmFreshTournamentReset()" class="touch-btn" style="width: 100%; padding: 1rem; font-size: 1.05rem; font-weight: 900; background: linear-gradient(135deg, #dc2626, #991b1b); color: #ffffff; border: 1px solid #ef4444; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 22px rgba(220, 38, 38, 0.55); min-height: 52px; display: flex; align-items: center; justify-content: center; gap: 0.55rem;">
+          <span>💥</span> Start Fresh Tournament (Wipe Players &amp; Teams)
+        </button>
+      </div>
+
+      <!-- CARD 1: FRESH LIVE AUCTION RESET (PRIMARY) -->
+      <div class="mobile-admin-card" style="border-color: rgba(245, 158, 11, 0.45); background: linear-gradient(145deg, rgba(28, 20, 10, 0.9), rgba(15, 23, 42, 0.95)); box-shadow: 0 0 25px rgba(245, 158, 11, 0.2);">
+        <div class="card-header-row" style="border-bottom-color: rgba(245, 158, 11, 0.25);">
+          <div>
+            <h2 class="card-header-title" style="color: #fbbf24;">
+              <span>🔄</span> Fresh Live Auction Reset (Rounds Only)
+            </h2>
+            <span style="font-size: 0.78rem; color: #fde68a;">Start fresh bidding rounds (Preserves registered players &amp; teams)</span>
+          </div>
+          <span class="badge" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.4); font-size: 0.75rem; padding: 0.25rem 0.65rem; border-radius: 9999px; font-weight: 800;">
+            ⚡ Rounds Reset Only
           </span>
         </div>
 
         <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.85rem; margin-bottom: 1.15rem; font-size: 0.82rem; line-height: 1.6;">
-          <strong style="color: #fff; display: block; margin-bottom: 0.45rem;">📋 What happens when you reset?</strong>
+          <strong style="color: #fff; display: block; margin-bottom: 0.45rem;">📋 What happens when you reset rounds?</strong>
           <ul style="margin: 0; padding-left: 1.2rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.3rem;">
             <li>💰 <strong style="color: #34d399;">Team Budgets:</strong> Restored to full starting tournament purse (₹{{ config.total_purse or config.default_purse or 6000 }}).</li>
             <li>👥 <strong style="color: #38bdf8;">Sold Players:</strong> Cleared and restocked for a fresh bidding start.</li>
@@ -1541,7 +1571,7 @@
           </ul>
         </div>
 
-        <button type="button" onclick="confirmResetAuction()" class="touch-btn touch-btn-red" style="width: 100%; padding: 0.95rem; font-size: 1rem; font-weight: 900; box-shadow: 0 4px 18px rgba(239, 68, 68, 0.4); min-height: 50px;">
+        <button type="button" onclick="confirmResetAuction()" class="touch-btn touch-btn-amber" style="width: 100%; padding: 0.95rem; font-size: 1rem; font-weight: 900; box-shadow: 0 4px 18px rgba(245, 158, 11, 0.35); min-height: 50px;">
           🔄 Reset Live Auction (Fresh Start)
         </button>
       </div>
@@ -3936,6 +3966,64 @@
       _isHostOpPending = false;
     }
   };
+
+  async function confirmFreshTournamentReset() {
+    if (_isGlobalOpPending) {
+      showToast('⚠️ Operation in progress...', 'warning');
+      return;
+    }
+    let pin = getAdminPin();
+    if (!pin) {
+      pin = prompt('Enter 4-Digit Organizer PIN (Default: 2026):') || '';
+      if (!pin) {
+        showToast('Organizer PIN required.', 'warning');
+        return;
+      }
+      pin = pin.trim();
+      sessionStorage.setItem('kpl_auction_pin', pin);
+      sessionStorage.setItem('spl_auction_pin', pin);
+      document.body.classList.add('admin-unlocked');
+    }
+
+    const firstConfirm = confirm(
+      "⚠️ DANGER: START FRESH TOURNAMENT (FACTORY RESET)?\n\n" +
+      "Are you sure you want to permanently start a FRESH TOURNAMENT?\n\n" +
+      "• ALL registered players will be DELETED from the project database\n" +
+      "• ALL teams, passcodes, and retentions will be DELETED\n" +
+      "• The live auction broadcast will STOP\n" +
+      "• All auction pools and bidding history will be wiped clean\n\n" +
+      "Click OK to proceed with factory wipe."
+    );
+    if (!firstConfirm) return;
+
+    const secondConfirm = confirm(
+      "⚠️ FINAL CONFIRMATION:\n\n" +
+      "This action is permanent and cannot be undone.\n\n" +
+      "Proceed to wipe all registered players, delete teams, and reset tournament?"
+    );
+    if (!secondConfirm) return;
+
+    _isGlobalOpPending = true;
+    try {
+      const res = await fetch('/api/admin/fresh-tournament-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        sessionStorage.setItem('admin_active_tab', 'cat1');
+        showToast('🏆 Fresh Tournament Initialized! All players & teams cleared.', 'success');
+        setTimeout(() => location.reload(), 500);
+      } else {
+        showToast('❌ Reset Failed: ' + (data.message || 'Invalid PIN or server error.'), 'error');
+      }
+    } catch(err) {
+      showToast('❌ Error: ' + err.message, 'error');
+    } finally {
+      _isGlobalOpPending = false;
+    }
+  }
 
   async function confirmResetAuction() {
     if (_isGlobalOpPending) {
