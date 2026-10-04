@@ -140,6 +140,59 @@ function applyAuctioneerMode(isHost) {
   }
 }
 
+async function toggleAuctionStarted() {
+  const pin = getAuctioneerPin();
+  if (!pin) {
+    openPinModal();
+    return;
+  }
+  const isStarted = Boolean(auctionState && auctionState.auction_started);
+  const endpoint = isStarted ? '/api/auction/pause' : '/api/auction/start';
+
+  try {
+    const res = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+      body: JSON.stringify({ pin: pin })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast(data.message || (isStarted ? 'Live Auction Paused' : 'Live Auction Started!'), 'success');
+      await fetchState();
+    } else {
+      showToast(data.message || 'Action failed', 'error');
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+
+async function stopAuctionFromHost() {
+  const pin = getAuctioneerPin();
+  if (!pin) {
+    openPinModal();
+    return;
+  }
+  if (!confirm('Are you sure you want to STOP and conclude the live auction?')) return;
+
+  try {
+    const res = await fetch('/api/auction/stop', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+      body: JSON.stringify({ pin: pin })
+    });
+    const data = await res.json();
+    if (data.success) {
+      showToast('Live Auction stopped & concluded.', 'info');
+      await fetchState();
+    } else {
+      showToast(data.message || 'Failed to stop auction', 'error');
+    }
+  } catch (err) {
+    showToast('Network error: ' + err.message, 'error');
+  }
+}
+
 async function checkSavedPin() {
   const saved = getAuctioneerPin();
   if (!saved) {
@@ -909,22 +962,48 @@ function renderAuctionState(state) {
 
   // Host toggle
   const hostToggle = document.getElementById('btnHostAuctionToggle');
+  const hostStop = document.getElementById('btnHostStopAuction');
   if (hostToggle) {
     if (state.auction_started) {
       hostToggle.className = 'btn btn-secondary';
       hostToggle.textContent = '⏸️ Pause Auction';
+      if (hostStop) hostStop.style.display = 'inline-block';
     } else {
       hostToggle.className = 'btn btn-success';
       hostToggle.textContent = '🚀 Start Live Auction';
+      if (hostStop) hostStop.style.display = 'none';
     }
   }
 
-  // Always display Active Stage for spectators and host
-  const notStartedScreen = document.getElementById('auctionNotStartedScreen');
-  if (notStartedScreen) notStartedScreen.style.display = 'none';
-
+  // Stream status header & Standby overlay update
+  const streamStatusText = document.getElementById('streamStatusText');
+  const streamStatusDot = document.getElementById('streamStatusDot');
+  const standbyOverlay = document.getElementById('auctionStandbyOverlay');
   const activeCard = document.getElementById('activePlayerCard') || document.getElementById('activePlayerPodium');
-  if (activeCard) activeCard.style.display = 'block';
+
+  if (state.auction_started) {
+    if (streamStatusText) {
+      streamStatusText.style.color = '#ef4444';
+      streamStatusText.textContent = 'LIVE AUCTION STREAM';
+    }
+    if (streamStatusDot) {
+      streamStatusDot.style.background = '#ef4444';
+      streamStatusDot.style.animation = 'pulse 1.2s infinite';
+    }
+    if (standbyOverlay) standbyOverlay.style.display = 'none';
+    if (activeCard) activeCard.style.display = 'block';
+  } else {
+    if (streamStatusText) {
+      streamStatusText.style.color = '#fbbf24';
+      streamStatusText.textContent = 'AUCTION PAUSED / STANDBY';
+    }
+    if (streamStatusDot) {
+      streamStatusDot.style.background = '#fbbf24';
+      streamStatusDot.style.animation = 'none';
+    }
+    if (standbyOverlay) standbyOverlay.style.display = 'block';
+    if (activeCard) activeCard.style.display = 'block';
+  }
 
   const isViewer = window.IS_VIEWER_MODE || !document.getElementById('auctioneerControls');
 
@@ -1006,10 +1085,18 @@ function renderAuctionState(state) {
     const vTimerStatus = document.getElementById('viewerTimerStatusText');
     const vTimerPulse = document.getElementById('viewerTimerPulse');
 
-    if (state.timer_enabled && state.timer_end) {
+    const isLive = Boolean(state.auction_started);
+    const hasTimer = Boolean(state.timer_enabled && (state.timer_end || state.timer_remaining_sec));
+
+    if (hasTimer) {
       if (vTimerBox) vTimerBox.style.display = 'block';
       const nowMs = Date.now();
-      const remainingSec = Math.max(0, Math.round((state.timer_end - nowMs) / 1000));
+      let remainingSec = 0;
+      if (!isLive) {
+        remainingSec = Math.max(0, Number(state.timer_remaining_sec || (state.timer_end ? Math.round((state.timer_end - nowMs) / 1000) : (state.timer_duration || 120))));
+      } else {
+        remainingSec = state.timer_end ? Math.max(0, Math.round((state.timer_end - nowMs) / 1000)) : (state.timer_duration || 120);
+      }
       const totalDur = state.timer_duration || 120;
       const pct = Math.min(100, Math.max(0, (remainingSec / totalDur) * 100));
 
@@ -1017,11 +1104,20 @@ function renderAuctionState(state) {
       const s = remainingSec % 60;
       const formattedTime = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
 
-      if (vTimerClock) vTimerClock.textContent = formattedTime;
       if (vTimerBar) vTimerBar.style.width = `${pct}%`;
 
-      if (remainingSec === 0) {
+      if (!isLive) {
         if (vTimerClock) {
+          vTimerClock.textContent = `${formattedTime} (PAUSED)`;
+          vTimerClock.style.color = '#fbbf24';
+          vTimerClock.classList.remove('timer-pulse-red');
+        }
+        if (vTimerBar) vTimerBar.style.background = '#f59e0b';
+        if (vTimerPulse) vTimerPulse.style.background = '#f59e0b';
+        if (vTimerStatus) vTimerStatus.textContent = '⏸️ Auction on Standby / Paused';
+      } else if (remainingSec === 0) {
+        if (vTimerClock) {
+          vTimerClock.textContent = formattedTime;
           vTimerClock.style.color = '#ef4444';
           vTimerClock.classList.add('timer-pulse-red');
         }
@@ -1030,6 +1126,7 @@ function renderAuctionState(state) {
         if (vTimerStatus) vTimerStatus.textContent = '⏱️ Bidding Closed! Resolving winner...';
       } else if (remainingSec <= 10) {
         if (vTimerClock) {
+          vTimerClock.textContent = formattedTime;
           vTimerClock.style.color = '#ef4444';
           vTimerClock.classList.add('timer-pulse-red');
         }
@@ -1038,6 +1135,7 @@ function renderAuctionState(state) {
         if (vTimerStatus) vTimerStatus.textContent = '⚠️ Final Call! Bidding closing...';
       } else if (remainingSec <= 30) {
         if (vTimerClock) {
+          vTimerClock.textContent = formattedTime;
           vTimerClock.style.color = '#fbbf24';
           vTimerClock.classList.remove('timer-pulse-red');
         }
@@ -1046,6 +1144,7 @@ function renderAuctionState(state) {
         if (vTimerStatus) vTimerStatus.textContent = '⏱️ Auto-awards on 00:00';
       } else {
         if (vTimerClock) {
+          vTimerClock.textContent = formattedTime;
           vTimerClock.style.color = '#fbbf24';
           vTimerClock.classList.remove('timer-pulse-red');
         }
