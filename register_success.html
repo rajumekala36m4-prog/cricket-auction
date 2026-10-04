@@ -39,7 +39,9 @@
       </div>
       <div>
         <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Fee Paid</span>
-        <strong style="color: var(--pitch-green);">₹{{ player.reg_amount }}</strong>
+        <strong style="color: var(--pitch-green);">
+          {% if player.reg_amount and player.reg_amount|int > 0 %}₹{{ player.reg_amount }}{% else %}No Fee (Free Entry){% endif %}
+        </strong>
       </div>
       <div>
         <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Batting</span>
@@ -51,7 +53,13 @@
       </div>
       <div style="grid-column: span 2;">
         <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Payment Reference (UTR)</span>
-        <strong style="color: var(--primary-gold); word-break: break-all;">{{ player.transaction_id }} ({{ player.payment_method }})</strong>
+        <strong style="color: var(--primary-gold); word-break: break-all;">
+          {% if player.transaction_id and player.transaction_id not in ['FREE_REG', 'FREE', 'N/A', 'NONE', 'None', ''] %}
+            {{ player.transaction_id }} ({{ player.payment_method or 'UPI' }})
+          {% else %}
+            Free Entry / No Payment Required
+          {% endif %}
+        </strong>
       </div>
     </div>
 
