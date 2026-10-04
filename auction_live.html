@@ -299,9 +299,9 @@
     <div class="kpl-logo-emblem">🏏</div>
     <div>
       <h1 class="kpl-brand-title">Kunsi Premier League 2026</h1>
-      <p class="kpl-brand-sub">
-        <span style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1.2s infinite;"></span>
-        <strong style="color: #ef4444; letter-spacing: 0.05em;">LIVE AUCTION STREAM</strong> • Saidapur Arena
+      <p class="kpl-brand-sub" id="streamStatusBox">
+        <span id="streamStatusDot" style="display: inline-block; width: 8px; height: 8px; background: #ef4444; border-radius: 50%; animation: pulse 1.2s infinite;"></span>
+        <strong id="streamStatusText" style="color: #ef4444; letter-spacing: 0.05em;">LIVE AUCTION STREAM</strong> • <span id="streamVenueName">KUNSI</span>
       </p>
     </div>
   </div>
@@ -323,6 +323,9 @@
     {% if not viewer_mode %}
     <button type="button" id="btnHostAuctionToggle" onclick="toggleAuctionStarted()" class="btn btn-success" style="display: none; font-size: 0.8rem; padding: 0.35rem 0.65rem;">
       🚀 Start Auction
+    </button>
+    <button type="button" id="btnHostStopAuction" onclick="stopAuctionFromHost()" class="btn btn-danger" style="display: none; font-size: 0.8rem; padding: 0.35rem 0.65rem; background: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171;">
+      🛑 Stop Auction
     </button>
     <div id="auctioneerAuthBox">
       <button type="button" id="btnUnlockAuctioneer" onclick="openPinModal()" class="btn btn-secondary" style="font-size: 0.8rem; padding: 0.35rem 0.65rem; border-color: rgba(245, 158, 11, 0.5); color: var(--primary-gold); display: flex; align-items: center; gap: 0.35rem;">
@@ -347,6 +350,15 @@
   <!-- LEFT / MAIN: LIVE PODIUM & ACTIVE PLAYER -->
   <div id="liveStageSection">
     
+    <!-- AUCTION STANDBY / PAUSED BANNER -->
+    <div id="auctionStandbyOverlay" class="glass-card" style="display: none; margin-bottom: 0.85rem; padding: 1.25rem; border: 1.5px solid rgba(245, 158, 11, 0.45); background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(15, 23, 42, 0.95)); text-align: center; box-shadow: 0 4px 25px rgba(0,0,0,0.5);">
+      <div style="font-size: 2.2rem; margin-bottom: 0.35rem;">⏸️</div>
+      <h3 style="color: #fbbf24; font-size: 1.2rem; font-weight: 900; margin: 0 0 0.35rem 0; letter-spacing: 0.03em;">Live Auction is Currently on Standby / Paused</h3>
+      <p style="color: #cbd5e1; font-size: 0.88rem; margin: 0 auto; max-width: 520px; line-height: 1.5;">
+        The host has paused live bidding. Please stay on this screen — live bidding and player draws will resume automatically once restarted!
+      </p>
+    </div>
+
     <!-- MOST RECENT SOLD PLAYER LIVE TICKER / HIGHLIGHT BAR -->
     <div id="lastSoldTickerBox" class="glass-card" style="margin-bottom: 0.85rem; padding: 0.75rem 1rem; border: 1.5px solid rgba(16, 185, 129, 0.4); background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(15, 23, 42, 0.85)); display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
       <div style="display: flex; align-items: center; gap: 0.65rem;">

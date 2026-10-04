@@ -1090,6 +1090,9 @@
             {% if state and state.auction_started %}&#x23F8;&#xFE0F; Pause Live Auction
             {% else %}&#x1F680; Start Live Auction Now{% endif %}
           </button>
+          <button type="button" id="btnAdminStopAuction" onclick="adminStopAuction()" class="touch-btn touch-btn-danger" style="padding: 0.75rem 1.15rem; font-size: 0.92rem; font-weight: 900; min-width: 150px; background: rgba(239, 68, 68, 0.2); border: 1.5px solid #ef4444; color: #f87171;">
+            🛑 Stop Auction
+          </button>
           <a href="/view" target="_blank" class="touch-btn touch-btn-secondary" style="flex: 1; min-width: 150px; padding: 0.75rem 0.9rem; text-align: center;">
             &#x1F4F1; Spectator Stream &#x2197;
           </a>
@@ -1517,6 +1520,69 @@
   <div id="category5View" style="display: none;">
     <div class="mobile-admin-shell">
 
+      <!-- CARD 0A: REGISTRATION DATA PROTECTION, PERMANENT MASTER VAULT & 1-CLICK RESTORE -->
+      <div class="mobile-admin-card" style="border-color: rgba(16, 185, 129, 0.65); background: linear-gradient(145deg, rgba(10, 35, 25, 0.95), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(16, 185, 129, 0.2); position: relative; overflow: hidden; margin-bottom: 1.5rem;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #10b981, #38bdf8, #10b981);"></div>
+        
+        <div class="card-header-row" style="border-bottom-color: rgba(16, 185, 129, 0.3);">
+          <div>
+            <h2 class="card-header-title" style="color: #34d399; display: flex; align-items: center; gap: 0.5rem;">
+              <span>💾</span> Registration Data Protection &amp; Master Vault
+            </h2>
+            <span style="font-size: 0.78rem; color: #a7f3d0;">Permanent append-only vault + 1-click restore to prevent any data loss</span>
+          </div>
+          <div style="display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;">
+            <span class="badge" id="badgeVaultCount" style="background: rgba(16, 185, 129, 0.25); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.5); font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 9999px; font-weight: 800;">
+              🛡️ Vault: 20 Players
+            </span>
+            <span class="badge" id="badgePhotosCount" style="background: rgba(245, 158, 11, 0.2); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 9999px; font-weight: 800;">
+              📸 Photos: Backed Up
+            </span>
+            <span class="badge" id="badgeActiveCount" style="background: rgba(56, 189, 248, 0.2); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.4); font-size: 0.75rem; padding: 0.3rem 0.7rem; border-radius: 9999px; font-weight: 800;">
+              📋 Active: 20 Players
+            </span>
+          </div>
+        </div>
+
+        <div style="background: rgba(10, 16, 30, 0.85); border: 1px solid rgba(16, 185, 129, 0.25); border-radius: 12px; padding: 0.95rem; margin-bottom: 1.15rem; font-size: 0.82rem; line-height: 1.65;">
+          <strong style="color: #fff; display: block; margin-bottom: 0.5rem; font-size: 0.88rem;">🔒 How your registration data is 100% protected:</strong>
+          <ul style="margin: 0; padding-left: 1.2rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.35rem;">
+            <li>🛡️ <strong style="color: #34d399;">Master Vault Archive:</strong> Every player registered is permanently stored in the Master Vault (<code style="color:#a7f3d0; background:rgba(0,0,0,0.4); padding:0.1rem 0.35rem; border-radius:4px;">backups/registrations_master_vault.json</code>). It is append-only and never deleted.</li>
+            <li>📸 <strong style="color: #38bdf8;">Auto-Snapshots &amp; Safety Backup:</strong> Automatic snapshots are taken periodically, and a dedicated pre-reset backup is generated instantly before any tournament reset.</li>
+            <li>⚡ <strong style="color: #fbbf24;">1-Click Instant Restore:</strong> If anyone ever resets or clears registrations, click "Restore from Master Vault" below to immediately restore all players back to the active tournament roster &amp; auction pool in 1 second!</li>
+          </ul>
+        </div>
+
+        <!-- Action Buttons -->
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
+          <button type="button" onclick="restoreFromMasterVault()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 900; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: 1px solid #34d399; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span>📥</span> Restore from Master Vault
+          </button>
+          <button type="button" onclick="createManualBackup()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span>💾</span> Create Instant Backup Snapshot
+          </button>
+          <a href="/api/admin/backups/download-full-archive" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span>📦</span> Download Full ZIP (JSON + Photos)
+          </a>
+        </div>
+
+        <!-- Snapshots List Section -->
+        <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.85rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+            <strong style="color: #fff; font-size: 0.88rem; display: flex; align-items: center; gap: 0.4rem;">
+              <span>📁</span> Saved Backup Snapshots (<span id="backupsListCount">0</span>)
+            </strong>
+            <button type="button" onclick="loadBackupList()" style="background: none; border: none; color: #38bdf8; cursor: pointer; font-size: 0.78rem; font-weight: 700; text-decoration: underline;">
+              🔄 Refresh List
+            </button>
+          </div>
+          <div id="backupsListContainer" style="max-height: 240px; overflow-y: auto;">
+            <div style="text-align: center; color: #64748b; padding: 1rem; font-size: 0.82rem;">Loading backups...</div>
+          </div>
+        </div>
+
+      </div>
+
       <!-- CARD 0: START FRESH TOURNAMENT (FULL FACTORY RESET) -->
       <div class="mobile-admin-card" style="border-color: rgba(239, 68, 68, 0.85); background: linear-gradient(145deg, rgba(50, 10, 18, 0.95), rgba(15, 23, 42, 0.98)); box-shadow: 0 0 35px rgba(239, 68, 68, 0.35); position: relative; overflow: hidden; margin-bottom: 1.5rem;">
         <div style="position: absolute; top: 0; left: 0; right: 0; height: 4px; background: linear-gradient(90deg, #ef4444, #f59e0b, #ef4444);"></div>
@@ -1795,6 +1861,9 @@
       }
     });
 
+    if (cat === 'cat5' || cat === 'cat1') {
+      loadBackupList();
+    }
     if (cat === 'cat2') {
       renderTeamNameInputs();
       updateReserveExplanation();
@@ -2560,11 +2629,31 @@
     }
   }
 
-  function quickBidForTeam(teamName) {
+  async function quickBidForTeam(teamName) {
     const curPlayer = document.getElementById('hostPlayerName')?.textContent?.trim();
     if (!curPlayer || curPlayer.includes('Waiting') || curPlayer.includes('Ready') || curPlayer.includes('UNSOLD')) {
       showToast('⚠️ Tap "Next Draw" to bring a player to the block first!', 'warning');
       return;
+    }
+
+    // If auction is currently paused/stopped, offer to auto-resume live bidding
+    if (_lastAuctionState && !_lastAuctionState.auction_started) {
+      const ok = confirm(`⏸️ Live Auction is currently PAUSED.\n\nDo you want to RESUME the Live Auction and place this opening bid for ${teamName}?`);
+      if (!ok) return;
+      const pin = getAdminPin();
+      try {
+        const rStart = await fetch('/api/auction/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+          body: JSON.stringify({ pin: pin })
+        });
+        const dStart = await rStart.json();
+        if (dStart.success) {
+          if (_lastAuctionState) _lastAuctionState.auction_started = true;
+          updateHostAuctionToggleState(_lastAuctionState);
+          showToast('🚀 Live Auction Resumed!', 'success');
+        }
+      } catch(e) { console.warn('Auto-resume error:', e); }
     }
 
     const minBid = Math.max(100, Number(_lastAuctionState?.min_bid || 100));
@@ -2713,8 +2802,8 @@
         </div>
         <div style="display:flex; justify-content:space-between; align-items:center; font-size:0.75rem; min-width:0; gap:0.2rem; width:100%;">
           <span style="font-weight:900; color:#10b981; font-size:0.78rem; white-space:nowrap; flex-shrink:0;">₹${purse}</span>
-          <span class="team-bid-badge" style="background:${isBidding ? '#10b981' : 'rgba(56,189,248,0.15)'}; color:${isBidding ? '#000' : '#38bdf8'}; font-weight:800; padding:0.1rem 0.35rem; border-radius:6px; font-size:0.65rem; white-space:nowrap; flex-shrink:0;">
-            ${isBidding ? '🎯 LEADING' : '+ Tap to Bid'}
+          <span class="team-bid-badge" style="background:${isBidding ? '#10b981' : (state.auction_started ? 'rgba(56,189,248,0.15)' : 'rgba(245,158,11,0.18)')}; color:${isBidding ? '#000' : (state.auction_started ? '#38bdf8' : '#fbbf24')}; font-weight:800; padding:0.1rem 0.35rem; border-radius:6px; font-size:0.65rem; white-space:nowrap; flex-shrink:0;">
+            ${isBidding ? '🎯 LEADING' : (state.auction_started ? '+ Tap to Bid' : '⏸️ Tap to Bid & Resume')}
           </span>
         </div>
       `;
@@ -2879,10 +2968,18 @@
     const hostTimerStatus = document.getElementById('hostTimerStatusText');
     const hostTimerPulse = document.getElementById('hostTimerPulse');
 
-    if (state.timer_enabled && hasPlayer && state.timer_end) {
+    const isLive = Boolean(state.auction_started);
+    const hasTimer = Boolean(state.timer_enabled && hasPlayer && (state.timer_end || state.timer_remaining_sec));
+
+    if (hasTimer) {
       if (hostTimerBox) hostTimerBox.style.display = 'block';
       const nowMs = Date.now();
-      const remainingSec = Math.max(0, Math.round((state.timer_end - nowMs) / 1000));
+      let remainingSec = 0;
+      if (!isLive) {
+        remainingSec = Math.max(0, Number(state.timer_remaining_sec || (state.timer_end ? Math.round((state.timer_end - nowMs) / 1000) : (state.timer_duration || 120))));
+      } else {
+        remainingSec = state.timer_end ? Math.max(0, Math.round((state.timer_end - nowMs) / 1000)) : (state.timer_duration || 120);
+      }
       const totalDur = state.timer_duration || 120;
       const pct = Math.min(100, Math.max(0, (remainingSec / totalDur) * 100));
 
@@ -2890,11 +2987,20 @@
       const s = remainingSec % 60;
       const formattedTime = `${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
 
-      if (hostTimerClock) hostTimerClock.textContent = formattedTime;
       if (hostTimerBar) hostTimerBar.style.width = `${pct}%`;
 
-      if (remainingSec === 0) {
+      if (!isLive) {
         if (hostTimerClock) {
+          hostTimerClock.textContent = `${formattedTime} (PAUSED)`;
+          hostTimerClock.style.color = '#fbbf24';
+          hostTimerClock.classList.remove('timer-pulse-red');
+        }
+        if (hostTimerBar) hostTimerBar.style.background = '#f59e0b';
+        if (hostTimerPulse) hostTimerPulse.style.background = '#f59e0b';
+        if (hostTimerStatus) hostTimerStatus.innerHTML = '⏸️ <strong style="color:#fbbf24;">AUCTION PAUSED</strong> — Bidding on standby. Click "Start / Resume Live Auction" to open bidding';
+      } else if (remainingSec === 0) {
+        if (hostTimerClock) {
+          hostTimerClock.textContent = formattedTime;
           hostTimerClock.style.color = '#ef4444';
           hostTimerClock.classList.add('timer-pulse-red');
         }
@@ -2903,6 +3009,7 @@
         if (hostTimerStatus) hostTimerStatus.textContent = '⏱️ Time Expired! Auto-resolving winner...';
       } else if (remainingSec <= 10) {
         if (hostTimerClock) {
+          hostTimerClock.textContent = formattedTime;
           hostTimerClock.style.color = '#ef4444';
           hostTimerClock.classList.add('timer-pulse-red');
         }
@@ -2911,6 +3018,7 @@
         if (hostTimerStatus) hostTimerStatus.textContent = '⚠️ Final Call! Bidding closing...';
       } else if (remainingSec <= 30) {
         if (hostTimerClock) {
+          hostTimerClock.textContent = formattedTime;
           hostTimerClock.style.color = '#fbbf24';
           hostTimerClock.classList.remove('timer-pulse-red');
         }
@@ -2919,6 +3027,7 @@
         if (hostTimerStatus) hostTimerStatus.textContent = '⏱️ Bidding active (Closing soon)';
       } else {
         if (hostTimerClock) {
+          hostTimerClock.textContent = formattedTime;
           hostTimerClock.style.color = '#fbbf24';
           hostTimerClock.classList.remove('timer-pulse-red');
         }
@@ -2955,7 +3064,98 @@
       _lastAuctionState = state;
       updateHostPlayerDisplay(state);
       renderHostAuctionSummary(state);
+      updateHostAuctionToggleState(state);
     } catch(e) { console.warn('Host console refresh error:', e); }
+  }
+
+  function updateHostAuctionToggleState(state) {
+    const toggleBtn = document.getElementById('btnAuctionToggle');
+    const stopBtn = document.getElementById('btnAdminStopAuction');
+    const statusInd = document.getElementById('auctionStatusIndicator');
+    const isStarted = Boolean(state && state.auction_started);
+
+    if (toggleBtn) {
+      if (isStarted) {
+        toggleBtn.className = 'touch-btn touch-btn-secondary';
+        toggleBtn.innerHTML = '⏸️ Pause Live Auction';
+      } else {
+        toggleBtn.className = 'touch-btn touch-btn-green';
+        toggleBtn.innerHTML = '🚀 Start / Resume Live Auction';
+      }
+    }
+
+    if (stopBtn) {
+      stopBtn.style.display = isStarted ? 'inline-block' : 'inline-block';
+    }
+
+    if (statusInd) {
+      if (isStarted) {
+        statusInd.style.background = 'rgba(16, 185, 129, 0.2)';
+        statusInd.style.color = '#34d399';
+        statusInd.style.borderColor = '#10b981';
+        statusInd.innerHTML = '<span style="width: 8px; height: 8px; border-radius: 50%; background: #34d399; animation: pulse 1.5s infinite; display: inline-block;"></span> 🟢 LIVE BIDDING ACTIVE';
+      } else {
+        statusInd.style.background = 'rgba(239, 68, 68, 0.2)';
+        statusInd.style.color = '#f87171';
+        statusInd.style.borderColor = '#ef4444';
+        statusInd.innerHTML = '⏸️ AUCTION PAUSED / STANDBY';
+      }
+    }
+  }
+
+  async function adminToggleAuctionStarted() {
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('⚠️ Host PIN required.', 'warning');
+      openPinModal();
+      return;
+    }
+    const isStarted = Boolean(_lastAuctionState && _lastAuctionState.auction_started);
+    const endpoint = isStarted ? '/api/auction/pause' : '/api/auction/start';
+
+    try {
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message || (isStarted ? 'Live Auction Paused' : 'Live Auction Started!'), 'success');
+        await refreshHostConsole();
+      } else {
+        showToast(data.message || 'Action failed', 'error');
+      }
+    } catch (err) {
+      showToast('Network error: ' + err.message, 'error');
+    }
+  }
+
+  async function adminStopAuction() {
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('⚠️ Host PIN required.', 'warning');
+      openPinModal();
+      return;
+    }
+    if (!confirm('Are you sure you want to STOP and conclude the live auction? Spectator and Owner screens will be set to Standby.')) return;
+
+    try {
+      const res = await fetch('/api/auction/stop', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast('Live Auction stopped & concluded.', 'info');
+        await refreshHostConsole();
+      } else {
+        showToast(data.message || 'Failed to stop auction', 'error');
+      }
+    } catch (err) {
+      showToast('Network error: ' + err.message, 'error');
+    }
   }
 
   function showToast(message, type = 'info') {
@@ -4025,6 +4225,144 @@
     }
   }
 
+  // --- DATA PROTECTION & BACKUP RESTORE HANDLERS ---
+  async function loadBackupList() {
+    try {
+      const res = await fetch('/api/admin/backups/list');
+      const data = await res.json();
+      if (!data.success) return;
+
+      const badgeVault = document.getElementById('badgeVaultCount');
+      const badgePhotos = document.getElementById('badgePhotosCount');
+      const badgeActive = document.getElementById('badgeActiveCount');
+      const listCount = document.getElementById('backupsListCount');
+      const container = document.getElementById('backupsListContainer');
+
+      if (badgeVault) badgeVault.textContent = `🛡️ Vault: ${data.vault_player_count || 0} Players`;
+      if (badgePhotos) badgePhotos.textContent = `📸 Photos: ${data.vault_photo_count || 0} Backed Up`;
+      if (badgeActive) badgeActive.textContent = `📋 Active: ${data.active_player_count || 0} Players`;
+      if (listCount) listCount.textContent = (data.backups || []).length;
+
+      if (!container) return;
+      if (!data.backups || data.backups.length === 0) {
+        container.innerHTML = '<div style="text-align: center; color: #64748b; padding: 1rem; font-size: 0.82rem;">No snapshot files yet. Click "Create Instant Backup Snapshot" above.</div>';
+        return;
+      }
+
+      let html = '<div style="display: flex; flex-direction: column; gap: 0.45rem;">';
+      data.backups.forEach(b => {
+        const isPreReset = b.filename.includes('pre_fresh_reset');
+        const badgeColor = isPreReset ? '#f87171' : '#34d399';
+        const tagText = isPreReset ? 'Pre-Reset Safety' : 'Snapshot';
+        html += `
+          <div style="background: rgba(15, 23, 42, 0.7); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 0.65rem 0.85rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 0.45rem; margin-bottom: 0.2rem;">
+                <span style="font-size: 0.7rem; font-weight: 800; color: ${badgeColor}; background: rgba(0,0,0,0.3); padding: 0.1rem 0.4rem; border-radius: 4px;">${tagText}</span>
+                <strong style="color: #fff; font-size: 0.85rem;">${b.filename}</strong>
+              </div>
+              <div style="font-size: 0.75rem; color: #94a3b8;">
+                📅 ${b.timestamp} &bull; 👥 <strong style="color: #38bdf8;">${b.player_count} Players</strong> &bull; 📦 ${b.size_kb} KB
+              </div>
+            </div>
+            <div style="display: flex; gap: 0.4rem; align-items: center;">
+              <button type="button" onclick="restoreFromSnapshot('${b.filename}')" class="touch-btn" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 800; background: rgba(16, 185, 129, 0.2); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.45); border-radius: 6px; cursor: pointer;">
+                🔄 Restore
+              </button>
+              <a href="/api/admin/backups/download/${encodeURIComponent(b.filename)}" class="touch-btn" style="padding: 0.35rem 0.75rem; font-size: 0.78rem; font-weight: 700; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 6px; text-decoration: none; display: inline-flex; align-items: center; gap: 0.25rem;">
+                ⬇️ JSON
+              </a>
+            </div>
+          </div>
+        `;
+      });
+      html += '</div>';
+      container.innerHTML = html;
+    } catch (e) {
+      console.error('Error loading backups:', e);
+    }
+  }
+
+  async function createManualBackup() {
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('Organizer PIN required.', 'warning');
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/backups/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(data.message, 'success');
+        loadBackupList();
+      } else {
+        showToast(data.message || 'Backup failed', 'error');
+      }
+    } catch (e) {
+      showToast('Error creating backup: ' + e.message, 'error');
+    }
+  }
+
+  async function restoreFromMasterVault() {
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('Organizer PIN required.', 'warning');
+      return;
+    }
+    if (!confirm('🛡️ RESTORE FROM MASTER VAULT?\n\nThis will restore all authentic registered players from the permanent Master Vault into your active tournament roster and live auction pool.\n\nProceed?')) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ use_vault: true, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 ${data.message}`, 'success');
+        loadBackupList();
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(data.message || 'Restore failed', 'error');
+      }
+    } catch (e) {
+      showToast('Error restoring vault: ' + e.message, 'error');
+    }
+  }
+
+  async function restoreFromSnapshot(filename) {
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('Organizer PIN required.', 'warning');
+      return;
+    }
+    if (!confirm(`🔄 RESTORE SNAPSHOT "${filename}"?\n\nThis will replace active registered players with this snapshot backup and update the auction pool.\n\nProceed?`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/api/admin/backups/restore', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Auction-PIN': pin },
+        body: JSON.stringify({ filename: filename, pin: pin })
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 ${data.message}`, 'success');
+        loadBackupList();
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(data.message || 'Restore failed', 'error');
+      }
+    } catch (e) {
+      showToast('Error restoring snapshot: ' + e.message, 'error');
+    }
+  }
+
   async function confirmResetAuction() {
     if (_isGlobalOpPending) {
       showToast('⚠️ Operation in progress...', 'warning');
@@ -4364,6 +4702,9 @@
     const activeTab = hash || sessionStorage.getItem('admin_active_tab') || 'cat1';
     if (typeof switchAdminTab === 'function') {
       switchAdminTab(activeTab);
+    }
+    if (typeof loadBackupList === 'function') {
+      loadBackupList();
     }
 
     const pinInput = document.getElementById('adminPinInput');
