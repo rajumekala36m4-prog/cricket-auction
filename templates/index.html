@@ -1,0 +1,1131 @@
+{% extends "base.html" %}
+
+{% block title %}Kunsi Premier League (KPL) — Official Village Cricket Portal & History{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* ── Kunsi Heritage Theme Styles ───────────────────────── */
+  :root {
+    --kpl-gold: #f59e0b;
+    --kpl-gold-light: #fbbf24;
+    --kpl-gold-dark: #d97706;
+    --kpl-green: #10b981;
+    --kpl-green-light: #34d399;
+    --kpl-blue: #38bdf8;
+    --kpl-cyan: #06b6d4;
+    --kpl-red: #ef4444;
+  }
+
+  /* ── Hero Section ─────────────────────────────────────── */
+  .hero-section {
+    text-align: center;
+    padding: 1.5rem 0 2rem;
+    position: relative;
+  }
+
+  .hero-season-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(245, 158, 11, 0.12);
+    color: #fbbf24;
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    padding: 0.4rem 1.1rem;
+    border-radius: 9999px;
+    font-weight: 800;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    margin-bottom: 1.1rem;
+    box-shadow: 0 0 20px rgba(245, 158, 11, 0.15);
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 6.5vw, 3.4rem);
+    font-weight: 900;
+    line-height: 1.12;
+    letter-spacing: -0.03em;
+    color: #fff;
+    margin-bottom: 0.65rem;
+  }
+
+  .hero-title .kpl-highlight {
+    background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #d97706 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-tagline {
+    font-size: clamp(1rem, 3.2vw, 1.25rem);
+    font-weight: 700;
+    color: #e2e8f0;
+    letter-spacing: -0.01em;
+    margin-bottom: 0.75rem;
+  }
+
+  .hero-subtitle {
+    font-size: clamp(0.88rem, 2.6vw, 1.02rem);
+    color: #94a3b8;
+    line-height: 1.65;
+    max-width: 680px;
+    margin: 0 auto 1.75rem;
+  }
+
+  .hero-cta-row {
+    display: flex;
+    gap: 0.75rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 1.25rem;
+  }
+
+  /* ── Stats Strip ──────────────────────────────────────── */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 1.1rem 0.75rem;
+    text-align: center;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    border-radius: 16px 16px 0 0;
+  }
+
+  .stat-card-gold::before  { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .stat-card-blue::before  { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+  .stat-card-green::before { background: linear-gradient(90deg, #10b981, #34d399); }
+  .stat-card-purple::before{ background: linear-gradient(90deg, #a855f7, #ec4899); }
+
+  .stat-card:hover { transform: translateY(-3px); border-color: rgba(255, 255, 255, 0.18); }
+
+  .stat-number {
+    font-size: 2rem;
+    font-weight: 900;
+    line-height: 1;
+    margin-bottom: 0.3rem;
+    font-family: 'Rajdhani', 'Plus Jakarta Sans', sans-serif;
+  }
+
+  .stat-label-text {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* ── Section Title Headers ────────────────────────────── */
+  .section-header-wrap {
+    text-align: center;
+    margin: 2.75rem 0 1.5rem;
+  }
+
+  .section-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--kpl-gold);
+    background: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.25);
+    padding: 0.25rem 0.85rem;
+    border-radius: 9999px;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-main-title {
+    font-size: clamp(1.4rem, 4.5vw, 2.1rem);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-desc {
+    font-size: 0.92rem;
+    color: #94a3b8;
+    max-width: 620px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  /* ── Three Generations Timeline Cards ──────────────────── */
+  .generations-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .gen-card {
+    background: rgba(12, 18, 34, 0.85);
+    backdrop-filter: blur(16px);
+    border-radius: 20px;
+    padding: 1.5rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.25s ease, box-shadow 0.25s ease;
+  }
+
+  .gen-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .gen-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+  }
+
+  .gen-card-pioneers::before { background: linear-gradient(90deg, #f59e0b, #fbbf24); }
+  .gen-card-champions::before{ background: linear-gradient(90deg, #10b981, #34d399); }
+  .gen-card-rising::before   { background: linear-gradient(90deg, #38bdf8, #818cf8); }
+
+  .gen-badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 0.2rem 0.65rem;
+    border-radius: 9999px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    margin-bottom: 0.85rem;
+  }
+
+  .gen-badge-gold { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.35); }
+  .gen-badge-green{ background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); }
+  .gen-badge-blue { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); }
+
+  .gen-title {
+    font-size: 1.3rem;
+    font-weight: 900;
+    color: #fff;
+    margin-bottom: 0.5rem;
+    line-height: 1.25;
+  }
+
+  .gen-subtitle {
+    font-size: 0.82rem;
+    color: var(--kpl-gold-light);
+    font-weight: 700;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .gen-body {
+    font-size: 0.88rem;
+    color: #94a3b8;
+    line-height: 1.65;
+    margin-bottom: 1.1rem;
+    flex-grow: 1;
+  }
+
+  .gen-highlights {
+    background: rgba(15, 23, 42, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 12px;
+    padding: 0.85rem;
+    font-size: 0.82rem;
+    color: #cbd5e1;
+  }
+
+  /* ── Role Models Hall of Fame Grid ─────────────────────── */
+  .legends-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .legend-card {
+    background: rgba(15, 23, 42, 0.8);
+    border: 1px solid rgba(245, 158, 11, 0.22);
+    border-radius: 14px;
+    padding: 1rem 0.9rem;
+    text-align: center;
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .legend-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(245, 158, 11, 0.5);
+    background: rgba(245, 158, 11, 0.06);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.15);
+  }
+
+  .legend-avatar {
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.2), rgba(217, 119, 6, 0.3));
+    border: 2px solid rgba(245, 158, 11, 0.45);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin: 0 auto 0.65rem;
+    box-shadow: 0 0 16px rgba(245, 158, 11, 0.2);
+  }
+
+  .legend-name {
+    font-size: 0.96rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.2rem;
+  }
+
+  .legend-tag {
+    font-size: 0.72rem;
+    color: #fbbf24;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  /* ── Batches & Player Rosters ──────────────────────────── */
+  .batches-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .batch-card {
+    background: rgba(12, 18, 34, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 18px;
+    padding: 1.4rem;
+  }
+
+  .batch-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .batch-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.35rem;
+  }
+
+  .batch-title {
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #fff;
+  }
+
+  .batch-subtitle {
+    font-size: 0.78rem;
+    color: #94a3b8;
+  }
+
+  .player-tags-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .player-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #cbd5e1;
+    font-size: 0.8rem;
+    font-weight: 600;
+    padding: 0.3rem 0.65rem;
+    border-radius: 8px;
+    transition: all 0.2s ease;
+  }
+
+  .player-pill:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #fff;
+    border-color: rgba(255, 255, 255, 0.25);
+  }
+
+  .player-pill-coach {
+    background: rgba(245, 158, 11, 0.18);
+    border-color: rgba(245, 158, 11, 0.4);
+    color: #fbbf24;
+    font-weight: 800;
+  }
+
+  .player-pill-support {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #34d399;
+    font-weight: 800;
+  }
+
+  /* ── Trophy & Ground Achievements ──────────────────────── */
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .achievement-card {
+    background: rgba(15, 23, 42, 0.75);
+    border-radius: 16px;
+    padding: 1.25rem;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .achievement-icon {
+    font-size: 2.25rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .achievement-title {
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.35rem;
+  }
+
+  .achievement-desc {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    line-height: 1.55;
+  }
+
+  /* ── Life Lessons Strip ────────────────────────────────── */
+  .lessons-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .lesson-card {
+    background: rgba(10, 16, 30, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.1rem;
+  }
+
+  .lesson-card-title {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.45rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .lesson-card p {
+    font-size: 0.84rem;
+    color: #94a3b8;
+    line-height: 1.55;
+  }
+
+  /* ── Association & Tournaments Banner ──────────────────── */
+  .traditions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .tradition-card {
+    background: rgba(12, 18, 34, 0.85);
+    border-radius: 18px;
+    padding: 1.4rem;
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .tradition-card-dussehra {
+    border-color: rgba(245, 158, 11, 0.3);
+    box-shadow: 0 8px 24px rgba(245, 158, 11, 0.08);
+  }
+
+  .tradition-card-sankranti {
+    border-color: rgba(16, 185, 129, 0.3);
+    box-shadow: 0 8px 24px rgba(16, 185, 129, 0.08);
+  }
+
+  /* ── Sponsors Spotlight Card ───────────────────────────── */
+  .sponsors-card {
+    background: linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8));
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    border-radius: 20px;
+    padding: 1.75rem 1.5rem;
+    margin-bottom: 2.5rem;
+    text-align: center;
+    position: relative;
+  }
+
+  /* ── Compact Portals Grid ──────────────────────────────── */
+  .portals-mini-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 0.85rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .portal-mini-card {
+    background: rgba(12, 18, 34, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 16px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.85rem;
+    transition: transform 0.2s ease;
+  }
+
+  .portal-mini-card:hover { transform: translateY(-3px); }
+
+  /* ── Climax Quote Banner ───────────────────────────────── */
+  .climax-quote-section {
+    text-align: center;
+    padding: 2.5rem 1.5rem;
+    margin: 2rem 0 1rem;
+    border-radius: 24px;
+    background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(16, 185, 129, 0.12) 100%);
+    border: 2px solid rgba(245, 158, 11, 0.4);
+    box-shadow: 0 0 50px rgba(245, 158, 11, 0.18);
+    position: relative;
+    overflow: hidden;
+  }
+
+  .climax-quote-icon {
+    font-size: 3rem;
+    margin-bottom: 0.5rem;
+    display: inline-block;
+  }
+
+  .climax-quote-en {
+    font-size: clamp(1.2rem, 3.8vw, 1.85rem);
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.35;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+  }
+
+  .climax-quote-te {
+    font-size: clamp(1.05rem, 3.2vw, 1.45rem);
+    font-weight: 800;
+    color: #fbbf24;
+    line-height: 1.5;
+    margin-bottom: 1rem;
+    font-style: italic;
+  }
+
+  .climax-quote-author {
+    font-size: 0.85rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: #94a3b8;
+  }
+
+  /* ── Responsive rules ──────────────────────────────────── */
+  @media (max-width: 768px) {
+    .stats-strip { grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+    .stat-number { font-size: 1.65rem; }
+    .hero-title  { font-size: 1.85rem; }
+    .legends-grid{ grid-template-columns: repeat(2, 1fr); }
+  }
+
+  @media (max-width: 480px) {
+    .legends-grid{ grid-template-columns: 1fr 1fr; gap: 0.55rem; }
+    .legend-name { font-size: 0.88rem; }
+    .legend-avatar { width: 44px; height: 44px; font-size: 1.25rem; }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- ── 1. Hero Section ───────────────────────────────────── -->
+<section class="hero-section">
+  <div class="hero-season-badge">
+    🏏 Pride of Kunsi Village &nbsp;·&nbsp; Established Cricket Legacy
+  </div>
+
+  <h1 class="hero-title">
+    <span class="kpl-highlight">Kunsi</span> Premier League
+    <br><span style="font-size:0.62em; color:#94a3b8; font-weight:700; -webkit-text-fill-color:#94a3b8;">Official Cricket Portal · KPL 2026</span>
+  </h1>
+
+  <div class="hero-tagline">
+    Three Generations of Passion, Brotherhood &amp; Village Greatness
+  </div>
+
+  <p class="hero-subtitle">
+    From the pioneers of before 1990 to the tournament-winning champions of KPL and today's rising stars — this is the heartfelt story of how cricket became the soul, identity, and heartbeat of Kunsi Village.
+  </p>
+
+  <div class="hero-cta-row">
+    <a href="/view" class="btn btn-danger" style="font-weight:900; font-size:1rem; padding:0.85rem 1.6rem;">
+      <span style="width:9px; height:9px; background:#fff; border-radius:50%; display:inline-block; animation: pulseDot 1.4s infinite;"></span>
+      Watch Live Auction
+    </a>
+    <a href="/register" class="btn btn-secondary" style="font-size:1rem; padding:0.85rem 1.4rem;">
+      📝 Player Directory
+    </a>
+    <a href="#history" class="btn" style="background:rgba(245,158,11,0.2); border:1px solid rgba(245,158,11,0.45); color:#fbbf24; font-weight:800; font-size:1rem; padding:0.85rem 1.4rem;">
+      📜 Village Cricket History ↓
+    </a>
+  </div>
+</section>
+
+<!-- ── 2. Live Stats & Home Ground Strip ─────────────────── -->
+<div class="stats-strip">
+  <div class="stat-card stat-card-gold">
+    <div class="stat-number" style="color:#f59e0b;">{{ total_registered }}</div>
+    <div class="stat-label-text">Enrolled Cricketers</div>
+  </div>
+  <div class="stat-card stat-card-blue">
+    <div class="stat-number" style="color:#38bdf8;">{{ total_teams }}</div>
+    <div class="stat-label-text">Active Franchises</div>
+  </div>
+  <div class="stat-card stat-card-green">
+    <div class="stat-number" style="color:#10b981;">3+</div>
+    <div class="stat-label-text">Generations of Pride</div>
+  </div>
+  <div class="stat-card stat-card-purple">
+    <div class="stat-number" style="color:#c084fc; font-size:1.35rem; padding-top:0.4rem;">Kunsi Ground</div>
+    <div class="stat-label-text">Official Home Venue</div>
+  </div>
+</div>
+
+<!-- ── 3. The Three Generations of Kunsi Cricket ─────────── -->
+<div id="history"></div>
+<div class="section-header-wrap">
+  <div class="section-eyebrow">⏳ Our Journey Through Time</div>
+  <h2 class="section-main-title">The Three Generations of Kunsi Cricket</h2>
+  <p class="section-desc">
+    Cricket in Kunsi was not built overnight. It was forged with sweat on red village soil, passed with honor from generation to generation.
+  </p>
+</div>
+
+<div class="generations-grid">
+
+  <!-- Generation 1: Before 1990 -->
+  <div class="gen-card gen-card-pioneers">
+    <div>
+      <span class="gen-badge gen-badge-gold">Era 1 · Before 1990</span>
+      <h3 class="gen-title">The Pioneers &amp; Role Models</h3>
+      <div class="gen-subtitle">🌟 The Spark That Started It All</div>
+      <p class="gen-body">
+        Back when proper equipment and grounds were rare dreams, our elder role models played with pure heart, raw talent, and fearless sportsmanship. By competing in and winning local tournaments, they ignited an unquenchable passion for cricket in the young hearts of the village. Observing their skills was the greatest school for everyone who came after.
+      </p>
+    </div>
+    <div class="gen-highlights">
+      <strong style="color:#fbbf24; display:block; margin-bottom:0.25rem;">✨ Defining Impact:</strong>
+      Won local tournaments &amp; established Kunsi’s proud sporting reputation among surrounding villages.
+    </div>
+  </div>
+
+  <!-- Generation 2: After 1990 & 1992 KPL Era -->
+  <div class="gen-card gen-card-champions">
+    <div>
+      <span class="gen-badge gen-badge-green">Era 2 · After 1990 (KPL Era)</span>
+      <h3 class="gen-title">The Champions &amp; Builders</h3>
+      <div class="gen-subtitle">🏆 From Semifinal Tears to Champion Trophies</div>
+      <p class="gen-body">
+        Growing up watching their mentors, this generation founded the <strong>Kunsi Premier League (KPL)</strong>. They traveled village-to-village, competing in fierce tournaments. In the early days, they reached multiple semifinals but lost due to fear and lack of match leadership. Refusing to surrender, they conquered self-doubt, mastered their skills, and brought home the prestigious <strong>Mustipally Tournament Cup</strong> and the <strong>Gudeballur 6-Over Short Game Trophy</strong>!
+      </p>
+    </div>
+    <div class="gen-highlights">
+      <strong style="color:#34d399; display:block; margin-bottom:0.25rem;">✨ Defining Impact:</strong>
+      Brought historic championship cups home, mastered life leadership, and earned deep respect from honorable sponsors.
+    </div>
+  </div>
+
+  <!-- Generation 3: Modern Youth -->
+  <div class="gen-card gen-card-rising">
+    <div>
+      <span class="gen-badge gen-badge-blue">Era 3 · Latest Generation</span>
+      <h3 class="gen-title">The Rising Stars</h3>
+      <div class="gen-subtitle">🚀 Carrying the Torch into the Future</div>
+      <p class="gen-body">
+        Today's young cricketers are stepping up with immense energy, fitness, and modern technique. Guided by senior veterans, they continue to uphold Kunsi’s legacy through digital live scoring, televised auctions, and relentless hunger on the pitch, ensuring that the Kunsi banner flies higher than ever.
+      </p>
+    </div>
+    <div class="gen-highlights">
+      <strong style="color:#38bdf8; display:block; margin-bottom:0.25rem;">✨ Defining Impact:</strong>
+      Embracing modern technology, professional league formats, and youth empowerment under KCA.
+    </div>
+  </div>
+
+</div>
+
+<!-- ── 4. Hall of Fame: Founding Role Models (Before 1990) ── -->
+<div class="section-header-wrap">
+  <div class="section-eyebrow">👑 Hall of Fame</div>
+  <h2 class="section-main-title">Our Founding Role Models</h2>
+  <p class="section-desc">
+    We salute the legendary seniors whose dedication, bowling, batting, and village pride inspired generations of Kunsi cricketers.
+  </p>
+</div>
+
+<div class="legends-grid">
+  <!-- Legend 1 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🏏</div>
+    <div class="legend-name">Nalle Suresh gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 2 -->
+  <div class="legend-card">
+    <div class="legend-avatar">⭐</div>
+    <div class="legend-name">Dukanam Raghu gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 3 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🎯</div>
+    <div class="legend-name">Kavali Jayaraj gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 4 -->
+  <div class="legend-card">
+    <div class="legend-avatar">⚡</div>
+    <div class="legend-name">Kavali Shivu gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 5 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🔥</div>
+    <div class="legend-name">Ali Sab gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 6 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🛡️</div>
+    <div class="legend-name">Kattige Buggoji gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 7 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🏛️</div>
+    <div class="legend-name">Uppari Shekrappa gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 8 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🦅</div>
+    <div class="legend-name">Gunugunu Sharan gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 9 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🌟</div>
+    <div class="legend-name">Sakali Shekar gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 10 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🎖️</div>
+    <div class="legend-name">Pawan Kalyan gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+
+  <!-- Legend 11 -->
+  <div class="legend-card">
+    <div class="legend-avatar">🏆</div>
+    <div class="legend-name">Shashi Gowda gaaru</div>
+    <div class="legend-tag">Founding Role Model</div>
+  </div>
+</div>
+
+<!-- ── 5. KPL Leadership & Player Roster by Era ──────────── -->
+<div class="section-header-wrap">
+  <div class="section-eyebrow">👥 Kunsi Cricket Fraternity</div>
+  <h2 class="section-main-title">KPL Leadership &amp; Player Lineages</h2>
+  <p class="section-desc">
+    The warriors and mentors who built the Kunsi Premier League and represented our village ground with courage.
+  </p>
+</div>
+
+<div class="batches-grid">
+
+  <!-- Founding Batch of KPL (First Generation) -->
+  <div class="batch-card" style="border-color: rgba(245,158,11,0.25);">
+    <div class="batch-header">
+      <div class="batch-icon" style="background:rgba(245,158,11,0.15); color:#fbbf24;">⚔️</div>
+      <div>
+        <div class="batch-title">Founding Batch of KPL (First Generation)</div>
+        <div class="batch-subtitle">Early Stage Founders &amp; Mentors</div>
+      </div>
+    </div>
+    <div class="player-tags-cloud">
+      <span class="player-pill player-pill-coach">🎓 Aligeri Mahadev (Head Coach)</span>
+      <span class="player-pill player-pill-support">🤝 Edigi Nagaraju (Chief Supporter)</span>
+      <span class="player-pill">Kavali Jayaraj</span>
+      <span class="player-pill">Mulinti Shankar</span>
+      <span class="player-pill">Myakali Raju</span>
+      <span class="player-pill">Masalthi Shiva Kumar</span>
+      <span class="player-pill">Gaddameda Sharan</span>
+      <span class="player-pill">Gaddameda Prabhu</span>
+      <span class="player-pill">Myakali Ganesh</span>
+      <span class="player-pill">Myakali Suresh</span>
+      <span class="player-pill">Myakali Suresh (Zym)</span>
+      <span class="player-pill">Jagly Chandrashekar</span>
+      <span class="player-pill">Edigi Raju</span>
+      <span class="player-pill">Uppari Suresh</span>
+      <span class="player-pill">Bassanna Gowda</span>
+    </div>
+  </div>
+
+  <!-- Kunsi Cricket Family (1990s to Modern Youth) -->
+  <div class="batch-card" style="border-color: rgba(56,189,248,0.25);">
+    <div class="batch-header">
+      <div class="batch-icon" style="background:rgba(56,189,248,0.15); color:#38bdf8;">🛡️</div>
+      <div>
+        <div class="batch-title">Kunsi Cricket Family (1990s to Modern Youth)</div>
+        <div class="batch-subtitle">The Core Backbone &amp; Rising Youth Generation</div>
+      </div>
+    </div>
+    <div class="player-tags-cloud">
+      <span class="player-pill">Venkat Reddy Gowda</span>
+      <span class="player-pill">Shashi Gowda</span>
+      <span class="player-pill">Aligeri Mahadev</span>
+      <span class="player-pill">Sunil Gowda</span>
+      <span class="player-pill">Venakat Reddy (Agro)</span>
+      <span class="player-pill">Mulinti Shankar Gouda</span>
+      <span class="player-pill">Myaklai Raju</span>
+      <span class="player-pill">Masalthi Shiva Kumar</span>
+      <span class="player-pill">Myakali Suresh</span>
+      <span class="player-pill">Myakali Ganesh</span>
+      <span class="player-pill">Uppari Suresh</span>
+      <span class="player-pill">Jegly Chandra Shekar</span>
+      <span class="player-pill">Gaddameda Prabhu</span>
+      <span class="player-pill">Gaddameda Sharan</span>
+      <span class="player-pill">Bassanna Gowda</span>
+      <span class="player-pill">Edigi Prabhu</span>
+      <span class="player-pill">Thangidi Raghu (Putta)</span>
+      <span class="player-pill">Edigi Shyam</span>
+      <span class="player-pill">Edigi Shashi (Police)</span>
+      <span class="player-pill">Hanmanthu (Police)</span>
+      <span class="player-pill">Uppari Kurmurthi</span>
+      <span class="player-pill">Uppari Ramesh</span>
+      <span class="player-pill">Badal Vannesh</span>
+      <span class="player-pill">Edigi Raju</span>
+      <span class="player-pill">Suresh Gowda</span>
+      <span class="player-pill">Sawkari Sadhananda</span>
+      <span class="player-pill">Myakali Suresh (Inju)</span>
+      <span class="player-pill">Myakali Suresh (Zym)</span>
+      <span class="player-pill">Sindram Ravi</span>
+      <span class="player-pill">Edigi Sai</span>
+      <span class="player-pill">Edigi Viswanath</span>
+      <span class="player-pill">Shankar Poojari</span>
+      <span class="player-pill">Kavali Sanjeeva</span>
+      <span class="player-pill">Kurva Thayappa</span>
+      <span class="player-pill">Akash Goud</span>
+      <span class="player-pill">Monesh Poojari</span>
+      <span class="player-pill">Yerukali Suresh</span>
+      <span class="player-pill">Saikiran Salmani</span>
+      <span class="player-pill">Myakali Mahesh</span>
+      <span class="player-pill">Sidram Vannesh</span>
+      <span class="player-pill">Myakali Shiva Kumar</span>
+      <span class="player-pill">Burra Ramesh</span>
+      <span class="player-pill">Burra Sharan</span>
+      <span class="player-pill">Burra Shiva Kumar</span>
+      <span class="player-pill">K Samba</span>
+      <span class="player-pill">Kavali Ramesh</span>
+      <span class="player-pill">Mulinti Sudeep</span>
+      <span class="player-pill">Umesh</span>
+      <span class="player-pill">Uday Kiran</span>
+      <span class="player-pill">Jutla Gopal</span>
+      <span class="player-pill">Badal Sharan</span>
+      <span class="player-pill">Dukanam Vinod</span>
+      <span class="player-pill">Edigi Govardhan</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- ── 6. Historic Achievements & Sacred Ground ─────────── -->
+<div class="section-header-wrap">
+  <div class="section-eyebrow">🏆 Village Glory</div>
+  <h2 class="section-main-title">Championship Milestones &amp; Our Home Turf</h2>
+  <p class="section-desc">
+    Hard work, teamwork, and fearless cricket turned Kunsi into a respected powerhouse across regional tournaments.
+  </p>
+</div>
+
+<div class="achievements-grid">
+  <!-- Mustipally Cup -->
+  <div class="achievement-card">
+    <div class="achievement-icon">🏆</div>
+    <div>
+      <div class="achievement-title">Mustipally Tournament Championship Cup</div>
+      <p class="achievement-desc">
+        A monumental milestone in our history! After years of heartbreak in semifinals, the Kunsi squad played with unbreakable unity and hoisted the prestigious championship trophy against fierce regional teams.
+      </p>
+    </div>
+  </div>
+
+  <!-- Gudeballur 6-Over -->
+  <div class="achievement-card">
+    <div class="achievement-icon">⚡</div>
+    <div>
+      <div class="achievement-title">Gudeballur 6-Over Short Game Champions</div>
+      <p class="achievement-desc">
+        A masterclass in high-pressure, lightning-fast blitz cricket. In the 6-over shootout, Kunsi players showcased nerve, aggressive hitting, and clinical bowling to claim the tournament title.
+      </p>
+    </div>
+  </div>
+
+  <!-- Kunsi Village Ground -->
+  <div class="achievement-card">
+    <div class="achievement-icon">🏟️</div>
+    <div>
+      <div class="achievement-title">Kunsi Village Cricket Ground</div>
+      <p class="achievement-desc">
+        Our sacred home pitch! This is where dreams are born, skills are polished under the village sun, and players bond for life. It is the beating cultural center for all Kunsi sports.
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ── 7. Cricket as a School of Life ───────────────────── -->
+<div class="section-header-wrap">
+  <div class="section-eyebrow">🌱 Values &amp; Character</div>
+  <h2 class="section-main-title">Beyond the Boundary: What Cricket Taught Us</h2>
+  <p class="section-desc">
+    For Kunsi youth, cricket was never just bat and ball — it was our classroom for character, brotherhood, and life balance.
+  </p>
+</div>
+
+<div class="lessons-grid">
+  <div class="lesson-card">
+    <div class="lesson-card-title">👑 Real-Life Leadership</div>
+    <p>Facing tough match situations and early semifinal defeats taught us how to lead teams, conquer fear, and stay steady during real-life trials.</p>
+  </div>
+  <div class="lesson-card">
+    <div class="lesson-card-title">🤝 Lifelong Brotherhood</div>
+    <p>Cricket brought everyone in Kunsi together. Regardless of background, we play as brothers, share meals, and stand together through thick and thin.</p>
+  </div>
+  <div class="lesson-card">
+    <div class="lesson-card-title">⚖️ Life Balance &amp; Discipline</div>
+    <p>Win or lose, the game taught us humility in victory and grace in defeat, giving us the focus and balance required for family and career.</p>
+  </div>
+  <div class="lesson-card">
+    <div class="lesson-card-title">🌟 Character &amp; Respect</div>
+    <p>Our integrity on the ground earned the deep respect and lasting trust of village elders and honorable sponsors who proudly stand behind us.</p>
+  </div>
+</div>
+
+<!-- ── 8. Kunsi Cricket Association & Festival Tournaments ── -->
+<div id="association"></div>
+<div class="section-header-wrap">
+  <div class="section-eyebrow">🏛️ Institution &amp; Traditions</div>
+  <h2 class="section-main-title">Kunsi Cricket Association (KCA) &amp; Festivals</h2>
+  <p class="section-desc">
+    United under one banner for cricket and community welfare, hosting two grand annual tournaments every year.
+  </p>
+</div>
+
+<!-- KCA & Trust Announcement Banner -->
+<div class="glass-card" style="margin-bottom: 2rem; border-color: rgba(16, 185, 129, 0.35); background: linear-gradient(135deg, rgba(12,18,34,0.9), rgba(15,23,42,0.8));">
+  <div style="display:flex; gap:1.25rem; align-items:center; flex-wrap:wrap;">
+    <div style="font-size:3rem; line-height:1;">🤝</div>
+    <div style="flex:1; min-width:260px;">
+      <h3 style="font-size:1.35rem; font-weight:900; color:#34d399; margin-bottom:0.4rem;">
+        Kunsi Cricket Association (KCA) &amp; Upcoming Trust
+      </h3>
+      <p style="color:#cbd5e1; font-size:0.9rem; line-height:1.6; margin-bottom:0.75rem;">
+        Today, all Kunsi cricket players are proudly organized under the <strong>Kunsi Cricket Association</strong> committee. Beyond conducting tournaments, KCA actively leads village social welfare activities. Moving forward, KCA is taking the noble step of registering an official <strong>Charitable Trust</strong> to expand youth sports training, support local education, and serve village community development.
+      </p>
+      <div style="display:inline-flex; align-items:center; gap:0.45rem; background:rgba(16,185,129,0.15); color:#34d399; border:1px solid rgba(16,185,129,0.4); padding:0.35rem 0.85rem; border-radius:9999px; font-weight:800; font-size:0.8rem;">
+        🌱 Cricket with Social Responsibility
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Two Annual Festival Tournaments -->
+<div class="traditions-grid">
+
+  <!-- Dussehra Circle Tournament -->
+  <div class="tradition-card tradition-card-dussehra">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+      <span style="font-size:1.85rem;">🏹</span>
+      <span style="font-size:0.75rem; font-weight:800; color:#fbbf24; background:rgba(245,158,11,0.15); border:1px solid rgba(245,158,11,0.4); padding:0.25rem 0.65rem; border-radius:9999px; text-transform:uppercase;">
+        Every Dussehra
+      </span>
+    </div>
+    <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:0.5rem;">
+      Dussehra Circle Tournament
+    </h3>
+    <p style="color:#94a3b8; font-size:0.88rem; line-height:1.6;">
+      An electrifying annual tradition! Held every year during the auspicious Dussehra festival, this fast-paced circle cricket tournament brings together village talent in an explosive celebration of sport, unity, and festive joy.
+    </p>
+  </div>
+
+  <!-- Sankranti Grand Open Tournament -->
+  <div class="tradition-card tradition-card-sankranti">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.85rem;">
+      <span style="font-size:1.85rem;">🌾</span>
+      <span style="font-size:0.75rem; font-weight:800; color:#34d399; background:rgba(16,185,129,0.15); border:1px solid rgba(16,185,129,0.4); padding:0.25rem 0.65rem; border-radius:9999px; text-transform:uppercase;">
+        Every Sankranti
+      </span>
+    </div>
+    <h3 style="font-size:1.25rem; font-weight:800; color:#fff; margin-bottom:0.5rem;">
+      Sankranti Grand Open Tournament
+    </h3>
+    <p style="color:#94a3b8; font-size:0.88rem; line-height:1.6;">
+      A grand championship welcoming top teams from across the region! True to our village culture of <em>Atithi Devo Bhava</em>, Kunsi provides complete hospitality, including complimentary, nutritious hot meals and full facilities for every visiting player and team.
+    </p>
+  </div>
+
+</div>
+
+<!-- ── 9. Honorable Sponsors & Village Patrons ────────────── -->
+<div class="sponsors-card">
+  <div style="font-size:2.5rem; margin-bottom:0.5rem;">🙏</div>
+  <h3 style="font-size:1.4rem; font-weight:900; color:#fbbf24; margin-bottom:0.5rem;">
+    Our Honorable Sponsors &amp; Village Patrons
+  </h3>
+  <p style="color:#cbd5e1; font-size:0.92rem; max-width:640px; margin:0 auto 1.25rem; line-height:1.65;">
+    Cricket in Kunsi thrives because of the unconditional love, moral blessings, and financial support of our village elders and esteemed patrons. Whenever an open tournament is held, our honorable sponsors step forward with open hearts to make it a grand success.
+  </p>
+  <div style="display:inline-flex; align-items:center; gap:0.5rem; background:rgba(255,255,255,0.06); border:1px dashed rgba(245,158,11,0.4); padding:0.5rem 1.25rem; border-radius:12px; color:#fbbf24; font-size:0.82rem; font-weight:700;">
+    ⭐ Dedicated Sponsor Directory &amp; Photo Gallery Updating Soon ⭐
+  </div>
+</div>
+
+<!-- ── 10. Compact Tournament Portals ───────────────────── -->
+<div class="section-header-wrap" style="margin-top:1.5rem;">
+  <div class="section-eyebrow">🚀 Tournament Portals</div>
+  <h2 class="section-main-title">Kunsi Premier League Hub</h2>
+  <p class="section-desc">Quick access to official league management and live auction stream.</p>
+</div>
+
+<div class="portals-mini-grid">
+  <!-- Live Stream -->
+  <div class="portal-mini-card" style="border-color: rgba(239, 68, 68, 0.35);">
+    <div>
+      <div style="font-size:1.75rem; margin-bottom:0.35rem;">🔴</div>
+      <h3 style="font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">Live Auction Stream</h3>
+      <p style="color:#94a3b8; font-size:0.82rem; line-height:1.5;">Watch real-time bidding, player cards, and franchise purse meters from your phone or TV.</p>
+    </div>
+    <a href="/view" class="btn btn-danger" style="font-size:0.88rem; padding:0.6rem; text-align:center; font-weight:800;">
+      👁️ Watch Live &rarr;
+    </a>
+  </div>
+
+  <!-- Player Directory -->
+  <div class="portal-mini-card" style="border-color: rgba(56, 189, 248, 0.35);">
+    <div>
+      <div style="font-size:1.75rem; margin-bottom:0.35rem;">📝</div>
+      <h3 style="font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">Player Registration</h3>
+      <p style="color:#94a3b8; font-size:0.82rem; line-height:1.5;">View the complete roster of approved cricketers with roles and registered details.</p>
+    </div>
+    <a href="/register" class="btn btn-primary" style="font-size:0.88rem; padding:0.6rem; text-align:center; font-weight:800;">
+      View Players &rarr;
+    </a>
+  </div>
+
+  <!-- Owner Portal -->
+  <div class="portal-mini-card" style="border-color: rgba(16, 185, 129, 0.35);">
+    <div>
+      <div style="font-size:1.75rem; margin-bottom:0.35rem;">👑</div>
+      <h3 style="font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">Team Owner Portal</h3>
+      <p style="color:#94a3b8; font-size:0.82rem; line-height:1.5;">Franchise owner bidding console with real-time budget tracking and squad management.</p>
+    </div>
+    <a href="/owner" class="btn btn-success" style="font-size:0.88rem; padding:0.6rem; text-align:center; font-weight:800;">
+      Owner Bidding &rarr;
+    </a>
+  </div>
+
+  <!-- Organizer Admin -->
+  <div class="portal-mini-card" style="border-color: rgba(245, 158, 11, 0.35);">
+    <div>
+      <div style="font-size:1.75rem; margin-bottom:0.35rem;">⚙️</div>
+      <h3 style="font-size:1.1rem; font-weight:800; color:#fff; margin-bottom:0.25rem;">Organizer Admin</h3>
+      <p style="color:#94a3b8; font-size:0.82rem; line-height:1.5;">PIN-protected organizer control panel for auction hosting, teams, and tournament rules.</p>
+    </div>
+    <a href="/admin" class="btn" style="background:#f59e0b; color:#000; font-size:0.88rem; padding:0.6rem; text-align:center; font-weight:800;">
+      Admin Console &rarr;
+    </a>
+  </div>
+</div>
+
+<!-- ── 11. Climax Philosophical Quote ───────────────────── -->
+<div class="climax-quote-section">
+  <div class="climax-quote-icon">🏏</div>
+
+  <div class="climax-quote-en">
+    &ldquo;For the outside world, Cricket may be just an eleven-player game.<br>
+    In Kunsi, Cricket is our school, our brotherhood, our culture, and our LIFE.&rdquo;
+  </div>
+
+  <div class="climax-quote-te">
+    &ldquo;క్రికెట్ మాకు కేవలం ఒక ఆట కాదు... అది మా ఊపిరి, మా స్నేహం, మా సంస్కృతి, మా జీవితం!&rdquo;
+  </div>
+
+  <div class="climax-quote-author">
+    — Kunsi Cricket Association (KCA) &amp; Kunsi Premier League
+  </div>
+</div>
+
+{% endblock %}

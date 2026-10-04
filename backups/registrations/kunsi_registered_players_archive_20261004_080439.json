@@ -14,8 +14,7 @@
         "transaction_id": "UTR900000000001",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Sunil Anna": {
         "id": "SPL002",
@@ -32,8 +31,7 @@
         "transaction_id": "UTR900000000002",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "M. Gani": {
         "id": "SPL003",
@@ -50,8 +48,7 @@
         "transaction_id": "UTR900000000003",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "B. Vannu": {
         "id": "SPL004",
@@ -68,8 +65,7 @@
         "transaction_id": "UTR900000000004",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "E. Prabhu": {
         "id": "SPL005",
@@ -86,8 +82,7 @@
         "transaction_id": "UTR900000000005",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Raghu (Putta)": {
         "id": "SPL006",
@@ -104,8 +99,7 @@
         "transaction_id": "UTR900000000006",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "S. Ravi": {
         "id": "SPL007",
@@ -122,8 +116,7 @@
         "transaction_id": "UTR900000000007",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "P. Sai": {
         "id": "SPL008",
@@ -140,8 +133,7 @@
         "transaction_id": "UTR900000000008",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "M. Srinu": {
         "id": "SPL009",
@@ -158,8 +150,7 @@
         "transaction_id": "UTR900000000009",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "B. Nani": {
         "id": "SPL010",
@@ -176,8 +167,7 @@
         "transaction_id": "UTR900000000010",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Kishore": {
         "id": "SPL011",
@@ -194,8 +184,7 @@
         "transaction_id": "UTR900000000011",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "T. Mahesh": {
         "id": "SPL012",
@@ -212,8 +201,7 @@
         "transaction_id": "UTR900000000012",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "G. Vamsi": {
         "id": "SPL013",
@@ -230,8 +218,7 @@
         "transaction_id": "UTR900000000013",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Ch. Vasu": {
         "id": "SPL014",
@@ -248,8 +235,7 @@
         "transaction_id": "UTR900000000014",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "A. Krishna": {
         "id": "SPL015",
@@ -266,8 +252,7 @@
         "transaction_id": "UTR900000000015",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "L. Suresh": {
         "id": "SPL016",
@@ -284,8 +269,7 @@
         "transaction_id": "UTR900000000016",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Prasad": {
         "id": "SPL017",
@@ -302,8 +286,7 @@
         "transaction_id": "UTR900000000017",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "P. Kumar": {
         "id": "SPL018",
@@ -320,8 +303,7 @@
         "transaction_id": "UTR900000000018",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Virat Sharma": {
         "id": "SPL019",
@@ -338,8 +320,187 @@
         "transaction_id": "T260929112233",
         "payment_screenshot": "",
         "created_at": "2026-09-29T03:14:32.679256Z",
+        "approved": true
+    },
+    "Ravindra Jadeja": {
+        "name": "Ravindra Jadeja",
+        "phone": "9876500007",
+        "village": "Kunsi",
+        "role": "Batsman",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL007",
+        "payment_status": "Verified",
         "approved": true,
-        "village": "Kunsi"
+        "serial_no": 7,
+        "id": "KPL007",
+        "photo_url": "/static/images/avatar_batsman.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Sanju Samson": {
+        "name": "Sanju Samson",
+        "phone": "9876500017",
+        "village": "Kunsi",
+        "role": "Batsman",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL017",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 17,
+        "id": "KPL017",
+        "photo_url": "/static/images/avatar_batsman.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Prasidh Krishna": {
+        "name": "Prasidh Krishna",
+        "phone": "9876500027",
+        "village": "Kunsi",
+        "role": "Bowler",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL027",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 27,
+        "id": "KPL027",
+        "photo_url": "/static/images/avatar_bowler.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Rahul Tripathi": {
+        "name": "Rahul Tripathi",
+        "phone": "9876500037",
+        "village": "Kunsi",
+        "role": "Batsman",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL037",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 37,
+        "id": "KPL037",
+        "photo_url": "/static/images/avatar_batsman.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Chetan Sakariya": {
+        "name": "Chetan Sakariya",
+        "phone": "9876500047",
+        "village": "Kunsi",
+        "role": "Bowler",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL047",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 47,
+        "id": "KPL047",
+        "photo_url": "/static/images/avatar_bowler.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Mayank Agarwal": {
+        "name": "Mayank Agarwal",
+        "phone": "9876500057",
+        "village": "Kunsi",
+        "role": "Batsman",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL057",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 57,
+        "id": "KPL057",
+        "photo_url": "/static/images/avatar_batsman.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Shashank Singh": {
+        "name": "Shashank Singh",
+        "phone": "9876500067",
+        "village": "Kunsi",
+        "role": "Batsman",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL067",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 67,
+        "id": "KPL067",
+        "photo_url": "/static/images/avatar_batsman.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Anukul Roy": {
+        "name": "Anukul Roy",
+        "phone": "9876500077",
+        "village": "Kunsi",
+        "role": "All-Rounder",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL077",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 77,
+        "id": "KPL077",
+        "photo_url": "/static/images/avatar_allrounder.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Vipraj Nigam": {
+        "name": "Vipraj Nigam",
+        "phone": "9876500087",
+        "village": "Kunsi",
+        "role": "Bowler",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL087",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 87,
+        "id": "KPL087",
+        "photo_url": "/static/images/avatar_bowler.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
+    },
+    "Manav Suthar": {
+        "name": "Manav Suthar",
+        "phone": "9876500097",
+        "village": "Kunsi",
+        "role": "All-Rounder",
+        "batting_style": "Right Hand Bat",
+        "bowling_style": "Right Arm Off Break",
+        "base_price": 100,
+        "reg_amount": 200,
+        "utr_number": "UTR2026KPL097",
+        "payment_status": "Verified",
+        "approved": true,
+        "serial_no": 97,
+        "id": "KPL097",
+        "photo_url": "/static/images/avatar_allrounder.svg",
+        "payment_screenshot": "/static/uploads/payments/payment_sample.png",
+        "registered_at": "2026-10-02 10:00:00"
     },
     "Raju Mekala": {
         "id": "KPL104",

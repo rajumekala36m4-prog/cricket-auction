@@ -13,7 +13,7 @@
     "timer_enabled": true,
     "timer_duration": 120,
     "timer_reset_on_bid": true,
-    "upi_enabled": true,
+    "upi_enabled": false,
     "total_purse": 15000,
     "registration_open": true,
     "pin": "2026",

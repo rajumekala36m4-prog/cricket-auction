@@ -14,8 +14,7 @@
         "transaction_id": "UTR900000000001",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Sunil Anna": {
         "id": "SPL002",
@@ -32,8 +31,7 @@
         "transaction_id": "UTR900000000002",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "M. Gani": {
         "id": "SPL003",
@@ -50,8 +48,7 @@
         "transaction_id": "UTR900000000003",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "B. Vannu": {
         "id": "SPL004",
@@ -68,8 +65,7 @@
         "transaction_id": "UTR900000000004",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "E. Prabhu": {
         "id": "SPL005",
@@ -86,8 +82,7 @@
         "transaction_id": "UTR900000000005",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Raghu (Putta)": {
         "id": "SPL006",
@@ -104,8 +99,7 @@
         "transaction_id": "UTR900000000006",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "S. Ravi": {
         "id": "SPL007",
@@ -122,8 +116,7 @@
         "transaction_id": "UTR900000000007",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "P. Sai": {
         "id": "SPL008",
@@ -140,8 +133,7 @@
         "transaction_id": "UTR900000000008",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "M. Srinu": {
         "id": "SPL009",
@@ -158,8 +150,7 @@
         "transaction_id": "UTR900000000009",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "B. Nani": {
         "id": "SPL010",
@@ -176,8 +167,7 @@
         "transaction_id": "UTR900000000010",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Kishore": {
         "id": "SPL011",
@@ -194,8 +184,7 @@
         "transaction_id": "UTR900000000011",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "T. Mahesh": {
         "id": "SPL012",
@@ -212,8 +201,7 @@
         "transaction_id": "UTR900000000012",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "G. Vamsi": {
         "id": "SPL013",
@@ -230,8 +218,7 @@
         "transaction_id": "UTR900000000013",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Ch. Vasu": {
         "id": "SPL014",
@@ -248,8 +235,7 @@
         "transaction_id": "UTR900000000014",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "A. Krishna": {
         "id": "SPL015",
@@ -266,8 +252,7 @@
         "transaction_id": "UTR900000000015",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "L. Suresh": {
         "id": "SPL016",
@@ -284,8 +269,7 @@
         "transaction_id": "UTR900000000016",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "K. Prasad": {
         "id": "SPL017",
@@ -302,8 +286,7 @@
         "transaction_id": "UTR900000000017",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "P. Kumar": {
         "id": "SPL018",
@@ -320,8 +303,7 @@
         "transaction_id": "UTR900000000018",
         "payment_screenshot": "",
         "created_at": "2026-09-29T08:00:00Z",
-        "approved": true,
-        "village": "Kunsi"
+        "approved": true
     },
     "Virat Sharma": {
         "id": "SPL019",
@@ -338,25 +320,6 @@
         "transaction_id": "T260929112233",
         "payment_screenshot": "",
         "created_at": "2026-09-29T03:14:32.679256Z",
-        "approved": true,
-        "village": "Kunsi"
-    },
-    "Raju Mekala": {
-        "id": "KPL104",
-        "serial_no": 104,
-        "name": "Raju Mekala",
-        "village": "Kunsi",
-        "phone": "9550887806",
-        "role": "All-Rounder",
-        "batting_style": "Right Hand Bat",
-        "bowling_style": "Right Arm Medium Fast",
-        "photo_url": "",
-        "reg_amount": 0,
-        "payment_status": "Free Registration / Verified",
-        "payment_method": "Free Registration (No Fee)",
-        "transaction_id": "Free Registration (UPI Disabled)",
-        "payment_screenshot": "",
-        "created_at": "2026-10-04T02:14:53.427942Z",
         "approved": true
     }
 }

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div style="max-width: 550px; margin: 1.5rem auto; text-align: center;">
+  <div style="width: 70px; height: 70px; background: rgba(16, 185, 129, 0.2); border: 2px solid var(--pitch-green); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2.25rem; margin: 0 auto 1.25rem;">
+    ✓
+  </div>
+  
+  <h1 style="font-size: 2rem; font-weight: 900; margin-bottom: 0.5rem; color: #fff;">Registration Received!</h1>
+  <p style="color: var(--text-muted); margin-bottom: 2rem;">
+    Your registration details and payment reference have been recorded. Here is your official tournament player card.
+  </p>
+
+  <!-- Player Digital Pass Card -->
+  <div class="glass-card" style="border: 2px solid var(--primary-gold); box-shadow: 0 0 35px var(--gold-glow); position: relative; overflow: hidden; padding: 2.5rem 1.5rem;">
+    <div style="position: absolute; top: 12px; right: 15px; font-size: 0.8rem; font-weight: 800; color: var(--primary-gold); background: rgba(245, 158, 11, 0.15); padding: 0.2rem 0.6rem; border-radius: var(--radius-sm); border: 1px solid rgba(245, 158, 11, 0.3);">
+      {{ player.id }}
+    </div>
+
+    <!-- Photo -->
+    <div style="width: 140px; height: 140px; border-radius: 50%; border: 4px solid var(--primary-gold); margin: 0 auto 1.25rem; overflow: hidden; box-shadow: 0 0 20px var(--gold-glow); background: #1e293b;">
+      <img src="{{ player.photo_url or '/static/images/avatar_allrounder.svg' }}" alt="{{ player.name }}" style="width: 100%; height: 100%; object-fit: cover;">
+    </div>
+
+    <div style="font-size: 1.75rem; font-weight: 900; color: #fff; margin-bottom: 0.35rem;">
+      {{ player.name }}
+    </div>
+
+    <div style="margin-bottom: 1.25rem;">
+      <span class="badge {% if 'Bat' in player.role and 'Keep' not in player.role %}badge-batsman{% elif 'Bowl' in player.role %}badge-bowler{% elif 'Keep' in player.role %}badge-keeper{% else %}badge-allrounder{% endif %}" style="font-size: 0.95rem; padding: 0.4rem 1rem;">
+        {{ player.role }}
+      </span>
+    </div>
+
+    <div style="background: rgba(0,0,0,0.4); border-radius: var(--radius-md); padding: 1rem; border: 1px solid var(--border-glass); display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; text-align: left; font-size: 0.9rem; margin-bottom: 1.5rem;">
+      <div>
+        <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Mobile</span>
+        <strong style="color: #fff;">{{ player.phone }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Fee Paid</span>
+        <strong style="color: var(--pitch-green);">
+          {% if player.reg_amount and player.reg_amount|int > 0 %}₹{{ player.reg_amount }}{% else %}No Fee (Free Entry){% endif %}
+        </strong>
+      </div>
+      <div>
+        <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Batting</span>
+        <strong style="color: #fff;">{{ player.batting_style }}</strong>
+      </div>
+      <div>
+        <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Bowling</span>
+        <strong style="color: #fff;">{{ player.bowling_style }}</strong>
+      </div>
+      <div style="grid-column: span 2;">
+        <span style="color: var(--text-dim); display: block; font-size: 0.8rem;">Payment Reference (UTR)</span>
+        <strong style="color: var(--primary-gold); word-break: break-all;">
+          {% if player.transaction_id and player.transaction_id not in ['FREE_REG', 'FREE', 'N/A', 'NONE', 'None', ''] %}
+            {{ player.transaction_id }} ({{ player.payment_method or 'UPI' }})
+          {% else %}
+            Free Entry / No Payment Required
+          {% endif %}
+        </strong>
+      </div>
+    </div>
+
+    <div style="font-size: 0.85rem; color: var(--pitch-green); font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+      <span>✓ Status:</span> Verified for Live Auction Pool
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 1rem; justify-content: center; margin-top: 1.75rem;">
+    <button onclick="window.print()" class="btn btn-secondary">🖨️ Print / Save Slip</button>
+    <a href="/register" class="btn btn-primary">Register Another Player</a>
+    <a href="/auction" class="btn btn-success">Go to Live Auction</a>
+  </div>
+</div>
+{% endblock %}
