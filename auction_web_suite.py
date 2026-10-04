@@ -32,6 +32,7 @@ from werkzeug.utils import secure_filename
 from flask import send_from_directory
 import shutil
 import pandas as pd
+import zipfile
 
 # Directory setup
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -152,7 +153,46 @@ def save_config(cfg):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=4)
 
-# ----------------- REGISTRATIONS HELPERS -----------------
+# ----------------- REGISTRATIONS & BACKUP VAULT HELPERS -----------------
+BACKUPS_DIR = os.path.join(BASE_DIR, 'backups', 'registrations')
+BACKUPS_PHOTOS_DIR = os.path.join(BASE_DIR, 'backups', 'photos')
+BACKUPS_PAYMENTS_DIR = os.path.join(BASE_DIR, 'backups', 'payments')
+os.makedirs(BACKUPS_DIR, exist_ok=True)
+os.makedirs(BACKUPS_PHOTOS_DIR, exist_ok=True)
+os.makedirs(BACKUPS_PAYMENTS_DIR, exist_ok=True)
+MASTER_VAULT_FILE = os.path.join(BASE_DIR, 'backups', 'registrations_master_vault.json')
+_last_backup_time = 0
+
+def sync_backup_photos():
+    """Bidirectional backup & self-healing of player photos and payment proofs."""
+    try:
+        # 1. Mirror static/uploads/photos -> backups/photos
+        if os.path.exists(PHOTOS_DIR):
+            for f in os.listdir(PHOTOS_DIR):
+                src = os.path.join(PHOTOS_DIR, f)
+                dst = os.path.join(BACKUPS_PHOTOS_DIR, f)
+                if os.path.isfile(src) and not os.path.exists(dst):
+                    shutil.copy2(src, dst)
+        # 2. Self-heal backups/photos -> static/uploads/photos
+        if os.path.exists(BACKUPS_PHOTOS_DIR):
+            for f in os.listdir(BACKUPS_PHOTOS_DIR):
+                src = os.path.join(BACKUPS_PHOTOS_DIR, f)
+                dst = os.path.join(PHOTOS_DIR, f)
+                if os.path.isfile(src) and not os.path.exists(dst):
+                    shutil.copy2(src, dst)
+        # 3. Mirror payments
+        if os.path.exists(PAYMENTS_DIR):
+            for f in os.listdir(PAYMENTS_DIR):
+                src = os.path.join(PAYMENTS_DIR, f)
+                dst = os.path.join(BACKUPS_PAYMENTS_DIR, f)
+                if os.path.isfile(src) and not os.path.exists(dst):
+                    shutil.copy2(src, dst)
+    except Exception as e:
+        print("Photo sync note:", e)
+
+# Initial sync
+sync_backup_photos()
+
 def load_registrations():
     if os.path.exists(REGISTRATIONS_FILE):
         try:
@@ -163,8 +203,40 @@ def load_registrations():
     return {}
 
 def save_registrations(regs):
+    global _last_backup_time
     with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as f:
         json.dump(regs, f, indent=4)
+
+    # Sync and mirror photos to permanent backup
+    sync_backup_photos()
+
+    # 1. Cumulative Master Vault - Never deletes registered players
+    try:
+        if isinstance(regs, dict) and len(regs) > 0:
+            vault = {}
+            if os.path.exists(MASTER_VAULT_FILE):
+                try:
+                    with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
+                        vault = json.load(vf)
+                except Exception:
+                    vault = {}
+            vault.update(regs)
+            with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
+                json.dump(vault, vf, indent=4)
+    except Exception as e:
+        print("Vault backup notice:", e)
+
+    # 2. Automated timestamped snapshot
+    now = datetime.now().timestamp()
+    if now - _last_backup_time > 30 and isinstance(regs, dict) and len(regs) > 0:
+        _last_backup_time = now
+        try:
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+            snap_path = os.path.join(BACKUPS_DIR, f"registrations_{ts}.json")
+            with open(snap_path, 'w', encoding='utf-8') as sf:
+                json.dump(regs, sf, indent=4)
+        except Exception as e:
+            print("Snapshot backup notice:", e)
 
 # ----------------- AUCTION STATE HELPERS -----------------
 def get_retained_player_names(state):
@@ -314,14 +386,17 @@ def register():
     regs = load_registrations()
     players_list = list(regs.values())
     players_list.sort(key=lambda p: p.get('serial_no', 999))
+    upi_en = bool(cfg.get("upi_enabled", True))
+    reg_fee = int(cfg.get("registration_fee", 200)) if upi_en else 0
     return render_template(
         'register.html',
         active_page='register',
         tournament_name=cfg["tournament_name"],
         upi_id=cfg["upi_id"],
         payee_name=cfg["payee_name"],
-        reg_fee=cfg["registration_fee"],
-        upi_enabled=cfg.get("upi_enabled", True),
+        reg_fee=reg_fee,
+        raw_reg_fee=int(cfg.get("registration_fee", 200)),
+        upi_enabled=upi_en,
         players=players_list
     )
 
@@ -551,8 +626,10 @@ def api_owner_bid():
         with AUCTION_STATE_LOCK:
             state = load_auction_state()
             cfg = load_config()
-            cur_player = state.get("current_player")
+            if not state.get('auction_started', False):
+                return jsonify({'success': False, 'message': 'The live auction is currently paused by the host. Bidding is temporarily on standby.'}), 400
 
+            cur_player = state.get("current_player")
             if not cur_player:
                 return jsonify({'success': False, 'message': 'No player is currently active on the auction block. Wait for host to draw.'}), 400
 
@@ -1094,6 +1171,10 @@ def api_register():
                 filename = f"player_{uuid.uuid4().hex[:8]}{ext}"
                 save_path = os.path.join(PHOTOS_DIR, filename)
                 photo_file.save(save_path)
+                try:
+                    shutil.copy2(save_path, os.path.join(BACKUPS_PHOTOS_DIR, filename))
+                except Exception as _pe:
+                    print("Photo backup note:", _pe)
                 photo_url = f"/static/uploads/photos/{filename}"
 
         # Handle Payment Screenshot
@@ -1105,6 +1186,10 @@ def api_register():
                 filename = f"pay_{uuid.uuid4().hex[:8]}{ext}"
                 save_path = os.path.join(PAYMENTS_DIR, filename)
                 screen_file.save(save_path)
+                try:
+                    shutil.copy2(save_path, os.path.join(BACKUPS_PAYMENTS_DIR, filename))
+                except Exception as _pse:
+                    print("Payment backup note:", _pse)
                 screenshot_url = f"/static/uploads/payments/{filename}"
 
         # Check duplicate phone verification
@@ -1595,24 +1680,45 @@ def api_auction_start():
         state = load_auction_state()
         push_history(state)
         state['auction_started'] = True
+        state['auction_status'] = 'active'
+        data = request.json or {}
 
-        # Initialize auction queue: exclude all retained players and sold players
-        retained = get_retained_player_names(state)
-        sold = get_sold_player_names(state)
-        excluded = retained | sold
-        pool = [p for p in state.get('players', []) if str(p).strip().lower() not in excluded]
-        random.shuffle(pool)
-        state['auction_players'] = pool
-        state['unsold_players'] = [p for p in state.get('unsold_players', []) if str(p).strip().lower() not in excluded]
-        state['current_round'] = 1
-        # Keep current_player as None until auctioneer clicks Next Draw
-        state['current_player'] = None
-        state['current_bid'] = 0
-        state['bidding_team'] = None
-        state['current_bid_team'] = None
+        # Only initialize/re-shuffle queue if explicitly requested OR pool is completely empty and no player on block
+        need_pool_init = data.get('initialize_pool', False) or (
+            ('auction_players' not in state or not state['auction_players'])
+            and not state.get('current_player')
+            and not get_sold_player_names(state)
+        )
+        if need_pool_init:
+            retained = get_retained_player_names(state)
+            sold = get_sold_player_names(state)
+            excluded = retained | sold
+            pool = [p for p in state.get('players', []) if str(p).strip().lower() not in excluded]
+            random.shuffle(pool)
+            state['auction_players'] = pool
+            state['unsold_players'] = [p for p in state.get('unsold_players', []) if str(p).strip().lower() not in excluded]
+            state['current_round'] = 1
+            state['current_player'] = None
+            state['current_bid'] = 0
+            state['bidding_team'] = None
+            state['current_bid_team'] = None
 
+        now_ms = int(datetime.now().timestamp() * 1000)
+        if state.get('timer_remaining_sec'):
+            state['timer_end'] = now_ms + (int(state['timer_remaining_sec']) * 1000)
+            state['timer_remaining_sec'] = None
+        elif state.get('timer_enabled') and state.get('current_player') and not state.get('timer_end'):
+            dur = int(state.get('timer_duration', 120))
+            state['timer_end'] = now_ms + (dur * 1000)
+        state['auction_started'] = True
+        state['auction_status'] = 'active'
         save_auction_state(state)
-        return jsonify({'success': True, 'message': 'Live Auction started! Spectators can now see live bidding.'})
+        return jsonify({
+            'success': True,
+            'message': 'Live Auction is now ACTIVE! Spectators & owners can see live bidding.',
+            'auction_started': True,
+            'auction_status': 'active'
+        })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 
@@ -1624,9 +1730,45 @@ def api_auction_pause():
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
         state = load_auction_state()
         push_history(state)
+        now_ms = int(datetime.now().timestamp() * 1000)
+        if state.get('timer_end') and state['timer_end'] > now_ms:
+            state['timer_remaining_sec'] = max(1, round((state['timer_end'] - now_ms) / 1000))
+        state['timer_end'] = None
         state['auction_started'] = False
+        state['auction_status'] = 'paused'
         save_auction_state(state)
-        return jsonify({'success': True, 'message': 'Live Auction paused. Viewers are now in waiting mode.'})
+        return jsonify({
+            'success': True,
+            'message': 'Live Auction paused. Viewers and franchise owners are now on standby.',
+            'auction_started': False,
+            'auction_status': 'paused'
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/auction/stop', methods=['POST'])
+def api_auction_stop():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
+        state = load_auction_state()
+        push_history(state)
+        state['timer_end'] = None
+        state['timer_remaining_sec'] = None
+        state['current_player'] = None
+        state['current_bid'] = 0
+        state['bidding_team'] = None
+        state['current_bid_team'] = None
+        state['auction_started'] = False
+        state['auction_status'] = 'stopped'
+        save_auction_state(state)
+        return jsonify({
+            'success': True,
+            'message': 'Live Auction stopped & concluded. Auction block cleared.',
+            'auction_started': False,
+            'auction_status': 'stopped'
+        })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
 # ==================================================================================
@@ -2234,15 +2376,27 @@ def api_admin_fresh_tournament_reset():
         if not check_auctioneer_pin(request):
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
 
-        # 1. Clear registrations.json completely (wipe all registered players)
-        save_registrations({})
+        # 1. ALWAYS snapshot current registrations to backups before fresh reset
+        try:
+            current_regs = load_registrations()
+            if current_regs and len(current_regs) > 0:
+                ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+                pre_reset_snap = os.path.join(BACKUPS_DIR, f"pre_fresh_reset_backup_{ts}.json")
+                with open(pre_reset_snap, 'w', encoding='utf-8') as sf:
+                    json.dump(current_regs, sf, indent=4)
+        except Exception as e:
+            print("Pre-reset snapshot notice:", e)
 
-        # 2. Reset tournament_config.json team passcodes
+        # 2. Clear registrations.json completely (wipe all registered players)
+        with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as f:
+            json.dump({}, f, indent=4)
+
+        # 3. Reset tournament_config.json team passcodes
         cfg = load_config()
         cfg['team_passcodes'] = {}
         save_config(cfg)
 
-        # 3. Reset auction_state.json completely (wipe teams, empty players, stop live auction)
+        # 4. Reset auction_state.json completely (wipe teams, empty players, stop live auction)
         total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
         cur_state = load_auction_state()
         fresh_state = {
@@ -2281,10 +2435,172 @@ def api_admin_fresh_tournament_reset():
 
         return jsonify({
             'success': True,
-            'message': 'Fresh Tournament Initialized! All registered players deleted, teams cleared, and live auction stopped.'
+            'message': 'Fresh Tournament Initialized! A safety backup was saved in backups/registrations/. Active players and teams cleared.'
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
+
+
+# ==================== DATA PROTECTION & BACKUP APIS ====================
+@app.route('/api/admin/backups/list')
+def api_admin_list_backups():
+    try:
+        backups = []
+        if os.path.exists(BACKUPS_DIR):
+            for f in sorted(os.listdir(BACKUPS_DIR), reverse=True):
+                if f.endswith('.json'):
+                    fp = os.path.join(BACKUPS_DIR, f)
+                    try:
+                        with open(fp, 'r', encoding='utf-8') as bfile:
+                            data = json.load(bfile)
+                            p_count = len(data) if isinstance(data, dict) else len(data)
+                    except Exception:
+                        p_count = 0
+                    mtime = os.path.getmtime(fp)
+                    backups.append({
+                        'filename': f,
+                        'player_count': p_count,
+                        'size_kb': round(os.path.getsize(fp) / 1024, 1),
+                        'timestamp': datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M:%S')
+                    })
+        vault_count = 0
+        if os.path.exists(MASTER_VAULT_FILE):
+            try:
+                with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
+                    vault_count = len(json.load(vf))
+            except Exception:
+                pass
+
+        photo_count = len([f for f in os.listdir(BACKUPS_PHOTOS_DIR) if os.path.isfile(os.path.join(BACKUPS_PHOTOS_DIR, f))]) if os.path.exists(BACKUPS_PHOTOS_DIR) else 0
+
+        return jsonify({
+            'success': True,
+            'backups': backups,
+            'vault_player_count': vault_count,
+            'vault_photo_count': photo_count,
+            'active_player_count': len(load_registrations())
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/backups/create', methods=['POST'])
+def api_admin_create_backup():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: PIN required'}), 403
+        regs = load_registrations()
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        snap_path = os.path.join(BACKUPS_DIR, f"manual_backup_{ts}.json")
+        with open(snap_path, 'w', encoding='utf-8') as sf:
+            json.dump(regs, sf, indent=4)
+        return jsonify({
+            'success': True,
+            'message': f'Backup created successfully ({len(regs)} registered players secured)!',
+            'filename': f"manual_backup_{ts}.json"
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/backups/restore', methods=['POST'])
+def api_admin_restore_backup():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: PIN required'}), 403
+        data = request.json or {}
+        filename = data.get('filename')
+        use_vault = data.get('use_vault', False)
+
+        restored_data = {}
+        if use_vault:
+            if not os.path.exists(MASTER_VAULT_FILE):
+                return jsonify({'success': False, 'message': 'Master vault archive not found'}), 404
+            with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
+                restored_data = json.load(vf)
+        elif filename:
+            safe_name = os.path.basename(filename)
+            file_path = os.path.join(BACKUPS_DIR, safe_name)
+            if not os.path.exists(file_path):
+                return jsonify({'success': False, 'message': f'Backup file {safe_name} not found'}), 404
+            with open(file_path, 'r', encoding='utf-8') as sf:
+                restored_data = json.load(sf)
+        else:
+            return jsonify({'success': False, 'message': 'No backup file specified'}), 400
+
+        if not isinstance(restored_data, dict):
+            return jsonify({'success': False, 'message': 'Invalid backup file format'}), 400
+
+        # Save to registrations.json
+        save_registrations(restored_data)
+
+        # Also sync players into auction state pool
+        state = load_auction_state()
+        if 'players' not in state or not isinstance(state['players'], list):
+            state['players'] = []
+        if 'auction_players' not in state or not isinstance(state['auction_players'], list):
+            state['auction_players'] = []
+
+        for p_name in restored_data.keys():
+            if p_name not in state['players']:
+                state['players'].append(p_name)
+            if p_name not in state['auction_players']:
+                state['auction_players'].append(p_name)
+        save_auction_state(state)
+
+        return jsonify({
+            'success': True,
+            'message': f'Successfully restored {len(restored_data)} players into active roster & live auction pool!',
+            'player_count': len(restored_data)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': str(e)}), 500
+
+
+@app.route('/api/admin/backups/download/<filename>')
+def api_admin_download_backup(filename):
+    try:
+        safe_name = os.path.basename(filename)
+        file_path = os.path.join(BACKUPS_DIR, safe_name)
+        if os.path.exists(file_path):
+            return send_file(file_path, as_attachment=True, download_name=safe_name)
+        return jsonify({'error': 'File not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/backups/download-full-archive')
+def api_admin_download_full_archive():
+    try:
+        sync_backup_photos()
+        zip_buffer = BytesIO()
+        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zf:
+            if os.path.exists(REGISTRATIONS_FILE):
+                zf.write(REGISTRATIONS_FILE, arcname='registrations.json')
+            if os.path.exists(MASTER_VAULT_FILE):
+                zf.write(MASTER_VAULT_FILE, arcname='registrations_master_vault.json')
+            if os.path.exists(CONFIG_FILE):
+                zf.write(CONFIG_FILE, arcname='tournament_config.json')
+            if os.path.exists(BACKUPS_PHOTOS_DIR):
+                for pf in os.listdir(BACKUPS_PHOTOS_DIR):
+                    p_path = os.path.join(BACKUPS_PHOTOS_DIR, pf)
+                    if os.path.isfile(p_path):
+                        zf.write(p_path, arcname=f"photos/{pf}")
+            if os.path.exists(BACKUPS_PAYMENTS_DIR):
+                for pf in os.listdir(BACKUPS_PAYMENTS_DIR):
+                    p_path = os.path.join(BACKUPS_PAYMENTS_DIR, pf)
+                    if os.path.isfile(p_path):
+                        zf.write(p_path, arcname=f"payments/{pf}")
+        zip_buffer.seek(0)
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        return send_file(
+            zip_buffer,
+            mimetype='application/zip',
+            as_attachment=True,
+            download_name=f"kpl_full_tournament_and_photos_{ts}.zip"
+        )
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 @app.route('/api/admin/reset-auction', methods=['POST'])
 def api_admin_reset_auction():
