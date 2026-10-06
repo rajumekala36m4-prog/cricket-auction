@@ -157,6 +157,76 @@ def save_config(cfg):
     except Exception:
         pass
 
+# --- RENDER CLOUD POSTGRESQL PERSISTENCE (ZERO DATA LOSS ON SLEEP/WAKEUP) ---
+DATABASE_URL = os.environ.get('DATABASE_URL')
+
+def get_db_connection():
+    if not DATABASE_URL:
+        return None
+    try:
+        import psycopg2
+        url = DATABASE_URL
+        if url.startswith("postgres://"):
+            url = url.replace("postgres://", "postgresql://", 1)
+        return psycopg2.connect(url, sslmode='require')
+    except Exception as e:
+        print("[DATABASE] Connection notice:", e)
+        return None
+
+def init_db():
+    conn = get_db_connection()
+    if not conn:
+        return
+    try:
+        with conn.cursor() as cur:
+            cur.execute("""
+                CREATE TABLE IF NOT EXISTS kpl_cloud_store (
+                    key VARCHAR(64) PRIMARY KEY,
+                    data_json TEXT NOT NULL,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+                );
+            """)
+            conn.commit()
+        conn.close()
+        print("[DATABASE] PostgreSQL cloud store ready! Zero data loss active.")
+    except Exception as e:
+        print("[DATABASE] Init notice:", e)
+
+init_db()
+
+def db_get(key):
+    conn = get_db_connection()
+    if not conn:
+        return None
+    try:
+        with conn.cursor() as cur:
+            cur.execute("SELECT data_json FROM kpl_cloud_store WHERE key = %s;", (key,))
+            row = cur.fetchone()
+        conn.close()
+        if row and row[0]:
+            return json.loads(row[0])
+    except Exception as e:
+        print(f"[DATABASE] db_get({key}) notice:", e)
+    return None
+
+def db_set(key, val_obj):
+    conn = get_db_connection()
+    if not conn:
+        return
+    try:
+        val_str = json.dumps(val_obj, indent=4)
+        with conn.cursor() as cur:
+            cur.execute("""
+                INSERT INTO kpl_cloud_store (key, data_json, updated_at)
+                VALUES (%s, %s, CURRENT_TIMESTAMP)
+                ON CONFLICT (key) DO UPDATE
+                SET data_json = EXCLUDED.data_json, updated_at = CURRENT_TIMESTAMP;
+            """, (key, val_str))
+            conn.commit()
+        conn.close()
+    except Exception as e:
+        print(f"[DATABASE] db_set({key}) notice:", e)
+
 # ----------------- REGISTRATIONS & BACKUP VAULT HELPERS -----------------
 BACKUPS_DIR = os.path.join(BASE_DIR, 'backups', 'registrations')
 BACKUPS_PHOTOS_DIR = os.path.join(BASE_DIR, 'backups', 'photos')
@@ -371,6 +441,12 @@ def sync_backup_photos():
 sync_backup_photos()
 
 def load_registrations():
+    # 1. Check PostgreSQL cloud store first if DATABASE_URL is set
+    if DATABASE_URL:
+        db_regs = db_get('registrations')
+        if db_regs is not None:
+            return db_regs
+
     regs = {}
     if os.path.exists(REGISTRATIONS_FILE):
         try:
@@ -395,6 +471,10 @@ def load_registrations():
 
 def save_registrations(regs):
     global _last_backup_time
+    if DATABASE_URL:
+        db_set('registrations', regs)
+        db_set('master_vault', regs)
+
     with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as f:
         json.dump(regs, f, indent=4)
 
@@ -474,6 +554,13 @@ AUCTION_STATE_LOCK = threading.RLock()
 
 def load_auction_state():
     with AUCTION_STATE_LOCK:
+        # 1. Check PostgreSQL cloud store first if DATABASE_URL is set
+        if DATABASE_URL:
+            db_st = db_get('auction_state')
+            if isinstance(db_st, dict) and "teams" in db_st:
+                sanitize_auction_pool(db_st)
+                return db_st
+
         for file_candidate in [AUCTION_STATE_FILE, AUCTION_VAULT_FILE]:
             if os.path.exists(file_candidate):
                 for attempt in range(10):
@@ -521,6 +608,9 @@ def load_auction_state():
 
 def save_auction_state(state):
     global _last_auction_backup_time
+    if DATABASE_URL:
+        db_set('auction_state', state)
+
     with AUCTION_STATE_LOCK:
         tmp_file = AUCTION_STATE_FILE + ".tmp"
         try:
@@ -2646,6 +2736,9 @@ def api_admin_fresh_tournament_reset():
             json.dump({}, f, indent=4)
         with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
             json.dump({}, vf, indent=4)
+        if DATABASE_URL:
+            db_set('registrations', {})
+            db_set('master_vault', {})
 
         # 3. Clean active uploaded photos so new tournament starts completely clean
         try:
