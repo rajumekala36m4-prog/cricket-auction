@@ -152,16 +152,166 @@ def load_config():
 def save_config(cfg):
     with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
         json.dump(cfg, f, indent=4)
+    try:
+        push_to_github_async('tournament_config.json', json.dumps(cfg, indent=4), 'KPL Auto-Sync: Updated tournament configuration')
+    except Exception:
+        pass
 
 # ----------------- REGISTRATIONS & BACKUP VAULT HELPERS -----------------
 BACKUPS_DIR = os.path.join(BASE_DIR, 'backups', 'registrations')
 BACKUPS_PHOTOS_DIR = os.path.join(BASE_DIR, 'backups', 'photos')
 BACKUPS_PAYMENTS_DIR = os.path.join(BASE_DIR, 'backups', 'payments')
+BACKUPS_AUCTION_DIR = os.path.join(BASE_DIR, 'backups', 'auction')
 os.makedirs(BACKUPS_DIR, exist_ok=True)
 os.makedirs(BACKUPS_PHOTOS_DIR, exist_ok=True)
 os.makedirs(BACKUPS_PAYMENTS_DIR, exist_ok=True)
+os.makedirs(BACKUPS_AUCTION_DIR, exist_ok=True)
 MASTER_VAULT_FILE = os.path.join(BASE_DIR, 'backups', 'registrations_master_vault.json')
+AUCTION_VAULT_FILE = os.path.join(BACKUPS_AUCTION_DIR, 'auction_state_vault.json')
 _last_backup_time = 0
+_last_auction_backup_time = 0
+
+# --- GITHUB CLOUD AUTO-COMMIT ENGINE (DEBOUNCED & CONFLICT-SAFE) ---
+_pending_github_syncs = {}
+_github_sync_lock = threading.Lock()
+_github_worker_started = False
+
+def _github_sync_worker():
+    import base64, requests, time
+    token = os.environ.get('GITHUB_TOKEN')
+    repo = os.environ.get('GITHUB_REPO')
+    if not token or not repo:
+        return
+    headers = {
+        'Authorization': f'token {token}',
+        'Accept': 'application/vnd.github.v3+json',
+        'User-Agent': 'KPL-Auction-Cloud-Sync'
+    }
+    clean_repo = repo.replace('https://github.com/', '').strip().strip('/')
+
+    while True:
+        try:
+            time.sleep(2)  # 2-second debounce interval for live bidding and rapid updates
+            item_to_sync = None
+            with _github_sync_lock:
+                if _pending_github_syncs:
+                    file_rel = next(iter(_pending_github_syncs))
+                    item_to_sync = (file_rel, _pending_github_syncs.pop(file_rel))
+
+            if not item_to_sync:
+                continue
+
+            file_rel, item = item_to_sync
+            content_str = item['content']
+            commit_msg = item['message']
+
+            # Commit with up to 3 conflict retries
+            for attempt in range(3):
+                try:
+                    url = f'https://api.github.com/repos/{clean_repo}/contents/{file_rel}'
+                    r_get = requests.get(url, headers=headers, timeout=10)
+                    sha = r_get.json().get('sha') if r_get.status_code == 200 else None
+
+                    b64_content = base64.b64encode(content_str.encode('utf-8')).decode('utf-8')
+                    payload = {
+                        'message': commit_msg,
+                        'content': b64_content
+                    }
+                    if sha:
+                        payload['sha'] = sha
+                    r_put = requests.put(url, headers=headers, json=payload, timeout=15)
+                    if r_put.status_code in [200, 201]:
+                        print(f"[GITHUB AUTO-SYNC] Successfully backed up {file_rel} to {clean_repo}")
+                        break
+                    elif r_put.status_code == 409:
+                        time.sleep(0.5)
+                        continue
+                    else:
+                        print(f"[GITHUB AUTO-SYNC] GitHub API {r_put.status_code}: {r_put.text[:120]}")
+                        break
+                except Exception as req_ex:
+                    print(f"[GITHUB AUTO-SYNC] Error uploading {file_rel} (attempt {attempt+1}):", req_ex)
+                    time.sleep(1)
+        except Exception as loop_ex:
+            print("[GITHUB AUTO-SYNC Worker] Loop notice:", loop_ex)
+            time.sleep(2)
+
+def push_to_github_async(file_path_relative, content_str, commit_message):
+    """Queue or immediately commit changes to GitHub repository if GITHUB_TOKEN & GITHUB_REPO are set."""
+    token = os.environ.get('GITHUB_TOKEN')
+    repo = os.environ.get('GITHUB_REPO')
+    if not token or not repo:
+        return
+    import time
+    global _github_worker_started
+    with _github_sync_lock:
+        _pending_github_syncs[file_path_relative] = {
+            'content': content_str,
+            'message': commit_message,
+            'time': time.time()
+        }
+        if not _github_worker_started:
+            _github_worker_started = True
+            threading.Thread(target=_github_sync_worker, daemon=True).start()
+
+def pull_from_github_on_startup():
+    """On container start/wake-up on Render, pull the latest data directly from GitHub repo."""
+    token = os.environ.get('GITHUB_TOKEN')
+    repo = os.environ.get('GITHUB_REPO')
+    if not token or not repo:
+        return
+    try:
+        import base64, requests
+        headers = {
+            'Authorization': f'token {token}',
+            'Accept': 'application/vnd.github.v3+json',
+            'User-Agent': 'KPL-Auction-Cloud-Sync'
+        }
+        clean_repo = repo.replace('https://github.com/', '').strip().strip('/')
+
+        # 1. Pull registrations.json
+        try:
+            r = requests.get(f'https://api.github.com/repos/{clean_repo}/contents/registrations.json', headers=headers, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                content = base64.b64decode(data.get('content', '')).decode('utf-8')
+                gh_regs = json.loads(content)
+                if isinstance(gh_regs, dict) and len(gh_regs) > 0:
+                    local_regs = {}
+                    if os.path.exists(REGISTRATIONS_FILE):
+                        try:
+                            with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as lf:
+                                local_regs = json.load(lf)
+                        except Exception:
+                            pass
+                    merged = dict(local_regs)
+                    merged.update(gh_regs)
+                    with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as wf:
+                        json.dump(merged, wf, indent=4)
+                    print(f"[GITHUB CLOUD RESTORE] Successfully restored {len(merged)} registrations from GitHub repo!")
+        except Exception as e_reg:
+            print("[GITHUB CLOUD RESTORE] Registrations notice:", e_reg)
+
+        # 2. Pull auction_state.json
+        try:
+            r = requests.get(f'https://api.github.com/repos/{clean_repo}/contents/auction_state.json', headers=headers, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                content = base64.b64decode(data.get('content', '')).decode('utf-8')
+                gh_state = json.loads(content)
+                if isinstance(gh_state, dict) and 'teams' in gh_state:
+                    with open(AUCTION_STATE_FILE, 'w', encoding='utf-8') as wf:
+                        json.dump(gh_state, wf, indent=4)
+                    with open(AUCTION_VAULT_FILE, 'w', encoding='utf-8') as vf:
+                        json.dump(gh_state, vf, indent=4)
+                    print("[GITHUB CLOUD RESTORE] Successfully restored latest auction state from GitHub repo!")
+        except Exception as e_st:
+            print("[GITHUB CLOUD RESTORE] Auction state notice:", e_st)
+    except Exception as ex:
+        print("[GITHUB CLOUD RESTORE] Startup pull error:", ex)
+
+# Pull latest data from GitHub first thing on startup
+pull_from_github_on_startup()
 
 def sync_backup_photos():
     """Bidirectional backup & self-healing of player photos and payment proofs."""
@@ -187,20 +337,54 @@ def sync_backup_photos():
                 dst = os.path.join(BACKUPS_PAYMENTS_DIR, f)
                 if os.path.isfile(src) and not os.path.exists(dst):
                     shutil.copy2(src, dst)
+        # 4. Self-heal player photos from embedded Base64 if disk was wiped by Render!
+        for v_path in [REGISTRATIONS_FILE, MASTER_VAULT_FILE]:
+            if os.path.exists(v_path):
+                try:
+                    with open(v_path, 'r', encoding='utf-8') as rf:
+                        r_data = json.load(rf)
+                    if isinstance(r_data, dict):
+                        for p_name, p_info in r_data.items():
+                            b64_str = p_info.get('photo_base64') or (p_info.get('photo_url') if str(p_info.get('photo_url', '')).startswith('data:image') else None)
+                            if b64_str and ',' in b64_str:
+                                clean_b64 = b64_str.split(',', 1)[1]
+                                fname = p_info.get('photo_filename') or f"player_{p_info.get('id', 'pic')}.jpg"
+                                target_p = os.path.join(PHOTOS_DIR, fname)
+                                if not os.path.exists(target_p):
+                                    import base64
+                                    with open(target_p, 'wb') as img_out:
+                                        img_out.write(base64.b64decode(clean_b64))
+                                    shutil.copy2(target_p, os.path.join(BACKUPS_PHOTOS_DIR, fname))
+                except Exception as _e_heal:
+                    print("Base64 photo self-heal notice:", _e_heal)
     except Exception as e:
         print("Photo sync note:", e)
 
-# Initial sync
+# Initial photo sync
 sync_backup_photos()
 
 def load_registrations():
+    regs = {}
     if os.path.exists(REGISTRATIONS_FILE):
         try:
             with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as f:
-                return json.load(f)
+                regs = json.load(f)
         except Exception as e:
             print("Error loading registrations:", e)
-    return {}
+            regs = {}
+    
+    # Self-heal from Cumulative Master Vault
+    if os.path.exists(MASTER_VAULT_FILE):
+        try:
+            with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
+                vault = json.load(vf)
+            if isinstance(vault, dict) and len(vault) > len(regs):
+                merged = dict(vault)
+                merged.update(regs)
+                regs = merged
+        except Exception:
+            pass
+    return regs
 
 def save_registrations(regs):
     global _last_backup_time
@@ -211,9 +395,9 @@ def save_registrations(regs):
     sync_backup_photos()
 
     # 1. Cumulative Master Vault - Never deletes registered players
+    vault = {}
     try:
         if isinstance(regs, dict) and len(regs) > 0:
-            vault = {}
             if os.path.exists(MASTER_VAULT_FILE):
                 try:
                     with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
@@ -237,6 +421,14 @@ def save_registrations(regs):
                 json.dump(regs, sf, indent=4)
         except Exception as e:
             print("Snapshot backup notice:", e)
+
+    # 3. GitHub Cloud Auto-Commit (Instant persistence across Render container restarts)
+    try:
+        push_to_github_async('registrations.json', json.dumps(regs, indent=4), 'KPL Auto-Sync: Updated registrations database')
+        if vault:
+            push_to_github_async('backups/registrations_master_vault.json', json.dumps(vault, indent=4), 'KPL Auto-Sync: Updated master vault')
+    except Exception as _gh_err:
+        print("GitHub push notice:", _gh_err)
 
 # ----------------- AUCTION STATE HELPERS -----------------
 def get_retained_player_names(state):
@@ -275,18 +467,19 @@ AUCTION_STATE_LOCK = threading.RLock()
 
 def load_auction_state():
     with AUCTION_STATE_LOCK:
-        if os.path.exists(AUCTION_STATE_FILE):
-            for attempt in range(10):
-                try:
-                    with open(AUCTION_STATE_FILE, 'r', encoding='utf-8') as f:
-                        st = json.load(f)
-                        if isinstance(st, dict):
-                            if 'auction_started' not in st:
-                                st['auction_started'] = False
-                            sanitize_auction_pool(st)
-                        return st
-                except Exception as e:
-                    time.sleep(0.015)
+        for file_candidate in [AUCTION_STATE_FILE, AUCTION_VAULT_FILE]:
+            if os.path.exists(file_candidate):
+                for attempt in range(10):
+                    try:
+                        with open(file_candidate, 'r', encoding='utf-8') as f:
+                            st = json.load(f)
+                            if isinstance(st, dict) and "teams" in st:
+                                if 'auction_started' not in st:
+                                    st['auction_started'] = False
+                                sanitize_auction_pool(st)
+                                return st
+                    except Exception as e:
+                        time.sleep(0.015)
         
         # Default initial state
         cfg = load_config()
@@ -320,6 +513,7 @@ def load_auction_state():
         return state
 
 def save_auction_state(state):
+    global _last_auction_backup_time
     with AUCTION_STATE_LOCK:
         tmp_file = AUCTION_STATE_FILE + ".tmp"
         try:
@@ -333,6 +527,31 @@ def save_auction_state(state):
                     time.sleep(0.015)
         except Exception as e:
             print("Error saving auction state:", e)
+
+    # 1. Local Auction Vault Backup
+    try:
+        with open(AUCTION_VAULT_FILE, 'w', encoding='utf-8') as vf:
+            json.dump(state, vf, indent=4)
+    except Exception:
+        pass
+
+    # 2. Automated timestamped snapshot
+    now = datetime.now().timestamp()
+    if now - _last_auction_backup_time > 30 and isinstance(state, dict):
+        _last_auction_backup_time = now
+        try:
+            ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+            snap_path = os.path.join(BACKUPS_AUCTION_DIR, f"auction_{ts}.json")
+            with open(snap_path, 'w', encoding='utf-8') as sf:
+                json.dump(state, sf, indent=4)
+        except Exception:
+            pass
+
+    # 3. GitHub Cloud Auto-Commit (Debounced & Queued)
+    try:
+        push_to_github_async('auction_state.json', json.dumps(state, indent=4), 'KPL Auto-Sync: Updated auction state')
+    except Exception as _gh_err:
+        print("GitHub auction push notice:", _gh_err)
 
 def push_history(state):
     state_copy = copy.deepcopy(state)
@@ -360,6 +579,16 @@ def sync_player_to_auction(player_name, serial_no=None):
         state["current_player"] = state["auction_players"][0]
         
     save_auction_state(state)
+
+# ----------------- NO-CACHE HEADERS (ENSURE LATEST DATA ALWAYS APPEARS) -----------------
+@app.after_request
+def add_no_cache_headers(response):
+    # Prevent browser caching of dynamic state and API calls so latest data ALWAYS appears
+    if request.path.startswith('/api/') or request.path in ['/', '/auction', '/view', '/teams', '/admin', '/players']:
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '0'
+    return response
 
 # ----------------- ROUTES -----------------
 
@@ -1164,6 +1393,8 @@ def api_register():
 
         # Handle Photo (Upload or Camera Capture)
         photo_url = ''
+        photo_base64 = ''
+        photo_filename = ''
         if 'photo' in request.files:
             photo_file = request.files['photo']
             if photo_file and photo_file.filename:
@@ -1176,6 +1407,18 @@ def api_register():
                 except Exception as _pe:
                     print("Photo backup note:", _pe)
                 photo_url = f"/static/uploads/photos/{filename}"
+                photo_filename = filename
+                try:
+                    from PIL import Image
+                    from io import BytesIO
+                    import base64
+                    with Image.open(save_path) as pimg:
+                        pimg.thumbnail((300, 300))
+                        pbuf = BytesIO()
+                        pimg.convert('RGB').save(pbuf, format='JPEG', quality=75)
+                        photo_base64 = f"data:image/jpeg;base64,{base64.b64encode(pbuf.getvalue()).decode('utf-8')}"
+                except Exception as _b64err:
+                    print("Base64 thumb note:", _b64err)
 
         # Handle Payment Screenshot
         screenshot_url = ''
@@ -1226,6 +1469,8 @@ def api_register():
             serial_no = existing.get('serial_no', serial_no)
             if not photo_url:
                 photo_url = existing.get('photo_url', '')
+                photo_base64 = existing.get('photo_base64', '')
+                photo_filename = existing.get('photo_filename', '')
 
         regs[name] = {
             'id': player_id,
@@ -1236,7 +1481,9 @@ def api_register():
             'role': role,
             'batting_style': batting_style,
             'bowling_style': bowling_style,
-            'photo_url': photo_url,
+            'photo_url': photo_url or photo_base64 or '/static/images/avatar_allrounder.svg',
+            'photo_base64': photo_base64,
+            'photo_filename': photo_filename,
             'reg_amount': reg_amount,
             'payment_status': 'Pending Verification',
             'payment_method': payment_method,
@@ -2601,6 +2848,69 @@ def api_admin_download_full_archive():
         )
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+@app.route('/api/admin/backups/upload-vault', methods=['POST'])
+def api_admin_upload_vault():
+    """Allows host to upload any JSON backup or ZIP archive to instantly restore registrations and photos."""
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
+
+        file = request.files.get('file')
+        raw_json = request.form.get('json_data', '').strip()
+
+        restored_data = {}
+        if file and file.filename:
+            fname = file.filename.lower()
+            if fname.endswith('.json'):
+                content = file.read().decode('utf-8', errors='ignore')
+                restored_data = json.loads(content)
+            elif fname.endswith('.zip'):
+                import zipfile
+                zf = zipfile.ZipFile(file)
+                for member in zf.namelist():
+                    if member.endswith('registrations_master_vault.json') or member.endswith('registrations.json'):
+                        restored_data = json.loads(zf.read(member).decode('utf-8', errors='ignore'))
+                    if member.startswith('photos/') and not member.endswith('/'):
+                        p_name = os.path.basename(member)
+                        if p_name:
+                            p_bytes = zf.read(member)
+                            with open(os.path.join(PHOTOS_DIR, p_name), 'wb') as pf:
+                                pf.write(p_bytes)
+                            with open(os.path.join(BACKUPS_PHOTOS_DIR, p_name), 'wb') as pf:
+                                pf.write(p_bytes)
+        elif raw_json:
+            restored_data = json.loads(raw_json)
+        else:
+            return jsonify({'success': False, 'message': 'Please select a valid .json or .zip backup file to restore.'}), 400
+
+        if not isinstance(restored_data, dict) or len(restored_data) == 0:
+            return jsonify({'success': False, 'message': 'Invalid backup: No player registrations found in file.'}), 400
+
+        # Save to registrations and master vault
+        save_registrations(restored_data)
+
+        # Sync into auction state
+        state = load_auction_state()
+        state.setdefault('players', [])
+        state.setdefault('auction_players', [])
+        for p_name in restored_data.keys():
+            if p_name not in state['players']:
+                state['players'].append(p_name)
+            if p_name not in state['auction_players']:
+                state['auction_players'].append(p_name)
+        save_auction_state(state)
+        sync_backup_photos()
+
+        return jsonify({
+            'success': True,
+            'message': f'Vault restored successfully! {len(restored_data)} registered players loaded into active roster & live auction pool.',
+            'player_count': len(restored_data)
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error restoring vault: {str(e)}'}), 500
+
 
 @app.route('/api/admin/reset-auction', methods=['POST'])
 def api_admin_reset_auction():
