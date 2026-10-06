@@ -1726,7 +1726,7 @@ function openRetainedModal() {
   const body = document.getElementById('retainedModalBody');
   if (!modal || !body) return;
 
-  fetch('/api/auction/state')
+  fetch('/api/auction/state?_t=' + Date.now(), { cache: 'no-store' })
     .then(r => r.json())
     .then(data => {
       const teams = data.teams || {};

@@ -1554,16 +1554,31 @@
         </div>
 
         <!-- Action Buttons -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 0.75rem; margin-bottom: 1.25rem;">
-          <button type="button" onclick="restoreFromMasterVault()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 900; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: 1px solid #34d399; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 0.65rem; margin-bottom: 1rem;">
+          <button type="button" onclick="restoreFromMasterVault()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.92rem; font-weight: 900; background: linear-gradient(135deg, #059669, #10b981); color: #ffffff; border: 1px solid #34d399; border-radius: 10px; cursor: pointer; box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35); display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
             <span>📥</span> Restore from Master Vault
           </button>
-          <button type="button" onclick="createManualBackup()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-            <span>💾</span> Create Instant Backup Snapshot
+          <button type="button" onclick="document.getElementById('inputUploadVault').click()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.92rem; font-weight: 800; background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.45); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;" title="Upload any backup JSON or full ZIP file to restore registrations">
+            <span>📤</span> Upload &amp; Restore Backup File
           </button>
-          <a href="/api/admin/backups/download-full-archive" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.95rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
-            <span>📦</span> Download Full ZIP (JSON + Photos)
+          <input type="file" id="inputUploadVault" accept=".json,.zip" style="display: none;" onchange="handleVaultUpload(this)">
+          <button type="button" onclick="createManualBackup()" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.92rem; font-weight: 800; background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.45); border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span>💾</span> Create Instant Snapshot
+          </button>
+          <a href="/api/admin/backups/download-full-archive" class="touch-btn" style="padding: 0.85rem 1rem; font-size: 0.92rem; font-weight: 800; background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.45); border-radius: 10px; text-decoration: none; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+            <span>📦</span> Download Full ZIP
           </a>
+        </div>
+
+        <!-- Render Free Tier Cloud Auto-Sync Notice -->
+        <div style="background: rgba(15, 23, 42, 0.7); border: 1px dashed rgba(56, 189, 248, 0.35); border-radius: 10px; padding: 0.75rem 0.95rem; margin-bottom: 1.15rem; font-size: 0.8rem; color: #94a3b8; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <span style="font-size: 1.25rem;">☁️</span>
+            <div>
+              <strong style="color: #38bdf8;">Render Free Tier Auto-Sync:</strong>
+              When Render sleeps and wakes up, it reloads from GitHub. To auto-save every registration permanently into GitHub, set <code style="color: #fbbf24; background: rgba(0,0,0,0.3); padding: 0.1rem 0.35rem; border-radius: 4px;">GITHUB_TOKEN</code> &amp; <code style="color: #fbbf24; background: rgba(0,0,0,0.3); padding: 0.1rem 0.35rem; border-radius: 4px;">GITHUB_REPO</code> in Render Dashboard (Environment tab).
+            </div>
+          </div>
         </div>
 
         <!-- Snapshots List Section -->
@@ -4332,6 +4347,43 @@
       }
     } catch (e) {
       showToast('Error restoring vault: ' + e.message, 'error');
+    }
+  }
+
+  async function handleVaultUpload(inputEl) {
+    const file = inputEl.files && inputEl.files[0];
+    if (!file) return;
+    const pin = getAdminPin();
+    if (!pin) {
+      showToast('Organizer PIN required.', 'warning');
+      inputEl.value = '';
+      return;
+    }
+    if (!confirm(`📤 UPLOAD & RESTORE BACKUP?\n\nFile: "${file.name}"\n\nThis will restore player registrations and photos from this file directly into your active tournament roster.\n\nProceed?`)) {
+      inputEl.value = '';
+      return;
+    }
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('pin', pin);
+    try {
+      showToast('⏳ Uploading and restoring vault data...', 'info');
+      const res = await fetch('/api/admin/backups/upload-vault', {
+        method: 'POST',
+        headers: { 'X-Auction-PIN': pin },
+        body: formData
+      });
+      const data = await res.json();
+      if (data.success) {
+        showToast(`🎉 ${data.message}`, 'success');
+        setTimeout(() => location.reload(), 1200);
+      } else {
+        showToast(data.message || 'Upload failed', 'error');
+      }
+    } catch(err) {
+      showToast('Upload error: ' + err.message, 'error');
+    } finally {
+      inputEl.value = '';
     }
   }
 
