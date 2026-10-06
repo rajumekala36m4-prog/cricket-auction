@@ -68,7 +68,28 @@
         "Virat Sharma",
         "Raju Mekala"
     ],
-    "player_serials": {},
+    "player_serials": {
+        "M. Raju Anna": 1,
+        "Sunil Anna": 2,
+        "M. Gani": 3,
+        "B. Vannu": 4,
+        "E. Prabhu": 5,
+        "K. Raghu (Putta)": 6,
+        "S. Ravi": 7,
+        "P. Sai": 8,
+        "M. Srinu": 9,
+        "B. Nani": 10,
+        "K. Kishore": 11,
+        "T. Mahesh": 12,
+        "G. Vamsi": 13,
+        "Ch. Vasu": 14,
+        "A. Krishna": 15,
+        "L. Suresh": 16,
+        "K. Prasad": 17,
+        "P. Kumar": 18,
+        "Virat Sharma": 19,
+        "Raju Mekala": 104
+    },
     "auction_players": [
         "M. Raju Anna",
         "Sunil Anna",
@@ -112,9 +133,9 @@
     "min_bid": 100,
     "retention_price": 500,
     "owner_retention_price": 100,
-    "state_version": 680,
+    "state_version": 678,
     "last_action": {
         "type": "RESET",
-        "timestamp": 1791255912223
+        "timestamp": 1791255601256
     }
 }

@@ -276,19 +276,26 @@ def pull_from_github_on_startup():
                 data = r.json()
                 content = base64.b64decode(data.get('content', '')).decode('utf-8')
                 gh_regs = json.loads(content)
-                if isinstance(gh_regs, dict) and len(gh_regs) > 0:
-                    local_regs = {}
-                    if os.path.exists(REGISTRATIONS_FILE):
-                        try:
-                            with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as lf:
-                                local_regs = json.load(lf)
-                        except Exception:
-                            pass
-                    merged = dict(local_regs)
-                    merged.update(gh_regs)
-                    with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as wf:
-                        json.dump(merged, wf, indent=4)
-                    print(f"[GITHUB CLOUD RESTORE] Successfully restored {len(merged)} registrations from GitHub repo!")
+                if isinstance(gh_regs, dict):
+                    if len(gh_regs) == 0:
+                        with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as wf:
+                            json.dump({}, wf, indent=4)
+                        with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
+                            json.dump({}, vf, indent=4)
+                        print("[GITHUB CLOUD RESTORE] Synced clean factory reset state from GitHub repo!")
+                    else:
+                        local_regs = {}
+                        if os.path.exists(REGISTRATIONS_FILE):
+                            try:
+                                with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as lf:
+                                    local_regs = json.load(lf)
+                            except Exception:
+                                pass
+                        merged = dict(local_regs)
+                        merged.update(gh_regs)
+                        with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as wf:
+                            json.dump(merged, wf, indent=4)
+                        print(f"[GITHUB CLOUD RESTORE] Successfully restored {len(merged)} registrations from GitHub repo!")
         except Exception as e_reg:
             print("[GITHUB CLOUD RESTORE] Registrations notice:", e_reg)
 
@@ -2623,31 +2630,62 @@ def api_admin_fresh_tournament_reset():
         if not check_auctioneer_pin(request):
             return jsonify({'success': False, 'message': 'Unauthorized: Valid Auctioneer PIN required'}), 403
 
-        # 1. ALWAYS snapshot current registrations to backups before fresh reset
-        try:
-            current_regs = load_registrations()
-            if current_regs and len(current_regs) > 0:
-                ts = datetime.now().strftime('%Y%m%d_%H%M%S')
-                pre_reset_snap = os.path.join(BACKUPS_DIR, f"pre_fresh_reset_backup_{ts}.json")
+        # 1. ALWAYS snapshot current registrations & auction state to safety backups before wipe
+        current_regs = load_registrations()
+        ts = datetime.now().strftime('%Y%m%d_%H%M%S')
+        if current_regs and len(current_regs) > 0:
+            pre_reset_snap = os.path.join(BACKUPS_DIR, f"pre_fresh_reset_backup_{ts}.json")
+            try:
                 with open(pre_reset_snap, 'w', encoding='utf-8') as sf:
                     json.dump(current_regs, sf, indent=4)
-        except Exception as e:
-            print("Pre-reset snapshot notice:", e)
+            except Exception as e:
+                print("Pre-reset snapshot notice:", e)
 
-        # 2. Clear registrations.json completely (wipe all registered players)
+        # 2. Clear registrations.json AND MASTER_VAULT_FILE completely
         with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as f:
             json.dump({}, f, indent=4)
+        with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
+            json.dump({}, vf, indent=4)
 
-        # 3. Reset tournament_config.json team passcodes
+        # 3. Clean active uploaded photos so new tournament starts completely clean
+        try:
+            for p_dir in [PHOTOS_DIR, PAYMENTS_DIR]:
+                if os.path.exists(p_dir):
+                    for fn in os.listdir(p_dir):
+                        fp = os.path.join(p_dir, fn)
+                        if os.path.isfile(fp):
+                            try:
+                                os.remove(fp)
+                            except Exception:
+                                pass
+        except Exception:
+            pass
+
+        # 4. Reset tournament_config.json team passcodes
         cfg = load_config()
         cfg['team_passcodes'] = {}
         save_config(cfg)
 
-        # 4. Reset auction_state.json completely (wipe teams, empty players, stop live auction)
+        # 5. Initialize fresh teams with full starting tournament purse
         total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
+        default_team_names = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans", "Hyderabad Blasters"]
+        fresh_teams = {
+            t_name: {
+                "budget": total_purse,
+                "purse": total_purse,
+                "spent": 0,
+                "players": [],
+                "retained": None,
+                "player_retained": None,
+                "owner_retained": None
+            }
+            for t_name in default_team_names
+        }
+
+        # 6. Reset auction_state.json completely (ready for new registrations & bidding)
         cur_state = load_auction_state()
         fresh_state = {
-            "teams": {},
+            "teams": fresh_teams,
             "players": [],
             "player_serials": {},
             "auction_players": [],
@@ -2680,9 +2718,17 @@ def api_admin_fresh_tournament_reset():
         }
         save_auction_state(fresh_state)
 
+        # 7. Push clean state to GitHub immediately so Render does not reload old data on wake-up!
+        try:
+            push_to_github_async('registrations.json', '{}', 'KPL Factory Reset: Cleared registrations')
+            push_to_github_async('backups/registrations_master_vault.json', '{}', 'KPL Factory Reset: Cleared master vault')
+            push_to_github_async('auction_state.json', json.dumps(fresh_state, indent=4), 'KPL Factory Reset: Reset auction state')
+        except Exception as _gh_err:
+            print("GitHub fresh reset push notice:", _gh_err)
+
         return jsonify({
             'success': True,
-            'message': 'Fresh Tournament Initialized! A safety backup was saved in backups/registrations/. Active players and teams cleared.'
+            'message': 'Fresh Tournament Initialized! All registered players and team rosters have been wiped clean. A safety backup was saved in backups/registrations/.'
         })
     except Exception as e:
         return jsonify({'success': False, 'message': str(e)}), 500
@@ -2931,13 +2977,7 @@ def api_admin_reset_auction():
         if not player_list:
             player_list = [p_name for p_name, _ in sorted_regs]
             
-        # Fallback if registrations file is empty
-        if not player_list:
-            player_list = [
-                "Virat Kohli", "Rohit Sharma", "Jasprit Bumrah", "Hardik Pandya",
-                "Rishabh Pant", "Ravindra Jadeja", "Surya Kumar Yadav", "Mohammed Shami",
-                "KL Rahul", "Shubman Gill"
-            ]
+
         
         player_serials = {}
         for idx, p in enumerate(player_list):

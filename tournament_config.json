@@ -17,11 +17,5 @@
     "total_purse": 15000,
     "registration_open": true,
     "pin": "2026",
-    "team_passcodes": {
-        "Deccan Royals": "DR26",
-        "Kunsi Warriors": "KW26",
-        "Saidapur Super Kings": "SS26",
-        "Telangana Titans": "TT26",
-        "Royal Tigers": "RT26"
-    }
+    "team_passcodes": {}
 }
