@@ -414,28 +414,64 @@ def sync_backup_photos():
                 dst = os.path.join(BACKUPS_PAYMENTS_DIR, f)
                 if os.path.isfile(src) and not os.path.exists(dst):
                     shutil.copy2(src, dst)
-        # 4. Self-heal player photos from embedded Base64 if disk was wiped by Render!
+        # 4. Self-heal player photos from embedded Base64 and PostgreSQL Cloud Store
+        if DATABASE_URL:
+            db_regs = db_get('registrations')
+            if isinstance(db_regs, dict):
+                restore_photos_from_regs(db_regs)
+
         for v_path in [REGISTRATIONS_FILE, MASTER_VAULT_FILE]:
             if os.path.exists(v_path):
                 try:
                     with open(v_path, 'r', encoding='utf-8') as rf:
                         r_data = json.load(rf)
                     if isinstance(r_data, dict):
-                        for p_name, p_info in r_data.items():
-                            b64_str = p_info.get('photo_base64') or (p_info.get('photo_url') if str(p_info.get('photo_url', '')).startswith('data:image') else None)
-                            if b64_str and ',' in b64_str:
-                                clean_b64 = b64_str.split(',', 1)[1]
-                                fname = p_info.get('photo_filename') or f"player_{p_info.get('id', 'pic')}.jpg"
-                                target_p = os.path.join(PHOTOS_DIR, fname)
-                                if not os.path.exists(target_p):
-                                    import base64
-                                    with open(target_p, 'wb') as img_out:
-                                        img_out.write(base64.b64decode(clean_b64))
-                                    shutil.copy2(target_p, os.path.join(BACKUPS_PHOTOS_DIR, fname))
+                        restore_photos_from_regs(r_data)
                 except Exception as _e_heal:
                     print("Base64 photo self-heal notice:", _e_heal)
     except Exception as e:
         print("Photo sync note:", e)
+
+def restore_photos_from_regs(regs):
+    """Restores player photos and payment proofs from embedded Base64 to disk after Render sleeps."""
+    if not isinstance(regs, dict):
+        return
+    import base64
+    for p_name, p_info in regs.items():
+        if not isinstance(p_info, dict):
+            continue
+        # 1. Restore player photo
+        b64_str = p_info.get('photo_base64') or (p_info.get('photo_url') if str(p_info.get('photo_url', '')).startswith('data:image') else None)
+        if b64_str and ',' in b64_str:
+            clean_b64 = b64_str.split(',', 1)[1]
+            fname = p_info.get('photo_filename') or (os.path.basename(p_info.get('photo_url')) if p_info.get('photo_url') and not str(p_info.get('photo_url')).startswith('data:') else None) or f"player_{p_info.get('id', 'pic')}.jpg"
+            target_p = os.path.join(PHOTOS_DIR, fname)
+            if not os.path.exists(target_p):
+                try:
+                    with open(target_p, 'wb') as img_out:
+                        img_out.write(base64.b64decode(clean_b64))
+                    try:
+                        shutil.copy2(target_p, os.path.join(BACKUPS_PHOTOS_DIR, fname))
+                    except Exception:
+                        pass
+                except Exception as _w_err:
+                    pass
+        # 2. Restore payment proof screenshot
+        pay_b64 = p_info.get('payment_screenshot_base64') or (p_info.get('payment_screenshot') if str(p_info.get('payment_screenshot', '')).startswith('data:image') else None)
+        if pay_b64 and ',' in pay_b64:
+            clean_pay_b64 = pay_b64.split(',', 1)[1]
+            pay_fname = p_info.get('payment_screenshot_filename') or (os.path.basename(p_info.get('payment_screenshot')) if p_info.get('payment_screenshot') and not str(p_info.get('payment_screenshot')).startswith('data:') else None) or f"pay_{p_info.get('id', 'pic')}.jpg"
+            pay_target = os.path.join(PAYMENTS_DIR, pay_fname)
+            if not os.path.exists(pay_target):
+                try:
+                    with open(pay_target, 'wb') as pay_out:
+                        pay_out.write(base64.b64decode(clean_pay_b64))
+                    try:
+                        shutil.copy2(pay_target, os.path.join(BACKUPS_PAYMENTS_DIR, pay_fname))
+                    except Exception:
+                        pass
+                except Exception:
+                    pass
 
 # Initial photo sync
 sync_backup_photos()
@@ -445,6 +481,7 @@ def load_registrations():
     if DATABASE_URL:
         db_regs = db_get('registrations')
         if db_regs is not None:
+            restore_photos_from_regs(db_regs)
             return db_regs
 
     regs = {}
@@ -467,6 +504,7 @@ def load_registrations():
                 regs = merged
         except Exception:
             pass
+    restore_photos_from_regs(regs)
     return regs
 
 def save_registrations(regs):
@@ -1212,7 +1250,55 @@ def serve_resilient_static(filename):
     p_root = os.path.join(BASE_DIR, os.path.basename(filename))
     if os.path.exists(p_root) and os.path.isfile(p_root):
         return send_from_directory(BASE_DIR, os.path.basename(filename))
-        
+
+    # 4. Self-healing dynamically from PostgreSQL database if disk was cleared by Render sleep
+    base_name = os.path.basename(filename)
+    if 'photos' in filename or 'player_' in base_name:
+        regs = load_registrations()
+        for p_name, p_info in regs.items():
+            if not isinstance(p_info, dict):
+                continue
+            p_fn = p_info.get('photo_filename') or os.path.basename(p_info.get('photo_url', ''))
+            if p_fn == base_name or base_name in str(p_info.get('photo_url', '')):
+                b64_str = p_info.get('photo_base64') or (p_info.get('photo_url') if str(p_info.get('photo_url', '')).startswith('data:image') else None)
+                if b64_str and ',' in b64_str:
+                    try:
+                        import base64
+                        clean_b64 = b64_str.split(',', 1)[1]
+                        raw_bytes = base64.b64decode(clean_b64)
+                        target_p = os.path.join(PHOTOS_DIR, base_name)
+                        os.makedirs(os.path.dirname(target_p), exist_ok=True)
+                        with open(target_p, 'wb') as img_out:
+                            img_out.write(raw_bytes)
+                        mime = 'image/png' if base_name.endswith('.png') else ('image/webp' if base_name.endswith('.webp') else 'image/jpeg')
+                        return Response(raw_bytes, mimetype=mime)
+                    except Exception as _b64_serve_err:
+                        print("Error serving self-healed photo:", _b64_serve_err)
+        # Graceful fallback to avatar SVG so browser never shows broken image
+        return send_from_directory(os.path.join(STATIC_DIR, 'images'), 'avatar_allrounder.svg')
+
+    if 'payments' in filename or 'pay_' in base_name:
+        regs = load_registrations()
+        for p_name, p_info in regs.items():
+            if not isinstance(p_info, dict):
+                continue
+            s_fn = p_info.get('payment_screenshot_filename') or os.path.basename(p_info.get('payment_screenshot', ''))
+            if s_fn == base_name or base_name in str(p_info.get('payment_screenshot', '')):
+                s_b64 = p_info.get('payment_screenshot_base64') or (p_info.get('payment_screenshot') if str(p_info.get('payment_screenshot', '')).startswith('data:image') else None)
+                if s_b64 and ',' in s_b64:
+                    try:
+                        import base64
+                        clean_b64 = s_b64.split(',', 1)[1]
+                        raw_bytes = base64.b64decode(clean_b64)
+                        target_p = os.path.join(PAYMENTS_DIR, base_name)
+                        os.makedirs(os.path.dirname(target_p), exist_ok=True)
+                        with open(target_p, 'wb') as pay_out:
+                            pay_out.write(raw_bytes)
+                        mime = 'image/png' if base_name.endswith('.png') else ('image/webp' if base_name.endswith('.webp') else 'image/jpeg')
+                        return Response(raw_bytes, mimetype=mime)
+                    except Exception:
+                        pass
+
     return "Asset not found", 404
 
 @app.route('/style.css')
@@ -1239,6 +1325,59 @@ def serve_root_auction_css():
 
 # ----------------- APIS -----------------
 
+@app.route('/api/admin/update-player-photo', methods=['POST'])
+def api_admin_update_player_photo():
+    try:
+        if not check_auctioneer_pin(request):
+            return jsonify({'success': False, 'message': 'Unauthorized: Valid Organizer PIN required'}), 403
+        name = request.form.get('name', '').strip()
+        regs = load_registrations()
+        if not name or name not in regs:
+            return jsonify({'success': False, 'message': f'Player "{name}" not found in registrations'}), 404
+        
+        if 'photo' not in request.files or not request.files['photo'].filename:
+            return jsonify({'success': False, 'message': 'No photo file provided'}), 400
+            
+        photo_file = request.files['photo']
+        ext = os.path.splitext(photo_file.filename)[1].lower() or '.jpg'
+        filename = f"player_{uuid.uuid4().hex[:8]}{ext}"
+        save_path = os.path.join(PHOTOS_DIR, filename)
+        photo_file.save(save_path)
+        
+        photo_base64 = ''
+        try:
+            from PIL import Image
+            from io import BytesIO
+            import base64
+            with Image.open(save_path) as pimg:
+                pimg.thumbnail((320, 320))
+                pbuf = BytesIO()
+                pimg.convert('RGB').save(pbuf, format='JPEG', quality=80)
+                photo_base64 = f"data:image/jpeg;base64,{base64.b64encode(pbuf.getvalue()).decode('utf-8')}"
+        except Exception:
+            pass
+        if not photo_base64 and os.path.exists(save_path):
+            try:
+                import base64
+                with open(save_path, 'rb') as rf:
+                    mime = 'image/png' if ext == '.png' else ('image/webp' if ext == '.webp' else 'image/jpeg')
+                    photo_base64 = f"data:{mime};base64,{base64.b64encode(rf.read()).decode('utf-8')}"
+            except Exception:
+                pass
+                
+        photo_url = photo_base64 or f"/static/uploads/photos/{filename}"
+        regs[name]['photo_url'] = photo_url
+        regs[name]['photo_base64'] = photo_base64
+        regs[name]['photo_filename'] = filename
+        save_registrations(regs)
+        
+        return jsonify({
+            'success': True,
+            'message': f'Photo for {name} saved permanently to Cloud Database!',
+            'photo_url': photo_url
+        })
+    except Exception as e:
+        return jsonify({'success': False, 'message': f'Error updating photo: {str(e)}'}), 500
 
 @app.route('/api/admin/quick-add-player', methods=['POST'])
 def api_admin_quick_add_player():
@@ -1510,15 +1649,26 @@ def api_register():
                     from io import BytesIO
                     import base64
                     with Image.open(save_path) as pimg:
-                        pimg.thumbnail((300, 300))
+                        pimg.thumbnail((320, 320))
                         pbuf = BytesIO()
-                        pimg.convert('RGB').save(pbuf, format='JPEG', quality=75)
+                        pimg.convert('RGB').save(pbuf, format='JPEG', quality=80)
                         photo_base64 = f"data:image/jpeg;base64,{base64.b64encode(pbuf.getvalue()).decode('utf-8')}"
                 except Exception as _b64err:
                     print("Base64 thumb note:", _b64err)
+                if not photo_base64 and os.path.exists(save_path):
+                    try:
+                        import base64
+                        with open(save_path, 'rb') as rf:
+                            raw_data = rf.read()
+                            if len(raw_data) < 2 * 1024 * 1024:
+                                mime = 'image/png' if ext == '.png' else ('image/webp' if ext == '.webp' else 'image/jpeg')
+                                photo_base64 = f"data:{mime};base64,{base64.b64encode(raw_data).decode('utf-8')}"
+                    except Exception:
+                        pass
 
         # Handle Payment Screenshot
         screenshot_url = ''
+        screenshot_base64 = ''
         if 'screenshot' in request.files:
             screen_file = request.files['screenshot']
             if screen_file and screen_file.filename:
@@ -1531,6 +1681,26 @@ def api_register():
                 except Exception as _pse:
                     print("Payment backup note:", _pse)
                 screenshot_url = f"/static/uploads/payments/{filename}"
+                try:
+                    from PIL import Image
+                    from io import BytesIO
+                    import base64
+                    with Image.open(save_path) as simg:
+                        simg.thumbnail((600, 600))
+                        sbuf = BytesIO()
+                        simg.convert('RGB').save(sbuf, format='JPEG', quality=75)
+                        screenshot_base64 = f"data:image/jpeg;base64,{base64.b64encode(sbuf.getvalue()).decode('utf-8')}"
+                except Exception:
+                    pass
+                if not screenshot_base64 and os.path.exists(save_path):
+                    try:
+                        import base64
+                        with open(save_path, 'rb') as sf:
+                            sraw = sf.read()
+                            if len(sraw) < 2 * 1024 * 1024:
+                                screenshot_base64 = f"data:image/jpeg;base64,{base64.b64encode(sraw).decode('utf-8')}"
+                    except Exception:
+                        pass
 
         # Check duplicate phone verification
         if phone:
@@ -1569,6 +1739,7 @@ def api_register():
                 photo_base64 = existing.get('photo_base64', '')
                 photo_filename = existing.get('photo_filename', '')
 
+        final_photo = photo_base64 or photo_url or '/static/images/avatar_allrounder.svg'
         regs[name] = {
             'id': player_id,
             'serial_no': serial_no,
@@ -1578,14 +1749,16 @@ def api_register():
             'role': role,
             'batting_style': batting_style,
             'bowling_style': bowling_style,
-            'photo_url': photo_url or photo_base64 or '/static/images/avatar_allrounder.svg',
+            'photo_url': final_photo,
             'photo_base64': photo_base64,
             'photo_filename': photo_filename,
             'reg_amount': reg_amount,
             'payment_status': 'Pending Verification',
             'payment_method': payment_method,
             'transaction_id': transaction_id,
-            'payment_screenshot': screenshot_url,
+            'payment_screenshot': screenshot_base64 or screenshot_url,
+            'payment_screenshot_base64': screenshot_base64,
+            'payment_screenshot_filename': filename if screenshot_url else '',
             'created_at': datetime.utcnow().isoformat() + 'Z',
             'approved': False
         }
@@ -1658,6 +1831,8 @@ def api_auction_state():
             }
         else:
             p_details = dict(p_details)
+            if p_details.get("photo_base64"):
+                p_details["photo_url"] = p_details["photo_base64"]
 
         if not p_details.get("photo_url"):
             role_low = str(p_details.get("role", "")).lower()
@@ -1684,7 +1859,7 @@ def api_auction_state():
         min_bid = 100
     for name, r_data in regs.items():
         role_str = r_data.get("role", "All-Rounder")
-        p_url = r_data.get("photo_url", "")
+        p_url = r_data.get("photo_base64") or r_data.get("photo_url", "")
         if not p_url:
             r_low = role_str.lower()
             if "keep" in r_low:
