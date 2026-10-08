@@ -90,6 +90,20 @@
     {% block content %}{% endblock %}
   </main>
 
+  <!-- ── Global Photo HD Lightbox Modal ───────────────────────── -->
+  <div id="photoLightboxModal" class="photo-lightbox-modal" onclick="closePhotoLightbox(event)" style="display:none; position:fixed; inset:0; z-index:999999; background:rgba(3,7,18,0.92); backdrop-filter:blur(10px); align-items:center; justify-content:center; padding:1rem; box-sizing:border-box;">
+    <div class="photo-lightbox-content" onclick="event.stopPropagation()" style="position:relative; max-width:92vw; max-height:90vh; display:flex; flex-direction:column; align-items:center; background:linear-gradient(145deg, #111827, #0b0f19); border:2px solid #f59e0b; border-radius:18px; padding:1.25rem 1rem 1rem; box-shadow:0 0 50px rgba(245,158,11,0.35); text-align:center;">
+      <button type="button" onclick="closePhotoLightbox()" aria-label="Close HD photo" style="position:absolute; top:-14px; right:-14px; width:36px; height:36px; border-radius:50%; background:#ef4444; color:#fff; border:2px solid #fff; font-size:1.1rem; font-weight:900; cursor:pointer; display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(0,0,0,0.5); z-index:10;">✕</button>
+      <div style="width:100%; max-width:440px; aspect-ratio:1/1; max-height:68vh; overflow:hidden; border-radius:12px; background:#1e293b; display:flex; align-items:center; justify-content:center; border:1.5px solid rgba(255,255,255,0.12);">
+        <img id="lightboxImg" src="" alt="Player Full HD Photo" style="width:100%; height:100%; object-fit:contain; border-radius:12px;">
+      </div>
+      <div style="margin-top:0.75rem; width:100%;">
+        <div id="lightboxPlayerName" style="color:#fff; font-size:1.35rem; font-weight:900; letter-spacing:-0.02em;">Player Name</div>
+        <div id="lightboxPlayerSub" style="color:#94a3b8; font-size:0.85rem; font-weight:600; margin-top:0.25rem;">Role • Village</div>
+      </div>
+    </div>
+  </div>
+
   <!-- ── Footer ──────────────────────────────────────────── -->
   <footer>
     <p style="color: #475569; font-size: 0.8rem;">
@@ -98,7 +112,7 @@
     </p>
   </footer>
 
-  <!-- ── Mobile Nav Script ───────────────────────────────── -->
+  <!-- ── Mobile Nav Script & Lightbox Helpers ────────────── -->
   <script>
     function toggleMobileNav() {
       const nav = document.getElementById('navLinks');
@@ -126,6 +140,32 @@
         document.getElementById('navLinks').classList.remove('open');
         document.getElementById('menuIcon').textContent = '☰';
       });
+    });
+
+    // Global Photo HD Lightbox Open/Close Handlers
+    function openPhotoLightbox(imgSrc, name, sub) {
+      if (!imgSrc || imgSrc === '') return;
+      const modal = document.getElementById('photoLightboxModal');
+      const img = document.getElementById('lightboxImg');
+      const nameEl = document.getElementById('lightboxPlayerName');
+      const subEl = document.getElementById('lightboxPlayerSub');
+      if (!modal || !img) return;
+      img.src = imgSrc;
+      if (nameEl) nameEl.textContent = name || 'Player Photo';
+      if (subEl) subEl.textContent = sub || '';
+      modal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closePhotoLightbox(e) {
+      const modal = document.getElementById('photoLightboxModal');
+      if (!modal) return;
+      modal.style.display = 'none';
+      document.body.style.overflow = '';
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closePhotoLightbox();
     });
   </script>
 

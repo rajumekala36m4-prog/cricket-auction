@@ -458,16 +458,20 @@
 
 <script>
   (function() {
-    const savedPin = sessionStorage.getItem('kpl_auction_pin') || 
-                     sessionStorage.getItem('spl_auction_pin') || 
-                     localStorage.getItem('kpl_auction_pin') || 
-                     localStorage.getItem('spl_auction_pin');
-    if (savedPin) {
-      document.documentElement.classList.add('admin-unlocked');
-      document.addEventListener('DOMContentLoaded', function() {
-        document.body.classList.add('admin-unlocked');
-      });
+    function tryUnlock() {
+      const savedPin = sessionStorage.getItem('kpl_auction_pin') || 
+                       sessionStorage.getItem('spl_auction_pin') || 
+                       localStorage.getItem('kpl_auction_pin') || 
+                       localStorage.getItem('spl_auction_pin');
+      if (savedPin) {
+        document.documentElement.classList.add('admin-unlocked');
+        if (document.body) document.body.classList.add('admin-unlocked');
+      }
     }
+    tryUnlock();
+    document.addEventListener('DOMContentLoaded', tryUnlock);
+    window.addEventListener('hashchange', tryUnlock);
+    window.addEventListener('storage', tryUnlock);
   })();
 </script>
 {% endblock %}
@@ -608,7 +612,7 @@
                 <!-- Top Row: Photo, Name, ID, Role -->
                 <div class="player-top-row">
                   <div style="position: relative; display: inline-block;">
-                    <img src="{{ p_data.photo_base64 or p_data.photo_url or '/static/images/avatar_allrounder.svg' }}" id="avatar_img_{{ loop.index }}" class="player-avatar-circle" alt="{{ p_name }}" onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';">
+                    <img src="{{ p_data.photo_base64 or p_data.photo_url or '/static/images/avatar_allrounder.svg' }}" id="avatar_img_{{ loop.index }}" class="player-avatar-circle" alt="{{ p_name }}" onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';" onclick="openPhotoLightbox(this.src, '{{ p_name|escape }}', '{{ p_data.role }} • {{ p_data.village }}')" style="cursor: zoom-in;" title="Click to enlarge photo">
                     <button type="button" onclick="triggerPhotoUpload('{{ p_name }}', 'avatar_img_{{ loop.index }}')" style="position: absolute; bottom: -3px; right: -3px; background: #0284c7; color: #fff; border: 1px solid #fff; border-radius: 50%; width: 20px; height: 20px; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; cursor: pointer; padding: 0;" title="Change / Upload Photo for {{ p_name }}">📷</button>
                   </div>
                   <div class="player-title-info">
@@ -821,6 +825,13 @@
               <input type="text" id="cfgTournamentName" class="form-control" value="{{ config.tournament_name }}" required>
             </div>
             <div class="form-group" style="margin-bottom: 0.85rem;">
+              <label class="form-label">Participating Villages / Towns (Comma-separated)</label>
+              <input type="text" id="cfgVillages" class="form-control" value="{{ (config.villages|join(', ')) if config.villages else 'Kunsi, Alampally, Kothapally, Hindupoor, Saidapur' }}" placeholder="e.g. Kunsi, Alampally, Kothapally, Hindupoor, Saidapur">
+              <small style="color: #94a3b8; font-size: 0.75rem; margin-top: 0.25rem; display: block;">
+                Participating village names shown in the registration dropdown menu.
+              </small>
+            </div>
+            <div class="form-group" style="margin-bottom: 0.85rem;">
               <label class="form-label">Player Registration Fee (₹)</label>
               <input type="number" id="cfgRegFee" class="form-control" value="{{ config.registration_fee or 200 }}" required min="0">
             </div>
@@ -1025,7 +1036,7 @@
           <div style="background: rgba(11, 17, 32, 0.75); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 0.85rem;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
               <strong style="color: #fff; font-size: 0.95rem;">{{ t_name }}</strong>
-              <span style="color: #10b981; font-weight: 800; font-size: 0.85rem;">Purse: ₹{{ t_data.purse or t_data.budget or 6000 }}</span>
+              <span style="color: #10b981; font-weight: 800; font-size: 0.85rem;">Purse: ₹{{ t_data.purse or t_data.budget or 5000 }}</span>
             </div>
 
             <!-- Retained Star Player -->
@@ -1160,9 +1171,12 @@
 
           <!-- Player Showcase -->
           <div style="display:flex; gap:1rem; align-items:center; margin-bottom:1rem;">
-            <img id="hostPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Player"
-              style="width:90px; height:90px; border-radius:50%; border:3px solid #f59e0b; object-fit:cover; object-position:center 20%; background:#1e293b; box-shadow:0 0 20px rgba(245,158,11,0.35); flex-shrink:0;"
-              onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';">
+            <div style="position: relative; display: inline-block; cursor: zoom-in;" onclick="openHostPlayerPhotoHD()" title="Click to view large HD photo">
+              <img id="hostPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Player"
+                style="width:90px; height:90px; border-radius:50%; border:3px solid #f59e0b; object-fit:cover; object-position:center 20%; background:#1e293b; box-shadow:0 0 20px rgba(245,158,11,0.35); flex-shrink:0; cursor: zoom-in;"
+                onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';">
+              <span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.78); color: #f59e0b; border: 1px solid rgba(245,158,11,0.5); border-radius: 4px; padding: 1px 4px; font-size: 0.62rem; font-weight: 800; pointer-events: none;">🔍 HD</span>
+            </div>
             <div style="flex:1; min-width:0;">
               <div style="display:flex; gap:0.4rem; align-items:center; flex-wrap:wrap; margin-bottom:0.25rem;">
                 <span id="hostRoleBadge" class="role-badge badge-allrounder" style="font-size:0.75rem; padding:0.15rem 0.55rem;">All-Rounder</span>
@@ -1653,7 +1667,7 @@
         <div style="background: rgba(10, 16, 30, 0.75); border: 1px solid rgba(255, 255, 255, 0.08); border-radius: 12px; padding: 0.85rem; margin-bottom: 1.15rem; font-size: 0.82rem; line-height: 1.6;">
           <strong style="color: #fff; display: block; margin-bottom: 0.45rem;">📋 What happens when you reset rounds?</strong>
           <ul style="margin: 0; padding-left: 1.2rem; color: #cbd5e1; display: flex; flex-direction: column; gap: 0.3rem;">
-            <li>💰 <strong style="color: #34d399;">Team Budgets:</strong> Restored to full starting tournament purse (₹{{ config.total_purse or config.default_purse or 6000 }}).</li>
+            <li>💰 <strong style="color: #34d399;">Team Budgets:</strong> Restored to full starting tournament purse (₹{{ config.total_purse or config.default_purse or 5000 }}).</li>
             <li>👥 <strong style="color: #38bdf8;">Sold Players:</strong> Cleared and restocked for a fresh bidding start.</li>
             <li>🔄 <strong style="color: #fbbf24;">Player Queue:</strong> All approved registered players re-enter the live auction pool.</li>
             <li>🎯 <strong style="color: #f87171;">Round Counter:</strong> Reset to Round 1 with cleared active bids.</li>
@@ -2226,7 +2240,7 @@
 
     const teams = state.teams || {};
     const teamEntries = Object.entries(teams);
-    const maxPurse = Number(state.default_purse || state.total_purse || 6000);
+    const maxPurse = Number(state.default_purse || state.total_purse || 5000);
     const maxPlayers = Number(state.max_players || 15);
     const minBid = Number(state.min_bid || 100);
 
@@ -2816,7 +2830,7 @@
     if (!grid || !state || !state.teams) return;
     grid.innerHTML = '';
     const teams = state.teams;
-    const maxPurse = state.default_purse || state.total_purse || 6000;
+    const maxPurse = state.default_purse || state.total_purse || 5000;
     const activeBidTeam = state.bidding_team || state.current_bid_team;
 
     // Dynamically keep select dropdown in sync with current tournament teams
@@ -2900,6 +2914,18 @@
     document.getElementById('hostBowling').textContent  = hasPlayer ? (details.bowling || details.bowling_style || 'Right Arm') : '--';
     document.getElementById('hostVillage').textContent  = hasPlayer ? (details.village || 'Saidapur') : '--';
     document.getElementById('hostBasePrice').textContent = hasPlayer ? ('₹' + basePrice) : ('₹' + minBid);
+
+  function openHostPlayerPhotoHD() {
+    const photoEl = document.getElementById('hostPlayerPhoto');
+    const nameEl = document.getElementById('hostPlayerName');
+    const roleEl = document.getElementById('hostRoleBadge');
+    const villageEl = document.getElementById('hostVillage');
+    if (photoEl && photoEl.src) {
+      const name = nameEl ? nameEl.textContent : 'Player';
+      const sub = `${roleEl ? roleEl.textContent : ''} • ${villageEl ? villageEl.textContent : ''}`;
+      openPhotoLightbox(photoEl.src, name, sub);
+    }
+  }
 
     // Role badge
     const roleBadge = document.getElementById('hostRoleBadge');
@@ -3598,6 +3624,7 @@
 
     const payload = {
       tournament_name: document.getElementById('cfgTournamentName').value.trim(),
+      villages: document.getElementById('cfgVillages') ? document.getElementById('cfgVillages').value.trim() : undefined,
       registration_fee: parseInt(document.getElementById('cfgRegFee').value) || 200,
       upi_id: document.getElementById('cfgUpiId').value.trim(),
       payee_name: document.getElementById('cfgPayeeName').value.trim(),
@@ -3736,7 +3763,7 @@
       team_count: teams.length,
       teams: teams,
       team_names: teams,
-      total_purse: parseInt(document.getElementById('setupPurse').value) || 6000,
+      total_purse: parseInt(document.getElementById('setupPurse').value) || 5000,
       max_players: parseInt(document.getElementById('setupMinPlayers').value) || 10,
       min_bid: parseInt(document.getElementById('setupMinBid').value) || 100,
       retention_price: parseInt(document.getElementById('setupPlayerRetentionPrice').value) || 500,
@@ -4478,7 +4505,7 @@
       document.body.classList.add('admin-unlocked');
     }
 
-    if (!confirm("⚠️ Confirm Live Auction Reset (Fresh Start)?\n\n• Team budgets will be restored to starting purse (₹6000)\n• All sold players will be cleared\n• Full player pool will be restocked for Round 1\n• Round will be reset to Round 1\n\nClick OK to reset now.")) {
+    if (!confirm("⚠️ Confirm Live Auction Reset (Fresh Start)?\n\n• Team budgets will be restored to starting purse (₹5000)\n• All sold players will be cleared\n• Full player pool will be restocked for Round 1\n• Round will be reset to Round 1\n\nClick OK to reset now.")) {
       return;
     }
 

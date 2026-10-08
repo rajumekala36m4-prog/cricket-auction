@@ -11,6 +11,7 @@ def sync_to_google_sheet_async(webhook_url, player_data):
 
 import os
 import sys
+import time
 import json
 import copy
 import random
@@ -112,51 +113,6 @@ app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 0  # Disable static file caching (dev 
 app.config['TEMPLATES_AUTO_RELOAD'] = True
 app.jinja_env.auto_reload = True
 
-# ----------------- CONFIG HELPERS -----------------
-def load_config():
-    default_config = {
-        "tournament_name": "Kunsi Premier League (KPL 2026)",
-        "upi_id": "saidapur.cricket@upi",
-        "payee_name": "Saidapur Cricket Committee",
-        "registration_fee": 200,
-        "default_purse": 5000,
-        "min_bid": 100,
-        "retention_price": 500,
-        "owner_retention_price": 100,
-        "max_players": 15,
-        "currency_symbol": "₹",
-        "admin_pin": "2026",
-        "timer_enabled": False,
-        "timer_duration": 120,
-        "timer_reset_on_bid": True,
-        "upi_enabled": True
-    }
-    if os.path.exists(CONFIG_FILE):
-        try:
-            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
-                cfg = json.load(f)
-                default_config.update(cfg)
-        except Exception as e:
-            print("Error loading config:", e)
-
-    # Guarantee KPL branding across all links and shares
-    t_name = default_config.get("tournament_name", "")
-    if "SPL" in t_name or not t_name:
-        default_config["tournament_name"] = "Kunsi Premier League (KPL 2026)"
-
-    env_pin = os.environ.get('ADMIN_PIN')
-    if env_pin:
-        default_config['admin_pin'] = env_pin.strip()
-    return default_config
-
-def save_config(cfg):
-    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
-        json.dump(cfg, f, indent=4)
-    try:
-        push_to_github_async('tournament_config.json', json.dumps(cfg, indent=4), 'KPL Auto-Sync: Updated tournament configuration')
-    except Exception:
-        pass
-
 # --- RENDER CLOUD POSTGRESQL PERSISTENCE (ZERO DATA LOSS ON SLEEP/WAKEUP) ---
 DATABASE_URL = os.environ.get('DATABASE_URL')
 
@@ -226,6 +182,78 @@ def db_set(key, val_obj):
         conn.close()
     except Exception as e:
         print(f"[DATABASE] db_set({key}) notice:", e)
+
+# ----------------- CONFIG HELPERS -----------------
+def load_config():
+    default_config = {
+        "tournament_name": "Kunsi Premier League (KPL 2026)",
+        "upi_id": "saidapur.cricket@upi",
+        "payee_name": "Saidapur Cricket Committee",
+        "registration_fee": 200,
+        "default_purse": 5000,
+        "total_purse": 5000,
+        "min_bid": 100,
+        "retention_price": 500,
+        "owner_retention_price": 100,
+        "max_players": 15,
+        "currency_symbol": "₹",
+        "admin_pin": "2026",
+        "timer_enabled": False,
+        "timer_duration": 120,
+        "timer_reset_on_bid": True,
+        "upi_enabled": True,
+        "villages": ["Kunsi", "Alampally", "Kothapally", "Hindupoor", "Saidapur"]
+    }
+    if os.path.exists(CONFIG_FILE):
+        try:
+            with open(CONFIG_FILE, 'r', encoding='utf-8') as f:
+                cfg = json.load(f)
+                default_config.update(cfg)
+        except Exception as e:
+            print("Error loading config:", e)
+
+    # Check PostgreSQL cloud store first if DATABASE_URL is set
+    if DATABASE_URL:
+        try:
+            db_cfg = db_get('tournament_config')
+            if isinstance(db_cfg, dict):
+                default_config.update(db_cfg)
+        except Exception as _dbe:
+            pass
+
+    # Guarantee KPL branding across all links and shares
+    t_name = default_config.get("tournament_name", "")
+    if "SPL" in t_name or not t_name:
+        default_config["tournament_name"] = "Kunsi Premier League (KPL 2026)"
+
+    # Guarantee default villages list is never empty
+    if "villages" not in default_config or not default_config["villages"]:
+        default_config["villages"] = ["Kunsi", "Alampally", "Kothapally", "Hindupoor", "Saidapur"]
+
+    # Guarantee default purse is 5000
+    if not default_config.get("default_purse"):
+        default_config["default_purse"] = 5000
+    if not default_config.get("total_purse"):
+        default_config["total_purse"] = 5000
+
+    env_pin = os.environ.get('ADMIN_PIN')
+    if env_pin:
+        default_config['admin_pin'] = env_pin.strip()
+    return default_config
+
+def save_config(cfg):
+    if DATABASE_URL:
+        try:
+            db_set('tournament_config', cfg)
+        except Exception as _dbe:
+            pass
+    with open(CONFIG_FILE, 'w', encoding='utf-8') as f:
+        json.dump(cfg, f, indent=4)
+    try:
+        push_to_github_async('tournament_config.json', json.dumps(cfg, indent=4), 'KPL Auto-Sync: Updated tournament configuration')
+    except Exception:
+        pass
+
 
 # ----------------- REGISTRATIONS & BACKUP VAULT HELPERS -----------------
 BACKUPS_DIR = os.path.join(BASE_DIR, 'backups', 'registrations')
@@ -761,7 +789,9 @@ def register():
         reg_fee=reg_fee,
         raw_reg_fee=int(cfg.get("registration_fee", 200)),
         upi_enabled=upi_en,
-        players=players_list
+        players=players_list,
+        config=cfg,
+        villages=cfg.get("villages", ["Kunsi", "Alampally", "Kothapally", "Hindupoor", "Saidapur"])
     )
 
 @app.route('/register/success/<player_id>')
@@ -1072,6 +1102,7 @@ def api_owner_bid():
             return jsonify({
                 'success': True,
                 'team': team,
+                'bidding_team': team,
                 'bid': target_bid,
                 'current_bid': target_bid,
                 'new_price': target_bid,
@@ -1610,7 +1641,7 @@ def api_register():
 
         name = request.form.get('name', '').strip()
         phone = request.form.get('phone', '').strip()
-        village = request.form.get('village', '').strip() or 'Saidapur'
+        village = request.form.get('village', '').strip() or 'Kunsi'
         role = request.form.get('role', 'All-Rounder')
         batting_style = request.form.get('batting_style', 'Right Hand Bat')
         bowling_style = request.form.get('bowling_style', 'None')
@@ -1794,6 +1825,7 @@ def api_register():
         return jsonify({
             'success': True,
             'player_id': player_id,
+            'player': regs[name],
             'name': name,
             'role': role,
             'reg_amount': reg_amount,
@@ -2074,6 +2106,9 @@ def api_setup_teams():
         state['retention_price'] = retention_price
         state['owner_retention_price'] = owner_retention_price
         state['current_round'] = 1
+        state['current_player'] = None
+        state['current_bid'] = 0
+        state['bidding_team'] = None
         sanitize_auction_pool(state)
         save_auction_state(state)
 
@@ -2332,6 +2367,14 @@ def api_auction_bid():
             return jsonify({
                 'success': False,
                 'message': f"⚠️ {team} is already the highest bidder at ₹{cur_bid}! Another team must place the next bid."
+            }), 400
+
+        # Check lower or equal bids: Counter-bids by another team must strictly exceed current leading bid
+        is_manual_override = bool(data.get('is_manual_override') or data.get('force', False))
+        if team and cur_lead_team and team != cur_lead_team and cur_bid > 0 and bid <= cur_bid and not is_manual_override:
+            return jsonify({
+                'success': False,
+                'message': f"⚠️ Bid amount (₹{bid}) must be higher than current leading bid of ₹{cur_bid}!"
             }), 400
 
         if team and team in state.get('teams', {}):
@@ -2824,6 +2867,13 @@ def api_admin_config():
             cfg['timer_reset_on_bid'] = bool(data['timer_reset_on_bid'])
         if 'upi_enabled' in data:
             cfg['upi_enabled'] = bool(data['upi_enabled'])
+        if 'villages' in data and data['villages'] is not None:
+            v_val = data['villages']
+            if isinstance(v_val, str):
+                cfg['villages'] = [v.strip() for v in v_val.split(',') if v.strip()]
+            elif isinstance(v_val, list):
+                cfg['villages'] = [str(v).strip() for v in v_val if str(v).strip()]
+            data['villages'] = cfg['villages']
         cfg.update(data)
         save_config(cfg)
 
@@ -2935,7 +2985,7 @@ def api_admin_fresh_tournament_reset():
         save_config(cfg)
 
         # 5. Initialize fresh teams with full starting tournament purse
-        total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
+        total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 5000)
         default_team_names = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans", "Hyderabad Blasters"]
         fresh_teams = {
             t_name: {
@@ -3259,7 +3309,7 @@ def api_admin_reset_auction():
         if not team_keys:
             team_keys = ["Deccan Royals", "Kunsi Warriors", "Saidapur Super Kings", "Telangana Titans", "Hyderabad Blasters"]
         
-        total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 6000)
+        total_purse = int(cfg.get("total_purse") or cfg.get("default_purse") or 5000)
         reset_teams = {
             t: {
                 "budget": total_purse,

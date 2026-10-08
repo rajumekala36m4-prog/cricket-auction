@@ -388,7 +388,7 @@ function renderQuickTeamGrid() {
   if (!grid || !auctionState || !auctionState.teams) return;
   grid.innerHTML = '';
   const teams = auctionState.teams;
-  const maxPurse = auctionState.default_purse || auctionState.total_purse || 6000;
+  const maxPurse = auctionState.default_purse || auctionState.total_purse || 5000;
 
   Object.entries(teams).forEach(([name, data]) => {
     const purse = (data.budget !== undefined) ? data.budget : ((data.purse !== undefined) ? data.purse : maxPurse);
@@ -1304,7 +1304,7 @@ function renderTeams(teams) {
 
       const squadCount = (tData.players ? tData.players.length : 0) + retCount;
       const purse = (tData.budget !== undefined) ? tData.budget : (tData.purse || 0);
-      const totalPurse = tData.total_purse || 6000;
+      const totalPurse = tData.total_purse || auctionState.total_purse || 5000;
       const pct = Math.max(5, Math.min(100, Math.round((purse / totalPurse) * 100)));
 
       let retChips = '';

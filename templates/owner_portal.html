@@ -479,9 +479,12 @@
   <!-- Active Player Card -->
   <div class="owner-player-card">
     <div style="display: flex; gap: 0.85rem; align-items: center; margin-bottom: 0.75rem;">
-      <img id="ownerPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Active Player"
-        style="width: 84px; height: 84px; border-radius: 50%; border: 3px solid #f59e0b; object-fit: cover; object-position: center 20%; background: #1e293b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.35); flex-shrink: 0;"
-        onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';">
+      <div style="position: relative; display: inline-block; cursor: zoom-in;" onclick="openOwnerPlayerPhotoHD()" title="Click to view large HD photo">
+        <img id="ownerPlayerPhoto" src="/static/images/avatar_allrounder.svg" alt="Active Player"
+          style="width: 84px; height: 84px; border-radius: 50%; border: 3px solid #f59e0b; object-fit: cover; object-position: center 20%; background: #1e293b; box-shadow: 0 0 20px rgba(245, 158, 11, 0.35); flex-shrink: 0; cursor: zoom-in;"
+          onerror="this.onerror=null; this.src='/static/images/avatar_allrounder.svg';">
+        <span style="position: absolute; bottom: 2px; right: 2px; background: rgba(0,0,0,0.82); color: #f59e0b; border: 1px solid rgba(245,158,11,0.5); border-radius: 4px; padding: 1px 4px; font-size: 0.6rem; font-weight: 800; pointer-events: none;">🔍 HD</span>
+      </div>
       <div style="flex: 1; min-width: 0;">
         <div style="display: flex; gap: 0.35rem; align-items: center; flex-wrap: wrap; margin-bottom: 0.25rem;">
           <span id="ownerRoleBadge" class="role-badge badge-allrounder" style="font-size: 0.75rem; padding: 0.15rem 0.55rem;">All-Rounder</span>
@@ -868,6 +871,18 @@
       villageEl.textContent = '--';
       basePriceEl.textContent = '₹--';
     }
+
+  function openOwnerPlayerPhotoHD() {
+    const photoEl = document.getElementById('ownerPlayerPhoto');
+    const nameEl = document.getElementById('ownerPlayerName');
+    const roleEl = document.getElementById('ownerRoleBadge');
+    const villageEl = document.getElementById('ownerVillage');
+    if (photoEl && photoEl.src) {
+      const name = nameEl ? nameEl.textContent : 'Active Player';
+      const sub = `${roleEl ? roleEl.textContent : ''} • ${villageEl ? villageEl.textContent : ''}`;
+      openPhotoLightbox(photoEl.src, name, sub);
+    }
+  }
 
     // Bid odometer
     const curBid = (hasPlayer && state.current_bid) ? state.current_bid : 0;

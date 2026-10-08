@@ -467,7 +467,16 @@
 
         <div class="mobile-field">
           <label class="field-title">Village / Town *</label>
-          <input type="text" id="regVillage" class="mobile-input" placeholder="e.g. Saidapur / Kunsi" value="Saidapur" required>
+          <select id="regVillage" class="mobile-input" style="cursor: pointer; appearance: auto;" onchange="handleVillageChange(this)" required>
+            {% set current_villages = villages if villages else ["Kunsi", "Alampally", "Kothapally", "Hindupoor", "Saidapur"] %}
+            {% for v in current_villages %}
+              <option value="{{ v }}" {% if loop.first %}selected{% endif %}>{{ v }}</option>
+            {% endfor %}
+            <option value="__OTHER__">➕ Other / Custom Village...</option>
+          </select>
+          <div id="customVillageBox" style="display: none; margin-top: 0.5rem;">
+            <input type="text" id="regVillageCustom" class="mobile-input" placeholder="Type your village / town name">
+          </div>
         </div>
       </div>
 
@@ -824,6 +833,17 @@
     document.getElementById('selectedBatting').value = style;
   }
 
+  function handleVillageChange(sel) {
+    const customBox = document.getElementById('customVillageBox');
+    const customInput = document.getElementById('regVillageCustom');
+    if (sel.value === '__OTHER__') {
+      customBox.style.display = 'block';
+      if (customInput) customInput.focus();
+    } else {
+      customBox.style.display = 'none';
+    }
+  }
+
   function toggleQrCode() {
     const el = document.getElementById('qrCodeContainer');
     el.style.display = el.style.display === 'none' ? 'block' : 'none';
@@ -964,7 +984,13 @@
     const pRole = document.getElementById('selectedRole').value;
     formData.append('name', pName);
     formData.append('phone', document.getElementById('regPhone').value.trim());
-    formData.append('village', document.getElementById('regVillage').value.trim());
+    const villageSelect = document.getElementById('regVillage');
+    let villageVal = villageSelect ? villageSelect.value : 'Kunsi';
+    if (villageVal === '__OTHER__') {
+      const customVal = (document.getElementById('regVillageCustom') ? document.getElementById('regVillageCustom').value : '').trim();
+      villageVal = customVal || 'Kunsi';
+    }
+    formData.append('village', villageVal);
     formData.append('role', pRole);
     formData.append('batting_style', document.getElementById('selectedBatting').value);
     formData.append('bowling_style', document.getElementById('regBowling').value);

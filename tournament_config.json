@@ -3,19 +3,33 @@
     "upi_id": "kpl@upi",
     "payee_name": "KPL Committee",
     "registration_fee": 200,
-    "default_purse": 15000,
+    "default_purse": 5000,
+    "total_purse": 5000,
     "min_bid": 100,
     "retention_price": 500,
     "owner_retention_price": 100,
-    "max_players": 15,
+    "max_players": 10,
     "currency_symbol": "\u20b9",
     "admin_pin": "2026",
-    "timer_enabled": true,
-    "timer_duration": 120,
+    "timer_enabled": false,
+    "timer_duration": 300,
     "timer_reset_on_bid": true,
-    "upi_enabled": false,
-    "total_purse": 15000,
+    "upi_enabled": true,
+    "villages": [
+        "Kunsi",
+        "Alampally",
+        "Kothapally",
+        "Hindupoor",
+        "Saidapur",
+        "Balanagar"
+    ],
     "registration_open": true,
     "pin": "2026",
-    "team_passcodes": {}
+    "team_passcodes": {
+        "Deccan Royals": "DR26",
+        "Kunsi Warriors": "KW26",
+        "Saidapur Super Kings": "SS26",
+        "Telangana Titans": "TT26",
+        "Hyderabad Blasters": "HB26"
+    }
 }
