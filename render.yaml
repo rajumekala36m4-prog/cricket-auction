@@ -1,7 +1,20 @@
+databases:
+  - name: kpl-auction-db
+    databaseName: kpl_auction
+    user: kpl_user
+    plan: free
+
 services:
   - type: web
-    name: spl-cricket-auction
+    name: kpl-cricket-auction
     env: python
     buildCommand: pip install -r requirements.txt
     startCommand: gunicorn auction_web_suite:app
     plan: free
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kpl-auction-db
+          property: connectionString
+      - key: PYTHON_VERSION
+        value: 3.11.9

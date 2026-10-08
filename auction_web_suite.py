@@ -382,18 +382,11 @@ def pull_from_github_on_startup():
                             json.dump({}, vf, indent=4)
                         print("[GITHUB CLOUD RESTORE] Synced clean factory reset state from GitHub repo!")
                     else:
-                        local_regs = {}
-                        if os.path.exists(REGISTRATIONS_FILE):
-                            try:
-                                with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as lf:
-                                    local_regs = json.load(lf)
-                            except Exception:
-                                pass
-                        merged = dict(local_regs)
-                        merged.update(gh_regs)
                         with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as wf:
-                            json.dump(merged, wf, indent=4)
-                        print(f"[GITHUB CLOUD RESTORE] Successfully restored {len(merged)} registrations from GitHub repo!")
+                            json.dump(gh_regs, wf, indent=4)
+                        with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
+                            json.dump(gh_regs, vf, indent=4)
+                        print(f"[GITHUB CLOUD RESTORE] Successfully restored {len(gh_regs)} registrations from GitHub repo!")
         except Exception as e_reg:
             print("[GITHUB CLOUD RESTORE] Registrations notice:", e_reg)
 
@@ -412,6 +405,22 @@ def pull_from_github_on_startup():
                     print("[GITHUB CLOUD RESTORE] Successfully restored latest auction state from GitHub repo!")
         except Exception as e_st:
             print("[GITHUB CLOUD RESTORE] Auction state notice:", e_st)
+
+        # 3. Pull tournament_config.json
+        try:
+            r = requests.get(f'https://api.github.com/repos/{clean_repo}/contents/tournament_config.json', headers=headers, timeout=10)
+            if r.status_code == 200:
+                data = r.json()
+                content = base64.b64decode(data.get('content', '')).decode('utf-8')
+                gh_cfg = json.loads(content)
+                if isinstance(gh_cfg, dict):
+                    with open(CONFIG_FILE, 'w', encoding='utf-8') as wf:
+                        json.dump(gh_cfg, wf, indent=4)
+                    if DATABASE_URL:
+                        db_set('tournament_config', gh_cfg)
+                    print("[GITHUB CLOUD RESTORE] Successfully restored latest tournament config from GitHub repo!")
+        except Exception as e_cfg:
+            print("[GITHUB CLOUD RESTORE] Tournament config notice:", e_cfg)
     except Exception as ex:
         print("[GITHUB CLOUD RESTORE] Startup pull error:", ex)
 
@@ -512,26 +521,30 @@ def load_registrations():
             restore_photos_from_regs(db_regs)
             return db_regs
 
-    regs = {}
+    regs = None
     if os.path.exists(REGISTRATIONS_FILE):
         try:
             with open(REGISTRATIONS_FILE, 'r', encoding='utf-8') as f:
                 regs = json.load(f)
         except Exception as e:
             print("Error loading registrations:", e)
-            regs = {}
+            regs = None
     
-    # Self-heal from Cumulative Master Vault
-    if os.path.exists(MASTER_VAULT_FILE):
+    # Self-heal from Master Vault ONLY if REGISTRATIONS_FILE was completely missing or corrupt
+    if regs is None and os.path.exists(MASTER_VAULT_FILE):
         try:
             with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
                 vault = json.load(vf)
-            if isinstance(vault, dict) and len(vault) > len(regs):
-                merged = dict(vault)
-                merged.update(regs)
-                regs = merged
+            if isinstance(vault, dict):
+                regs = vault
+                with open(REGISTRATIONS_FILE, 'w', encoding='utf-8') as f:
+                    json.dump(regs, f, indent=4)
         except Exception:
-            pass
+            regs = {}
+            
+    if regs is None:
+        regs = {}
+
     restore_photos_from_regs(regs)
     return regs
 
@@ -547,19 +560,11 @@ def save_registrations(regs):
     # Sync and mirror photos to permanent backup
     sync_backup_photos()
 
-    # 1. Cumulative Master Vault - Never deletes registered players
-    vault = {}
+    # Exact snapshot sync to Master Vault - accurately reflects deletions
     try:
-        if isinstance(regs, dict) and len(regs) > 0:
-            if os.path.exists(MASTER_VAULT_FILE):
-                try:
-                    with open(MASTER_VAULT_FILE, 'r', encoding='utf-8') as vf:
-                        vault = json.load(vf)
-                except Exception:
-                    vault = {}
-            vault.update(regs)
+        if isinstance(regs, dict):
             with open(MASTER_VAULT_FILE, 'w', encoding='utf-8') as vf:
-                json.dump(vault, vf, indent=4)
+                json.dump(regs, vf, indent=4)
     except Exception as e:
         print("Vault backup notice:", e)
 
@@ -578,8 +583,7 @@ def save_registrations(regs):
     # 3. GitHub Cloud Auto-Commit (Instant persistence across Render container restarts)
     try:
         push_to_github_async('registrations.json', json.dumps(regs, indent=4), 'KPL Auto-Sync: Updated registrations database')
-        if vault:
-            push_to_github_async('backups/registrations_master_vault.json', json.dumps(vault, indent=4), 'KPL Auto-Sync: Updated master vault')
+        push_to_github_async('backups/registrations_master_vault.json', json.dumps(regs, indent=4), 'KPL Auto-Sync: Updated master vault')
     except Exception as _gh_err:
         print("GitHub push notice:", _gh_err)
 
