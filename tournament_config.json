@@ -14,7 +14,7 @@
     "timer_enabled": false,
     "timer_duration": 300,
     "timer_reset_on_bid": true,
-    "upi_enabled": true,
+    "upi_enabled": false,
     "villages": [
         "Kunsi",
         "Alampally",
