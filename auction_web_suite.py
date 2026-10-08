@@ -180,7 +180,7 @@ def load_config():
         "timer_enabled": False,
         "timer_duration": 120,
         "timer_reset_on_bid": True,
-        "upi_enabled": True,
+        "upi_enabled": False,
         "villages": ["Kunsi", "Alampally", "Kothapally", "Hindupoor", "Saidapur"]
     }
     if os.path.exists(CONFIG_FILE):
@@ -401,8 +401,14 @@ def pull_from_github_on_startup():
                     with open(CONFIG_FILE, 'w', encoding='utf-8') as wf:
                         json.dump(gh_cfg, wf, indent=4)
                     if DATABASE_URL:
-                        db_set('tournament_config', gh_cfg)
-                    print("[GITHUB CLOUD RESTORE] Successfully restored latest tournament config from GitHub repo!")
+                        existing_db_cfg = db_get('tournament_config')
+                        if not existing_db_cfg:
+                            db_set('tournament_config', gh_cfg)
+                            print("[GITHUB CLOUD RESTORE] Initialized tournament config in PostgreSQL from GitHub repo.")
+                        else:
+                            print("[GITHUB CLOUD RESTORE] Retained live PostgreSQL tournament config (organizer settings preserved)!")
+                    else:
+                        print("[GITHUB CLOUD RESTORE] Successfully restored latest tournament config from GitHub repo!")
         except Exception as e_cfg:
             print("[GITHUB CLOUD RESTORE] Tournament config notice:", e_cfg)
     except Exception as ex:
