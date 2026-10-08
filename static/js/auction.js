@@ -917,7 +917,18 @@ async function fetchState() {
 function startStatePolling() {
   fetchState();
   if (pollTimer) clearInterval(pollTimer);
-  pollTimer = setInterval(fetchState, 400);
+  
+  // Smart adaptive polling: 600ms for Host Console, 1000ms for Spectator Stream
+  const isHost = !document.body.classList.contains('viewer-mode') && !!document.getElementById('auctioneerControls');
+  const baseInterval = isHost ? 600 : 1000;
+  
+  pollTimer = setInterval(() => {
+    // When phone screen is locked or tab is hidden, reduce polling frequency to save battery and server resources
+    if (document.hidden && Math.random() > 0.33) {
+      return;
+    }
+    fetchState();
+  }, baseInterval);
 }
 
 function renderAuctionState(state) {

@@ -150,8 +150,20 @@ def db_set(key, val_obj):
     except Exception as e:
         print(f"[DATABASE] db_set({key}) notice:", e)
 
+# --- ULTRA HIGH-PERFORMANCE IN-MEMORY CACHE (CRASH-PROOF ON RENDER FREE TIER) ---
+_MEMORY_CONFIG = None
+_MEMORY_REGISTRATIONS = None
+_MEMORY_AUCTION_STATE = None
+CONFIG_LOCK = threading.RLock()
+REGISTRATIONS_LOCK = threading.RLock()
+AUCTION_STATE_LOCK = threading.RLock()
+
 # ----------------- CONFIG HELPERS -----------------
 def load_config():
+    global _MEMORY_CONFIG
+    with CONFIG_LOCK:
+        if _MEMORY_CONFIG is not None:
+            return copy.deepcopy(_MEMORY_CONFIG)
     default_config = {
         "tournament_name": "Kunsi Premier League (KPL 2026)",
         "upi_id": "saidapur.cricket@upi",
@@ -206,9 +218,14 @@ def load_config():
     env_pin = os.environ.get('ADMIN_PIN')
     if env_pin:
         default_config['admin_pin'] = env_pin.strip()
+    with CONFIG_LOCK:
+        _MEMORY_CONFIG = copy.deepcopy(default_config)
     return default_config
 
 def save_config(cfg):
+    global _MEMORY_CONFIG
+    with CONFIG_LOCK:
+        _MEMORY_CONFIG = copy.deepcopy(cfg)
     if DATABASE_URL:
         try:
             db_set('tournament_config', cfg)
@@ -481,6 +498,10 @@ def restore_photos_from_regs(regs):
 sync_backup_photos()
 
 def load_registrations():
+    global _MEMORY_REGISTRATIONS
+    with REGISTRATIONS_LOCK:
+        if _MEMORY_REGISTRATIONS is not None:
+            return copy.deepcopy(_MEMORY_REGISTRATIONS)
     # 1. Check PostgreSQL cloud store first if DATABASE_URL is set
     if DATABASE_URL:
         db_regs = db_get('registrations')
@@ -513,10 +534,14 @@ def load_registrations():
         regs = {}
 
     restore_photos_from_regs(regs)
+    with REGISTRATIONS_LOCK:
+        _MEMORY_REGISTRATIONS = copy.deepcopy(regs)
     return regs
 
 def save_registrations(regs):
-    global _last_backup_time
+    global _last_backup_time, _MEMORY_REGISTRATIONS
+    with REGISTRATIONS_LOCK:
+        _MEMORY_REGISTRATIONS = copy.deepcopy(regs)
     if DATABASE_URL:
         db_set('registrations', regs)
         db_set('master_vault', regs)
@@ -587,15 +612,17 @@ def sanitize_auction_pool(state):
     if "unsold_players" in state and isinstance(state["unsold_players"], list):
         state["unsold_players"] = [p for p in state["unsold_players"] if str(p).strip().lower() not in excluded]
 
-AUCTION_STATE_LOCK = threading.RLock()
-
 def load_auction_state():
+    global _MEMORY_AUCTION_STATE
     with AUCTION_STATE_LOCK:
+        if _MEMORY_AUCTION_STATE is not None:
+            return copy.deepcopy(_MEMORY_AUCTION_STATE)
         # 1. Check PostgreSQL cloud store first if DATABASE_URL is set
         if DATABASE_URL:
             db_st = db_get('auction_state')
             if isinstance(db_st, dict) and "teams" in db_st:
                 sanitize_auction_pool(db_st)
+                _MEMORY_AUCTION_STATE = copy.deepcopy(db_st)
                 return db_st
 
         for file_candidate in [AUCTION_STATE_FILE, AUCTION_VAULT_FILE]:
@@ -608,6 +635,7 @@ def load_auction_state():
                                 if 'auction_started' not in st:
                                     st['auction_started'] = False
                                 sanitize_auction_pool(st)
+                                _MEMORY_AUCTION_STATE = copy.deepcopy(st)
                                 return st
                     except Exception as e:
                         time.sleep(0.015)
@@ -644,7 +672,9 @@ def load_auction_state():
         return state
 
 def save_auction_state(state):
-    global _last_auction_backup_time
+    global _last_auction_backup_time, _MEMORY_AUCTION_STATE
+    with AUCTION_STATE_LOCK:
+        _MEMORY_AUCTION_STATE = copy.deepcopy(state)
     if DATABASE_URL:
         db_set('auction_state', state)
 
